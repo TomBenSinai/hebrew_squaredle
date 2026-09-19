@@ -12,6 +12,7 @@ plain server-rendered HTML:
 from __future__ import annotations
 
 import time
+from collections import OrderedDict
 from html.parser import HTMLParser
 from urllib.parse import quote
 
@@ -21,8 +22,9 @@ MILOG = "https://milog.co.il/"
 MAX_ENTRIES = 3
 MAX_SENSES = 3
 CACHE_TTL = 7 * 24 * 3600
+CACHE_SIZE = 5000                         # the endpoint takes any string, so keep this bounded
 
-_cache: dict[str, tuple[float, dict]] = {}
+_cache: OrderedDict[str, tuple[float, dict]] = OrderedDict()   # least recently used first
 
 
 def url_for(word: str) -> str:
@@ -115,6 +117,7 @@ async def define(word: str) -> dict:
     now = time.time()
     hit = _cache.get(word)
     if hit and now - hit[0] < CACHE_TTL:
+        _cache.move_to_end(word)
         return hit[1]
     result = {"word": word, "url": url_for(word), "entries": []}
     try:
@@ -126,4 +129,7 @@ async def define(word: str) -> dict:
     except httpx.HTTPError:
         return result                     # not cached: try again next time
     _cache[word] = (now, result)
+    _cache.move_to_end(word)
+    while len(_cache) > CACHE_SIZE:
+        _cache.popitem(last=False)
     return result

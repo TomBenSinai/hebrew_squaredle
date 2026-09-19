@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from . import config, milog
-from .boards import Day, all_dates, get_day, playable_dates
+from .boards import Day, all_dates, load_day, playable_dates
 from .deps import current_player, day, repo
 
 app = FastAPI(title="Rivuon API")
@@ -52,8 +52,8 @@ def health():
 
 @app.get("/api/days")
 def days():
-    dates = playable_dates()
-    return {"today": config.today(), "days": [get_day(d).summary() for d in dates]}
+    dates = playable_dates()          # one scan of boards/daily for the whole list
+    return {"today": config.today(), "days": [load_day(d).summary(dates[0]) for d in dates]}
 
 
 @app.get("/api/boards/{date}")
@@ -85,11 +85,11 @@ def progress_get(d: Day = Depends(day), player: str = Depends(current_player)):
 def progress_put(body: ProgressIn, d: Day = Depends(day), player: str = Depends(current_player)):
     """Union of stored and sent words (a word once found stays found), re-checked
     against the board so only real words are kept."""
-    stored = repo().get(player, d.date) or {"found": [], "rot": 0}
-    words = [f["w"] for f in stored["found"]] + [f.w for f in body.found]
-    found = d.classify(words)
-    repo().put(player, d.date, found, body.rot)
-    return {"found": found, "rot": body.rot}
+    def merge(stored: dict | None) -> dict:
+        words = [f["w"] for f in (stored or {"found": []})["found"]] + [f.w for f in body.found]
+        return {"found": d.classify(words), "rot": body.rot}
+
+    return repo().update(player, d.date, merge)
 
 
 @app.get("/api/define/{word}")

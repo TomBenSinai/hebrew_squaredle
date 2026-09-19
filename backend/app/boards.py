@@ -51,13 +51,19 @@ def playable_dates() -> list[str]:
 def get_day(date: str) -> "Day":
     if date not in playable_dates():
         raise BoardNotFound(date)
+    return load_day(date)
+
+
+def load_day(date: str) -> "Day":
+    """No playability check: for dates that came from `playable_dates()`."""
     path = config.BOARDS_DIR / f"{date}.json"
     return _load(path, path.stat().st_mtime)
 
 
-def day_number(date: str) -> int:
-    epoch = Date.fromisoformat(all_dates()[0])
-    return (Date.fromisoformat(date) - epoch).days + 1
+def day_number(date: str, epoch: str | None = None) -> int:
+    """Day 1 is the first stored board; pass `epoch` to skip listing the boards."""
+    first = Date.fromisoformat(epoch or all_dates()[0])
+    return (Date.fromisoformat(date) - first).days + 1
 
 
 def group_of(word: str) -> int:
@@ -89,12 +95,12 @@ class Day:
     def main_letters(self) -> int:
         return sum(len(normalize(w)) for w in self.board.main)
 
-    def summary(self) -> dict:
+    def summary(self, epoch: str | None = None) -> dict:
         """What the archive list shows for this day."""
         b = self.board
         return {
             "date": b.date,
-            "number": day_number(b.date),
+            "number": day_number(b.date, epoch),
             "shapeName": self.shape_title,
             "theme": b.theme["title"] if b.theme else None,
             "mainTotal": len(b.main),
