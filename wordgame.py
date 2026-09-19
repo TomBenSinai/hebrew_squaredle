@@ -371,6 +371,8 @@ class Settings:
                                 # step (fewer long words, wider range) and say so
     main_zipf: float = 0.0      # >0: only words at least this common are MAIN, the
                                 # rest BONUS (for crowded boards; 4.5 ~ everyday words)
+    max_bonus_ratio: float = 1.0  # >0: at most this many BONUS words per MAIN word
+                                  # (ignored with main_zipf, which makes BONUS words on purpose)
     theme: Theme | None = None
 
     @property
@@ -577,6 +579,9 @@ def _evaluate(grid, lex, s: Settings, shape: Shape, lo: int, hi: int, theme_keys
         cost += lo - n
     elif n > hi:
         cost += n - hi
+    if s.max_bonus_ratio and not s.main_zipf:
+        bonus = sum(1 for cat, _ in found.values() if cat == BONUS)
+        cost += 0.5 * max(0, bonus - s.max_bonus_ratio * n)
     if not any(len(normalize(w)) >= s.min_longest for w in main):
         cost += 5
     long_words = sum(1 for w in main if len(normalize(w)) >= s.long_len)
@@ -739,16 +744,19 @@ def generate(seed: int, lex: Lexicon, s: Settings | None = None, date_str: str =
             step.append(f"min_longest {cur.min_longest}->{cur.min_longest - 1}")
         step.append(f"main range {cur.min_main}-{cur.max_main}->"
                     f"{round(cur.min_main * .8)}-{round(cur.max_main * 1.2)}")
+        if cur.max_bonus_ratio and not cur.main_zipf:
+            step.append(f"max_bonus_ratio {cur.max_bonus_ratio:g}->{cur.max_bonus_ratio * 1.25:g}")
         relaxed += step
         cur = replace(cur, min_long_words=max(1, cur.min_long_words - 2),
                       min_longest=max(5, cur.min_longest - 1),
                       min_main=round(cur.min_main * .8), max_main=round(cur.max_main * 1.2),
+                      max_bonus_ratio=cur.max_bonus_ratio * 1.25,
                       max_attempts=max(6, cur.max_attempts // 2))
     if cost:
         raise RuntimeError(
             f"No {shape.name or 'board'} ({shape.n_cells} cells) met the requirements "
             f"(best cost {cost:g}). Loosen the settings (min_main/max_main, min_longest, "
-            f"min_long_words, min_distinct, max_same_letter) or raise max_steps/max_attempts.")
+            f"min_long_words, min_distinct, max_same_letter, max_bonus_ratio) or raise max_steps/max_attempts.")
 
     found = _solve(grid, lex, True, shape)[0]
     main = {w: p for w, (cat, p) in found.items() if cat == MAIN}

@@ -66,7 +66,7 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
         <Score found={mainFound} total={board.mainTotal} rank={rankFor(fraction)} fraction={fraction} />
 
         <div className="boardwrap" style={boardVars(layout)}>
-          <Readout current={withFinal(path.map(i => layout.letters[i]).join(""))}
+          <Readout current={withFinal(path.map(i => layout.letters[i]).join("")) || game.pending || ""}
             toast={game.toast} onWord={setDefWord} />
           <Board layout={layout} path={path} live={game.live} flash={game.flash} spin={phase}
             tileRefs={tileRefs} handlers={handlers} />

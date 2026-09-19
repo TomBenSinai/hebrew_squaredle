@@ -48,6 +48,7 @@ Goal: a board meeting the day's **settings**:
 | `all_cells_used` | Every letter is part of some main word |
 | `max_same_letter`, `min_distinct` | Letter variety |
 | `main_zipf` | Only words at least this common count as MAIN (for crowded boards) |
+| `max_bonus_ratio` | At most this many bonus words per main word (default 1.0, 0 = off; ignored with `main_zipf`) |
 | blocked words | Never allowed on a board |
 | theme `min_words` | At least N theme words |
 

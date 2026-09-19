@@ -122,6 +122,7 @@ class TestGeneration(unittest.TestCase):
                     c = Counter(b.grid)
                     self.assertLessEqual(max(c.values()), s.max_same_letter)
                     self.assertGreaterEqual(len(c), s.min_distinct)
+                    self.assertLessEqual(len(b.bonus), s.max_bonus_ratio * len(b.main))
                     found = solve(b.grid, LEX)
                     self.assertFalse([w for w, (cat, _) in found.items() if cat == BLOCKED])
 
@@ -294,6 +295,14 @@ class TestSchedule(unittest.TestCase):
         p = gd.plan_for(date(2026, 9, 26), sched)                                       # themed Saturday
         self.assertEqual(p["theme"], "sukkot")
         self.assertIn(p["shape"], ("heart", "diamond"))
+
+    def test_command_line_flags_act_as_date_entry(self):
+        import generate_days as gd
+        sched = {"default": {"shape": "5x5"}}
+        p = gd.plan_for(date(2026, 9, 21), sched, {"theme": "yomkippur"})
+        self.assertEqual((p["shape"], p["main_zipf"]), ("4x4", 4.0))   # the theme's shape and settings
+        p = gd.plan_for(date(2026, 9, 21), sched, {"theme": "yomkippur", "main_zipf": 4.5})
+        self.assertEqual(p["main_zipf"], 4.5)                           # a flag beats the theme
 
 
 if __name__ == "__main__":

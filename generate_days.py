@@ -15,8 +15,8 @@ shapes.json, themes in themes/*.json.
   python generate_days.py --show 2026-09-19                 # print a stored board
 
 --date makes a one-day change and records it in schedule.json (so later bulk
-runs keep it); add --no-save to try it without recording. --shape / --theme /
---size and any setting flag apply to every day of the run.
+runs keep it); add --no-save to just print the board (nothing is written).
+--shape / --theme / --size and any setting flag apply to every day of the run.
 
 Days that already have a file are skipped unless --force.
 """
@@ -55,6 +55,7 @@ HELP = {
     "max_steps": "annealing steps per attempt",
     "max_attempts": "restarts before giving up",
     "main_zipf": "only words at least this common count as MAIN (e.g. 4.5), 0 = off",
+    "max_bonus_ratio": "at most this many BONUS words per MAIN word (e.g. 1.0), 0 = off",
     "relax": "1 = loosen the rules step by step if a shape can't meet them, 0 = fail instead",
 }
 
@@ -93,11 +94,12 @@ def load_schedule() -> dict:
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {"default": {"shape": "4x4"}}
 
 
-def plan_for(day: date, schedule: dict) -> dict:
-    """Merge default < weekday < date entries into one plan for the day."""
+def plan_for(day: date, schedule: dict, extra: dict | None = None) -> dict:
+    """Merge default < weekday < date entries into one plan for the day.
+    `extra` (one-off command-line flags) counts as part of the date entry."""
     wd = WEEKDAYS[day.weekday()]
     layers = [schedule.get("default", {}), schedule.get("weekdays", {}).get(wd, {}),
-              schedule.get("dates", {}).get(day.isoformat(), {})]
+              {**schedule.get("dates", {}).get(day.isoformat(), {}), **(extra or {})}]
     plan: dict = {}
     for layer in layers:
         plan.update({k: v for k, v in layer.items() if not k.startswith("_")})
@@ -144,9 +146,12 @@ def _make(job):
         board = daily_board(day, _lex, build_settings(plan, _lex), salt)
     except (RuntimeError, ValueError) as e:
         return day.isoformat(), plan, None, time.time() - t, str(e)
-    save_board(board, out)
     info = {"main": len(board.main), "bonus": len(board.bonus),
             "theme": (board.theme or {}).get("words", []), "relaxed": board.relaxed}
+    if out:
+        save_board(board, out)
+    else:                                   # a dry run: show the board instead
+        info["grid"] = format_grid(board)
     return board.date, plan, info, time.time() - t, ""
 
 
@@ -175,7 +180,8 @@ def main() -> None:
     p.add_argument("--days", type=int, default=30)
     p.add_argument("--date", type=date.fromisoformat,
                    help="generate just this day (always overwrites) and record it in schedule.json")
-    p.add_argument("--no-save", action="store_true", help="with --date: don't record it in schedule.json")
+    p.add_argument("--no-save", action="store_true",
+                   help="with --date: just print the board (no board file, nothing in schedule.json)")
     p.add_argument("--shape", help="shape name from shapes.json, 'NxN', or a mask like '.X./XXX/.X.'")
     p.add_argument("--size", type=int, help="shortcut for --shape NxN")
     p.add_argument("--theme", help="theme file name from themes/ (without .json)")
@@ -190,9 +196,11 @@ def main() -> None:
     p.add_argument("--presets", action="store_true", help="list the square presets and exit")
     g = p.add_argument_group("settings (default: measured for the shape / the square preset)")
     for name in TUNABLE:
-        kind = float if name == "main_zipf" else int
+        kind = float if name in ("main_zipf", "max_bonus_ratio") else int
         g.add_argument("--" + name.replace("_", "-"), type=kind, default=None, help=HELP.get(name))
     a = p.parse_args()
+    if a.no_save and not a.date:
+        p.error("--no-save only works with --date")
     out = Path(a.out)
 
     if a.shapes:
@@ -240,16 +248,21 @@ def main() -> None:
         start, days, force = a.start, a.days, a.force
 
     schedule = load_schedule()
-    out.mkdir(parents=True, exist_ok=True)
+    if a.date and forced:
+        # the day's entry becomes exactly the flags, saved or not, so a
+        # --no-save try gives the board that saving would
+        schedule.setdefault("dates", {})[a.date.isoformat()] = forced
+        forced = {}
+    if not a.no_save:
+        out.mkdir(parents=True, exist_ok=True)
     jobs = []
     for i in range(days):
         day = start + timedelta(days=i)
         path = out / f"{day.isoformat()}.json"
         if force or not path.exists():
-            plan = plan_for(day, schedule)
-            plan.update(forced)
-            jobs.append((day, plan, a.salt, path))
-    print(f"{len(jobs)} board(s) to generate -> {out}")
+            plan = plan_for(day, schedule, forced)
+            jobs.append((day, plan, a.salt, None if a.no_save else path))
+    print(f"{len(jobs)} board(s) to generate -> {'(dry run, not saved)' if a.no_save else out}")
     if not jobs:
         return
 
@@ -269,6 +282,8 @@ def main() -> None:
             relaxed = f", loosened: {'; '.join(info['relaxed'])}" if info["relaxed"] else ""
             print(f"  {d}: {label:10} {info['main']} main, {info['bonus']} bonus "
                   f"({secs:.1f}s){extra}{relaxed}")
+            if "grid" in info:
+                print("\n" + info["grid"] + "\n")
 
     if mains:
         print(f"\nmain words per board: min {min(mains)}, median {statistics.median(mains):g}, "
