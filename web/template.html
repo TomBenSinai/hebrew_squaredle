@@ -1,0 +1,1129 @@
+<title>ריבועון</title>
+<meta name="description" content="ריבועון: משחק מילים יומי. מחליקים בין אותיות ומוצאים מילים.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700;800&family=Assistant:wght@400;600;700&display=swap">
+<style>
+:root {
+  --ground: #ECECEA;
+  --paper: #FFFFFF;
+  --ink: #111111;
+  --muted: #6A6A67;
+  --line: #D2D2CF;
+  --cobalt: #111111;
+  --cobalt-ink: #FFFFFF;
+  --cobalt-soft: #E3E3E0;
+  --amber: #A86F06;
+  --amber-fill: #E3A52B;
+  --amber-soft: #F6EACB;
+  --bad: #B3261E;
+  --shadow: 0 1px 0 rgba(0, 0, 0, .06), 0 6px 14px -9px rgba(0, 0, 0, .3);
+  --display: "Rubik", "Segoe UI", "Arial Hebrew", Arial, sans-serif;
+  --body: "Assistant", "Segoe UI", "Arial Hebrew", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0B0B0B;
+    --paper: #1A1A1A;
+    --ink: #F2F2F0;
+    --muted: #9A9A96;
+    --line: #2E2E2E;
+    --cobalt: #F2F2F0;
+    --cobalt-ink: #0B0B0B;
+    --cobalt-soft: #333333;
+    --amber: #F0B94D;
+    --amber-fill: #F0B94D;
+    --amber-soft: #382B12;
+    --bad: #FF8A80;
+    --shadow: 0 1px 0 rgba(0, 0, 0, .4), 0 8px 18px -10px rgba(0, 0, 0, .8);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0B0B0B;
+  --paper: #1A1A1A;
+  --ink: #F2F2F0;
+  --muted: #9A9A96;
+  --line: #2E2E2E;
+  --cobalt: #F2F2F0;
+  --cobalt-ink: #0B0B0B;
+  --cobalt-soft: #333333;
+  --amber: #F0B94D;
+  --amber-fill: #F0B94D;
+  --amber-soft: #382B12;
+  --bad: #FF8A80;
+  --shadow: 0 1px 0 rgba(0, 0, 0, .4), 0 8px 18px -10px rgba(0, 0, 0, .8);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { height: 100%; }
+body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-inline: 16px;
+  padding-block: 10px 12px;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--cobalt); outline-offset: 2px; }
+
+/* One screen: the play column fills the height, the board takes what's left. */
+.app {
+  height: 100%;
+  max-width: 520px;
+  margin-inline: auto;
+  display: grid;
+  grid-template-rows: 100%;
+}
+
+.play {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---------- masthead ---------- */
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 8px;
+}
+.masthead h1 {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(1.45rem, 5.5vw, 2.1rem);
+  line-height: 1;
+  margin: 0;
+  letter-spacing: -.01em;
+  white-space: nowrap;
+}
+.brand { display: grid; gap: 2px; }
+.chip-theme {
+  display: inline-block; margin-inline-start: 6px; padding: 1px 9px;
+  border-radius: 99px; background: var(--cobalt); color: var(--cobalt-ink);
+  font-weight: 600; font-size: .78rem; vertical-align: 1px;
+}
+.chip-shape { color: var(--ink); font-weight: 600; }
+.tile.theme-hit { box-shadow: var(--shadow), inset 0 0 0 2.5px var(--amber); }
+.wgroup.theme h3 { color: var(--cobalt); }
+.wgroup.theme h3::before { content: "★ "; }
+.when { color: var(--muted); font-size: .82rem; line-height: 1.2; }
+.when b { color: var(--ink); font-weight: 600; }
+.headbtns { display: flex; align-items: center; gap: 8px; }
+.archbtn, .pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px;
+  border-radius: 99px;
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  font-weight: 600; font-size: .9rem;
+  cursor: pointer;
+}
+.pill { border-color: var(--ink); }
+.archbtn, .pill { white-space: nowrap; flex: none; }
+.masthead { align-items: flex-start; }
+.archbtn:hover, .pill:hover { border-color: var(--ink); }
+.iconbtn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  cursor: pointer;
+  display: grid; place-items: center;
+  font-size: 1rem;
+  flex: none;
+}
+.iconbtn:disabled { opacity: .35; cursor: default; }
+
+/* ---------- progress ---------- */
+.progress { display: grid; gap: 8px; }
+.count { display: flex; align-items: baseline; gap: 10px; }
+.count .num {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(2.6rem, 11vw, 3.4rem);
+  line-height: .95;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+}
+.count .num small { font-size: .5em; font-weight: 600; color: var(--muted); letter-spacing: 0; }
+.count .label { font-family: var(--display); font-weight: 600; font-size: 1.15rem; }
+.count .rank { margin-inline-start: auto; color: var(--muted); font-weight: 600; font-size: .95rem; }
+
+/* RTL loader: fills from the right, weighted by letters found */
+.loader {
+  position: relative;
+  height: 14px;
+  border-radius: 99px;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  overflow: hidden;
+}
+.loader i {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;              /* right edge in RTL */
+  width: 0;
+  border-radius: 99px;
+  background:
+    repeating-linear-gradient(-45deg, rgba(255,255,255,.14) 0 8px, transparent 8px 16px),
+    var(--cobalt);
+  background-size: 22.6px 100%, auto;
+  transition: width .6s cubic-bezier(.2, .8, .2, 1);
+  animation: crawl 1.2s linear infinite;
+}
+@keyframes crawl { to { background-position: -22.6px 0, 0 0; } }
+
+/* ---------- readout ---------- */
+.readout { position: relative; height: 2.6rem; width: 100%; display: grid; place-items: center; }
+.current {
+  font-family: var(--display); font-weight: 600;
+  font-size: 1.9rem; line-height: 1; letter-spacing: .02em;
+}
+.toast {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font-weight: 600; font-size: 1.05rem;
+  pointer-events: none;
+}
+.current:not(:empty) + .toast { visibility: hidden; }
+.toast.main { color: var(--cobalt); }
+.toast.bonus { color: var(--amber); }
+.toast.bad { color: var(--bad); }
+.toast.info { color: var(--muted); }
+
+/* ---------- board: as big as fits in the space left ---------- */
+.boardwrap {
+  /* one cell's size: whatever fits the shape's bounding box in the space left */
+  --cell: min(calc(100cqw / var(--cols, 4)), calc((100cqh - 3.2rem) / var(--rows, 4)),
+              calc(480px / var(--maxd, 4)));
+  flex: 1;
+  min-height: 0;
+  container-type: size;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.board {
+  position: relative;
+  flex: none;
+  width: calc(var(--cell) * var(--cols, 4));
+  height: calc(var(--cell) * var(--rows, 4));
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.tiles {
+  position: absolute; inset: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 4), 1fr);
+  grid-template-rows: repeat(var(--rows, 4), 1fr);
+  gap: calc(var(--cell) * .16);
+}
+.tile {
+  position: relative;
+  border: 0;
+  border-radius: 10%;
+  background: var(--paper);
+  box-shadow: var(--shadow), inset 0 0 0 1.5px var(--line);
+  cursor: pointer;
+  display: grid; place-items: center;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: calc(var(--cell) * .46);
+  line-height: 1;
+  color: var(--cobalt);
+  padding: 0;
+  transition: transform .12s ease, background .12s ease, color .12s ease;
+}
+/* no main word left that uses this letter */
+.tile.dead { color: var(--muted); opacity: .38; box-shadow: inset 0 0 0 1.5px var(--line); }
+.tile { transition: transform .12s ease, background .12s ease, color .4s ease, opacity .4s ease; }
+.tile.on { background: var(--cobalt); color: var(--cobalt-ink); transform: scale(.94); opacity: 1; }
+.tile.show { background: var(--cobalt-soft); }
+.tile.show.bonus { background: var(--amber-soft); }
+.tile.hint { animation: pulse 1.2s ease 2; }
+@keyframes pulse { 50% { background: var(--amber-soft); transform: scale(1.06); } }
+.trace { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.tiles.spin { transition: transform .46s cubic-bezier(.45, .05, .2, 1); transform: rotate(-90deg) scale(.94); }
+.tiles.settle .tile { animation: settle .32s ease-out both; }
+@keyframes settle { from { transform: scale(.9); opacity: .6; } }
+.trace polyline { fill: none; stroke: var(--cobalt); stroke-opacity: .35; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- controls ---------- */
+.controls { display: grid; gap: 8px; }
+.btn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.btn.primary { background: var(--cobalt); border-color: var(--cobalt); color: var(--cobalt-ink); }
+.tools { display: flex; gap: 8px; }
+.tools .btn { flex: 1; }
+.tools .wordsbtn b { font-variant-numeric: tabular-nums; }
+
+/* ---------- words modal ---------- */
+.modal {
+  position: fixed; inset: 0; z-index: 20;
+  display: grid; place-items: center;
+  padding: 16px;
+  visibility: hidden; pointer-events: none;
+  transition: visibility 0s linear .4s;           /* stay visible while closing */
+}
+.modal.open { visibility: visible; pointer-events: auto; transition: visibility 0s; }
+.backdrop {
+  position: absolute; inset: 0;
+  background: rgba(8, 8, 8, .5);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+.modal.open .backdrop { opacity: 1; }
+.words {
+  position: relative;
+  width: 100%; max-width: 520px;
+  height: min(86%, 760px);
+  display: flex; flex-direction: column;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, .5);
+  overflow: hidden;
+  transform: translateY(24px) scale(.96);
+  opacity: 0;
+  transition: transform .4s cubic-bezier(.2, .9, .25, 1), opacity .25s ease;
+}
+.modal.open .words { transform: none; opacity: 1; }
+.sheethead {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px 12px;
+  border-bottom: 1.5px solid var(--ink);
+}
+.sheethead h2 { font-family: var(--display); font-weight: 800; font-size: 2rem; line-height: 1; margin: 0; }
+.closebtn { font-size: 1.6rem; line-height: 1; width: 40px; height: 40px; border: 0; background: none; cursor: pointer; color: var(--ink); }
+
+.tabs {
+  display: flex; gap: 8px;
+  padding-inline: 22px;
+  border-bottom: 1.5px solid var(--ink);
+}
+.tab {
+  position: relative;
+  padding: 8px 20px;
+  margin-bottom: -1.5px;
+  font-family: var(--display); font-weight: 600; font-size: 1.1rem;
+  background: var(--cobalt-soft);
+  color: var(--muted);
+  border: 1.5px solid var(--line);
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+}
+.tab[aria-selected="true"] {
+  background: var(--paper);
+  color: var(--ink);
+  border-color: var(--ink);
+  box-shadow: inset 0 3px 0 var(--ink);
+}
+.tab:disabled { opacity: .45; cursor: default; }
+
+.tabbody {
+  flex: 1; min-height: 0;
+  overflow-y: auto; overscroll-behavior: contain;
+  padding: 6px 22px 26px;
+}
+.wgroup { padding-block: 16px 4px; }
+.wgroup h3 {
+  font-family: var(--display); font-weight: 800;
+  font-size: 1.55rem; line-height: 1.1;
+  margin: 0 0 6px;
+}
+.wgroup.bonus h3 { color: var(--amber); }
+.wlist { display: flex; flex-wrap: wrap; gap: 6px 26px; }
+.w {
+  border: 0; background: none; padding: 2px 0; cursor: pointer;
+  font-size: 1.25rem; color: var(--ink);
+  text-decoration: underline dotted 1.5px;
+  text-underline-offset: 7px;
+  text-decoration-color: var(--muted);
+}
+.w:disabled { cursor: default; }
+.w.fresh { text-decoration-style: solid; text-decoration-color: var(--ink); }
+.wleft { margin: 10px 0 0; color: var(--muted); font-style: italic; font-size: 1.05rem; }
+.wleft.done { font-style: normal; color: var(--ink); font-weight: 600; }
+.wempty { color: var(--muted); padding-top: 24px; margin: 0; }
+
+.days { display: grid; padding-top: 6px; }
+.day {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 4px 16px;
+  width: 100%;
+  padding: 14px 4px;
+  border: 0; border-bottom: 1px solid var(--line);
+  background: none; color: var(--ink);
+  text-align: start;
+  cursor: pointer;
+}
+.day:hover .dname { text-decoration: underline; text-underline-offset: 4px; }
+.day .dname { font-family: var(--display); font-weight: 700; font-size: 1.2rem; line-height: 1.2; }
+.day .dsub { grid-column: 1; color: var(--muted); font-size: .85rem; }
+.day .dstat { grid-row: 1 / span 2; grid-column: 2; display: grid; justify-items: end; gap: 6px; }
+.day .dcount { font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.day .dcount b { color: var(--ink); }
+.day .dbar { width: 88px; height: 6px; border-radius: 6px; background: var(--cobalt-soft); overflow: hidden; }
+.day .dbar i { display: block; height: 100%; background: var(--cobalt); border-radius: 6px; }
+.day.current { background: var(--cobalt-soft); border-radius: 8px; padding-inline: 12px; margin-block: 2px; border-bottom-color: transparent; }
+.day.done .dcount { color: var(--ink); font-weight: 600; }
+.day.current .dbar { background: var(--paper); }
+.modal.open .day {
+  animation: rise .36s cubic-bezier(.2, .9, .25, 1) both;
+  animation-delay: calc(90ms + var(--i, 0) * 28ms);
+}
+
+/* ---------- definition card ---------- */
+.defmodal { z-index: 30; }
+.defcard { height: auto; max-height: min(80%, 560px); max-width: 460px; }
+.defbody { padding: 14px 22px 22px; overflow-y: auto; display: grid; gap: 10px; }
+.defmeta { color: var(--muted); font-size: .95rem; margin: 0; min-height: 1.4em; }
+.defmeta b { color: var(--ink); font-weight: 600; }
+.deftext { font-size: 1.2rem; line-height: 1.55; margin: 0; }
+.deftext.loading { color: var(--muted); }
+.deftext.loading::after { content: ""; display: inline-block; width: 1.2em; text-align: start; animation: dots 1.2s steps(4) infinite; }
+@keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+.defex { margin: 0; color: var(--muted); font-size: 1.02rem; border-inline-start: 3px solid var(--line); padding-inline-start: 10px; }
+.defnote { margin: 2px 0 0; color: var(--muted); font-size: .78rem; }
+.defactions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.defactions .btn { text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.toast.tappable { pointer-events: auto; }
+.toastbtn { border: 0; background: none; color: inherit; font: inherit; cursor: pointer; padding: 4px 8px; }
+.toastbtn .tw { text-decoration: underline dotted 1.5px; text-underline-offset: 5px; }
+.toastbtn .th { font-weight: 400; font-size: .85em; opacity: .75; margin-inline-start: 6px; }
+
+/* the list drifts in as the modal opens */
+.modal.open .wgroup {
+  animation: rise .4s cubic-bezier(.2, .9, .25, 1) both;
+  animation-delay: calc(110ms + var(--i, 0) * 45ms);
+}
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before { animation: none !important; transition: none !important; }
+}
+</style>
+
+<div class="app" dir="rtl" lang="he">
+  <section class="play" aria-label="הלוח">
+    <header class="masthead">
+      <div class="brand">
+        <h1>ריבועון</h1>
+        <div class="when" id="when" aria-live="polite"></div>
+      </div>
+      <div class="headbtns">
+        <button class="pill" id="backToday" type="button" hidden>חזרה להיום</button>
+        <button class="archbtn" id="openArchive" type="button" aria-controls="archive">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 9.5h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8 13.5h2M11 13.5h2M14 13.5h2M8 16.5h2M11 16.5h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          ארכיון
+        </button>
+      </div>
+    </header>
+
+    <div class="progress">
+      <div class="count">
+        <span class="num"><span dir="ltr"><span id="foundN">0</span><small>/<span id="totalN">0</span></small></span></span>
+        <span class="label">מילים שמצאת</span>
+        <span class="rank" id="rank"></span>
+      </div>
+      <div class="loader" role="progressbar" aria-label="התקדמות" aria-valuemin="0" aria-valuemax="100" id="loader"><i id="meter"></i></div>
+    </div>
+
+    <div class="boardwrap">
+      <div class="readout">
+        <div class="current" id="current" aria-live="polite"></div>
+        <div class="toast" id="toast" role="status"></div>
+      </div>
+      <div class="board" id="board">
+        <svg class="trace" id="trace" aria-hidden="true"><polyline id="line" points=""></polyline></svg>
+        <div class="tiles" id="tiles"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="tools">
+        <button class="btn" id="rotate" type="button">סיבוב</button>
+        <button class="btn wordsbtn" id="openWords" type="button" aria-controls="words">המילים (<b id="wordsBtnN">0</b>)</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="modal" id="words" role="dialog" aria-modal="true" aria-labelledby="wordsTitle">
+    <div class="backdrop" id="backdrop"></div>
+    <section class="words" id="wordsPanel">
+      <div class="sheethead">
+        <h2 id="wordsTitle">מילים</h2>
+        <button class="closebtn" id="closeWords" type="button" aria-label="סגירה">✕</button>
+      </div>
+      <div class="tabbody" id="wordsBody" role="tabpanel"></div>
+    </section>
+  </div>
+
+  <div class="modal defmodal" id="defModal" role="dialog" aria-modal="true" aria-labelledby="defWord">
+    <div class="backdrop" id="defBackdrop"></div>
+    <section class="words defcard">
+      <div class="sheethead">
+        <h2 id="defWord"></h2>
+        <button class="closebtn" id="closeDef" type="button" aria-label="סגירה">✕</button>
+      </div>
+      <div class="defbody">
+        <p class="defmeta" id="defMeta"></p>
+        <p class="deftext" id="defText"></p>
+        <p class="defex" id="defEx" hidden></p>
+        <p class="defnote" id="defNote" hidden>הגדרה קצרה שנכתבה על ידי Claude. ההגדרה המלאה במילוג.</p>
+        <div class="defactions">
+          <a class="btn primary" id="defMilog" href="https://milog.co.il/" target="_blank" rel="noopener noreferrer">למילוג ↗</a>
+          <button class="btn" id="defShow" type="button">הצגה על הלוח</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal" id="archive" role="dialog" aria-modal="true" aria-labelledby="archTitle">
+    <div class="backdrop" id="archBackdrop"></div>
+    <section class="words" id="archPanel">
+      <div class="sheethead">
+        <h2 id="archTitle">ארכיון</h2>
+        <button class="closebtn" id="closeArchive" type="button" aria-label="סגירה">✕</button>
+      </div>
+      <div class="tabbody" id="archBody"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const BOARDS = /*BOARDS*/{};
+const EPOCH = "/*EPOCH*/";
+
+let N = 16, NEIGH = [], CELLS = [], ROWS = 4, COLS = 4;   // set per board by setLayout()
+const MIN_LEN = 4;
+const TO_REGULAR = { "ך": "כ", "ם": "מ", "ן": "נ", "ף": "פ", "ץ": "צ" };
+const TO_FINAL = { "כ": "ך", "מ": "ם", "נ": "ן", "פ": "ף", "צ": "ץ" };
+const POINTS = { 4: 1, 5: 2, 6: 3, 7: 5 };
+const RANKS = [[0, "מתחילים"], [.1, "בדרך"], [.25, "יפה"], [.45, "טוב מאוד"], [.65, "מצוין"], [.85, "מדהים"], [1, "גאון"]];
+
+const norm = w => [...w].filter(c => c >= "א" && c <= "ת").map(c => TO_REGULAR[c] || c).join("");
+const withFinal = s => s.length ? s.slice(0, -1) + (TO_FINAL[s.at(-1)] || s.at(-1)) : s;
+const points = (w, cat) => (POINTS[norm(w).length] || 11) * (cat === "bonus" ? 2 : 1);
+
+// A board is any shape drawn on a grid: mask rows of X (cell) and . (empty).
+// Cells are numbered in reading order; two cells touch if they are next to
+// each other in any of the 8 directions (an empty spot blocks the path).
+function cellsOf(mask) {
+  const out = [];
+  mask.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === "X") out.push([r, c]); }));
+  return out;
+}
+function setLayout(mask) {
+  ROWS = mask.length; COLS = mask[0].length;
+  CELLS = cellsOf(mask); N = CELLS.length;
+  const at = new Map(CELLS.map(([r, c], i) => [r + "," + c, i]));
+  NEIGH = CELLS.map(([r, c]) => {
+    const out = [];
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      const j = at.get((r + dr) + "," + (c + dc));
+      if ((dr || dc) && j !== undefined) out.push(j);
+    }
+    return out;
+  });
+  const root = document.documentElement.style;
+  root.setProperty("--rows", ROWS);
+  root.setProperty("--cols", COLS);
+  root.setProperty("--maxd", Math.max(ROWS, COLS));
+}
+
+// ---------- dates ----------
+const DATES = Object.keys(BOARDS).sort();
+function todayInIsrael() {
+  try {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date());
+  } catch (e) { return new Date().toISOString().slice(0, 10); }
+}
+const TODAY = todayInIsrael();
+const PLAYABLE = DATES.filter(d => d <= TODAY);
+if (!PLAYABLE.length) PLAYABLE.push(DATES[0]);
+const dayNumber = d => Math.round((Date.parse(d) - Date.parse(EPOCH)) / 864e5) + 1;
+function prettyDate(d) {
+  try {
+    return new Intl.DateTimeFormat("he-IL", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" })
+      .format(new Date(d + "T12:00:00Z"));
+  } catch (e) { return d; }
+}
+
+function weekday(d) {
+  try {
+    return new Intl.DateTimeFormat("he-IL", { weekday: "long", timeZone: "UTC" }).format(new Date(d + "T12:00:00Z"));
+  } catch (e) { return ""; }
+}
+function shortDate(d) {
+  const [y, m, dd] = d.split("-");
+  return `${+dd}.${+m}`;
+}
+
+// ---------- storage (optional; the game works without it) ----------
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+};
+
+// ---------- state ----------
+const S = {
+  date: null, letters: [], rot: 0,
+  main: new Map(), bonus: new Map(),      // normalized -> word
+  found: [],                               // [{w, cat}]
+  hints: 0,
+  path: [], dragging: false, moved: false,
+};
+const $ = id => document.getElementById(id);
+
+// Turn the whole layout a quarter: cell (r, c) moves to (c, rows-1-r).
+function rotateLayout(mask, letters, times) {
+  for (let t = 0; t < times; t++) {
+    const R = mask.length, C = mask[0].length;
+    const moved = cellsOf(mask).map(([r, c], i) => [c, R - 1 - r, letters[i]]);
+    const grid = Array.from({ length: C }, () => Array(R).fill("."));
+    moved.forEach(([r, c]) => { grid[r][c] = "X"; });
+    mask = grid.map(row => row.join(""));
+    moved.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    letters = moved.map(m => m[2]);
+  }
+  return { mask, letters };
+}
+function applyLayout() {
+  const { mask, letters } = rotateLayout(S.baseMask, S.base, S.rot);
+  setLayout(mask);
+  S.letters = letters;
+}
+
+function loadDay(date) {
+  const b = BOARDS[date];
+  S.date = date;
+  S.base = [...b.g];
+  S.baseMask = b.s ? b.s.split("/") : Array(Math.round(Math.sqrt(S.base.length))).fill("X".repeat(Math.round(Math.sqrt(S.base.length))));
+  S.theme = b.t ? { title: b.t, words: new Set((b.tw || "").split(" ").filter(Boolean)) } : null;
+  S.shapeName = b.n || "";
+  S.main = new Map(b.m.split(" ").map(w => [norm(w), w]));
+  S.bonus = new Map(b.b ? b.b.split(" ").map(w => [norm(w), w]) : []);
+  const saved = store.get("otiot:" + date) || {};
+  S.found = (saved.found || []).filter(f => S.main.has(norm(f.w)) || S.bonus.has(norm(f.w)));
+  S.hints = saved.hints || 0;
+  S.rot = saved.rot || 0;
+  applyLayout();
+  S.path = [];
+  S.fresh = null;
+  $("toast").textContent = "";
+  renderTiles();
+  renderAll();
+}
+function save() {
+  store.set("otiot:" + S.date, { found: S.found, hints: S.hints, rot: S.rot });
+}
+
+// ---------- rendering ----------
+function renderTiles() {
+  const box = $("tiles");
+  box.innerHTML = "";
+  S.letters.forEach((ch, i) => {
+    const t = document.createElement("div");
+    t.className = "tile";
+    t.textContent = ch;
+    t.dataset.i = i;
+    t.style.gridRow = CELLS[i][0] + 1;
+    t.style.gridColumn = CELLS[i][1] + 1;
+    t.setAttribute("aria-label", "האות " + ch);
+    box.appendChild(t);
+  });
+  if (S.main.size) updateDead();
+  renderPath();
+}
+
+function renderPath() {
+  const tiles = $("tiles").children;
+  for (const t of tiles) t.classList.toggle("on", S.path.includes(+t.dataset.i));
+  const word = S.path.map(i => S.letters[i]).join("");
+  $("current").textContent = withFinal(word);
+  const rect = $("board").getBoundingClientRect();
+  $("trace").setAttribute("viewBox", `0 0 ${rect.width} ${rect.height}`);
+  const pts = S.path.map(i => {
+    const r = tiles[i].getBoundingClientRect();
+    return `${r.left - rect.left + r.width / 2},${r.top - rect.top + r.height / 2}`;
+  });
+  $("line").setAttribute("points", pts.join(" "));
+  $("line").setAttribute("stroke-width", rect.width / 16);
+}
+
+
+function renderAll() {
+
+  const i = PLAYABLE.indexOf(S.date);
+  const isToday = S.date === TODAY;
+  $("when").innerHTML = `${isToday ? "<b>היום</b>" : "<b>ארכיון</b> · " + weekday(S.date)} ${shortDate(S.date)} · לוח ${dayNumber(S.date)}`
+    + (S.shapeName ? ` · <span class="chip-shape">${esc(S.shapeName)}</span>` : "")
+    + (S.theme ? `<span class="chip-theme">${esc(S.theme.title)}</span>` : "");
+  $("backToday").hidden = isToday || !PLAYABLE.includes(TODAY);
+
+  const total = S.main.size;
+  const mainFound = S.found.filter(f => f.cat === "main");
+  const bonusFound = S.found.filter(f => f.cat === "bonus");
+  const frac = [...mainFound].reduce((n, f) => n + norm(f.w).length, 0) /
+               Math.max(1, [...S.main.values()].reduce((n, w) => n + norm(w).length, 0));
+  let rank = RANKS[0][1];
+  for (const [t, name] of RANKS) if (frac >= t) rank = name;
+  $("rank").textContent = rank;
+  $("foundN").textContent = mainFound.length;
+  $("totalN").textContent = total;
+  $("wordsBtnN").textContent = S.found.length;
+  // the loader counts letters: longer words move it further
+  const letters = w => norm(w).length;
+  const allLetters = [...S.main.values()].reduce((n, w) => n + letters(w), 0);
+  const gotLetters = mainFound.reduce((n, f) => n + letters(f.w), 0);
+  const pct = allLetters ? 100 * gotLetters / allLetters : 0;
+  $("meter").style.width = pct + "%";
+  $("loader").setAttribute("aria-valuenow", Math.round(pct));
+
+  renderWords();
+  updateDead();
+}
+
+// ---------- words modal: grouped by length, found words + how many are left ----------
+let wordsTab = "today";
+function prevDate(d) {
+  const t = new Date(d + "T12:00:00Z");
+  t.setUTCDate(t.getUTCDate() - 1);
+  return t.toISOString().slice(0, 10);
+}
+function dayData(which) {
+  if (which === "today") return { date: S.date, main: [...S.main.values()], bonusN: S.bonus.size, found: S.found, live: true };
+  const d = prevDate(S.date), b = BOARDS[d];
+  if (!b) return null;
+  const main = b.m.split(" "), bonus = new Set(b.b ? b.b.split(" ") : []);
+  const saved = store.get("otiot:" + d) || {};
+  const found = (saved.found || []).filter(f => main.includes(f.w) || bonus.has(f.w));
+  return { date: d, main, bonusN: bonus.size, found, live: false };
+}
+const leftText = n => n === 1 ? "נותרה עוד מילה אחת" : `נותרו עוד ${n} מילים`;
+
+function renderWords() {
+  const data = dayData("today");
+  const body = $("wordsBody");
+  body.innerHTML = "";
+  const order = data.found.map(f => f.w);
+  const foundSet = new Set(order);
+
+  const byLen = new Map();
+  for (const w of data.main) {
+    const L = Math.min(norm(w).length, 8);
+    if (!byLen.has(L)) byLen.set(L, []);
+    byLen.get(L).push(w);
+  }
+  let gi = 0;
+  const group = (title, words, left, bonus, theme) => {
+    const g = document.createElement("div");
+    g.className = "wgroup" + (bonus ? " bonus" : "") + (theme ? " theme" : "");
+    g.style.setProperty("--i", gi++);
+    g.innerHTML = `<h3>${title}</h3>`;
+    if (words.length) {
+      const list = document.createElement("div");
+      list.className = "wlist";
+      words.forEach(w => list.appendChild(wordBtn(w, data.live, bonus)));
+      g.appendChild(list);
+    }
+    const p = document.createElement("p");
+    p.className = "wleft" + (left === 0 ? " done" : "");
+    p.textContent = left === 0 ? "כל המילים נמצאו ✓" : leftText(left);
+    g.appendChild(p);
+    body.appendChild(g);
+  };
+  if (S.theme && S.theme.words.size) {
+    const all = [...S.theme.words];
+    const got = all.filter(w => foundSet.has(w)).sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    group(`מילות הנושא: ${esc(S.theme.title)}`, got, all.length - got.length, false, true);
+  }
+  [...byLen.keys()].sort((a, b) => a - b).forEach(L => {
+    const all = byLen.get(L);
+    const got = all.filter(w => foundSet.has(w)).sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    group(L >= 8 ? "8+ אותיות" : `${L} אותיות`, got, all.length - got.length, false);
+  });
+  const bonusGot = data.found.filter(f => f.cat === "bonus").map(f => f.w);
+  group("בונוס", bonusGot, data.bonusN - bonusGot.length, true);
+}
+
+function wordBtn(w, live, bonus) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "w" + (live && w === S.fresh ? " fresh" : "");
+  b.textContent = w;
+  if (live) {
+    b.title = "הגדרה";
+    b.addEventListener("click", () => openDef(w, bonus));
+  } else {
+    b.disabled = true;
+  }
+  return b;
+}
+
+// ---------- dead letters: grey out cells no remaining main word passes through ----------
+function markCells(word, into) {
+  const w = norm(word), L = S.letters;
+  const go = (k, cell, used) => {
+    if (k === w.length) { used.forEach(c => into.add(c)); return; }
+    for (const n of NEIGH[cell]) if (L[n] === w[k] && !used.includes(n)) go(k + 1, n, [...used, n]);
+  };
+  for (let s = 0; s < N; s++) if (L[s] === w[0]) go(1, s, [s]);
+}
+function updateDead() {
+  const found = new Set(S.found.map(f => f.w));
+  const needed = new Set();
+  for (const w of S.main.values()) if (!found.has(w)) markCells(w, needed);
+  for (const t of $("tiles").children) t.classList.toggle("dead", !needed.has(+t.dataset.i));
+}
+
+// ---------- word logic ----------
+function findPath(word) {
+  const w = norm(word), L = S.letters;
+  const go = (k, cell, used) => {
+    if (k === w.length) return used;
+    for (const n of NEIGH[cell]) if (L[n] === w[k] && !used.includes(n)) {
+      const r = go(k + 1, n, [...used, n]);
+      if (r) return r;
+    }
+    return null;
+  };
+  for (let s = 0; s < N; s++) if (L[s] === w[0]) { const r = go(1, s, [s]); if (r) return r; }
+  return null;
+}
+
+let flashTimer;
+function showWord(w, bonus) {
+  const p = findPath(w) || [];
+  clearTimeout(flashTimer);
+  const tiles = $("tiles").children;
+  for (const t of tiles) t.classList.remove("show", "bonus");
+  p.forEach(i => { tiles[i].classList.add("show"); if (bonus) tiles[i].classList.add("bonus"); });
+  flashTimer = setTimeout(() => { for (const t of tiles) t.classList.remove("show", "bonus"); }, 1600);
+}
+
+let toastTimer;
+function toast(msg, kind, word) {
+  const t = $("toast");
+  t.className = "toast " + kind;
+  t.textContent = "";
+  if (word) {
+    // a found word: tap it for its definition
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "toastbtn";
+    const [before, after] = msg.split(word);
+    b.append(before || "");
+    const span = document.createElement("span");
+    span.className = "tw";
+    span.textContent = word;
+    b.append(span, after || "");
+    b.addEventListener("click", () => openDef(word.w || word, S.bonus.has(norm(word))));
+    t.appendChild(b);
+    t.classList.add("tappable");
+  } else {
+    t.textContent = msg;
+  }
+  // stays until the next word is swiped (or the day changes)
+}
+
+function submit(key) {
+  if (key.length < MIN_LEN) { if (key.length > 1) toast("צריך לפחות 4 אותיות", "info"); return; }
+  const w = S.main.get(key) || S.bonus.get(key);
+  if (!w) { toast(`${withFinal(key)} לא ברשימה`, "bad"); return; }
+  const prev = S.found.find(f => f.w === w);
+  if (prev) {
+    // already found: say so, keep its bonus colour, and keep it tappable for the definition
+    if (prev.cat === "bonus") toast(`בונוס · ${w} כבר נמצאה`, "bonus", w);
+    else toast(`${w} כבר נמצאה`, "info", w);
+    showWord(w, prev.cat === "bonus");
+    return;
+  }
+  const cat = S.main.has(key) ? "main" : "bonus";
+  S.found.push({ w, cat });
+  S.fresh = w;
+  const pts = points(w, cat);
+  const done = cat === "main" && S.found.filter(f => f.cat === "main").length === S.main.size;
+  if (done) toast(`${w}! סיימתם את כל המילים 🎉`, "main", w);
+  else if (cat === "bonus") toast(`בונוס! ${w} · ${pts} נק׳`, "bonus", w);
+  else if (S.theme && S.theme.words.has(w)) toast(`★ ${w} · מילת נושא · ${pts === 1 ? "נקודה" : pts + " נק׳"}`, "main", w);
+  else toast(pts === 1 ? `${w} · נקודה` : `${w} · ${pts} נק׳`, "main", w);
+  save();
+  renderAll();
+}
+
+// ---------- pointer input: drag, or tap letter by letter ----------
+const board = $("board");
+let rects = [];
+function tileAt(x, y) {
+  for (let i = 0; i < rects.length; i++) {
+    const r = rects[i];
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    if (Math.hypot(x - cx, y - cy) < r.width * 0.45) return i;
+  }
+  return -1;
+}
+function extend(i) {
+  const p = S.path;
+  if (i < 0) return false;
+  if (p.length >= 2 && i === p[p.length - 2]) { p.pop(); return true; }      // back up
+  if (!p.includes(i) && (!p.length || NEIGH[p[p.length - 1]].includes(i))) { p.push(i); return true; }
+  return false;
+}
+function finish() {
+  const key = S.path.map(i => S.letters[i]).join("");
+  S.path = [];
+  renderPath();
+  submit(key);
+}
+
+board.addEventListener("pointerdown", e => {
+  rects = [...$("tiles").children].map(t => t.getBoundingClientRect());
+  const i = tileAt(e.clientX, e.clientY);
+  if (i < 0) return;
+  e.preventDefault();
+  board.setPointerCapture(e.pointerId);
+  S.path = [i];                                   // every press starts a new word
+  S.dragging = true;
+  S.moved = false;
+  renderPath();
+});
+board.addEventListener("pointermove", e => {
+  if (!S.dragging) return;
+  if (extend(tileAt(e.clientX, e.clientY))) { S.moved = true; renderPath(); }
+});
+function endDrag() {
+  if (!S.dragging) return;
+  S.dragging = false;
+  if (S.moved) finish();                          // only a swipe sends a word
+  else { S.path = []; renderPath(); }             // a tap does nothing
+}
+board.addEventListener("pointerup", endDrag);
+board.addEventListener("pointercancel", () => { S.dragging = false; S.path = []; renderPath(); });
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { S.path = []; renderPath(); }
+});
+
+
+// ---------- tools ----------
+const reduceMotion = () => window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+let spinning = false;
+function applyRotation() {
+  S.rot = (S.rot + 1) % 4;
+  applyLayout();
+  save();
+  renderTiles();
+}
+$("rotate").addEventListener("click", () => {
+  if (spinning) return;
+  S.path = [];
+  renderPath();
+  const t = $("tiles");
+  if (reduceMotion()) { applyRotation(); return; }
+  spinning = true;
+  t.classList.add("spin");                          // the whole board turns a quarter
+  setTimeout(() => {
+    t.style.transition = "none";
+    t.classList.remove("spin");                     // snap back, now with rotated letters upright
+    applyRotation();
+    void t.offsetWidth;
+    t.style.transition = "";
+    t.classList.add("settle");
+    setTimeout(() => { t.classList.remove("settle"); spinning = false; }, 340);
+  }, 470);
+});
+// ---------- definitions: a short one from Claude, the full one on Milog ----------
+let samplePromise = null, sampleOff = false, defCtl = null, defWordNow = null;
+function getSample() {
+  if (!samplePromise) {
+    samplePromise = (window.claude && window.claude.use ? window.claude.use("sample") : Promise.resolve(null))
+      .catch(() => null);
+  }
+  return samplePromise;
+}
+const HIDE_CODES = ["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed", "session_expired"];
+
+function renderDef(d) {
+  const meta = [];
+  if (d.lemma && norm(d.lemma) !== norm($("defWord").textContent)) meta.push(`מתוך <b>${esc(d.lemma)}</b>`);
+  if (d.pos) meta.push(esc(d.pos));
+  if (d.form) meta.push(esc(d.form));
+  $("defMeta").innerHTML = meta.join(" · ");
+  $("defText").className = "deftext";
+  $("defText").textContent = d.definition || "";
+  $("defEx").textContent = d.example || "";
+  $("defEx").hidden = !d.example;
+  $("defNote").hidden = false;
+}
+function renderLinkOnly(msg) {
+  $("defMeta").textContent = "";
+  $("defText").className = "deftext";
+  $("defText").textContent = msg || "ההגדרה המלאה נמצאת במילוג.";
+  $("defEx").hidden = true;
+  $("defNote").hidden = true;
+}
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+async function openDef(w, bonus) {
+  defWordNow = w;
+  $("defWord").textContent = w;
+  $("defMilog").href = "https://milog.co.il/" + encodeURIComponent(w);
+  $("defShow").onclick = () => { closeDef(); closeWords(); showWord(w, bonus); };
+  $("defModal").classList.add("open");
+  setTimeout(() => $("closeDef").focus({ preventScroll: true }), 50);
+
+  const cached = store.get("def:" + w);
+  if (cached && cached.definition) { renderDef(cached); return; }
+  if (sampleOff) { renderLinkOnly(); return; }
+  $("defMeta").textContent = "";
+  $("defEx").hidden = true;
+  $("defNote").hidden = true;
+  $("defText").className = "deftext loading";
+  $("defText").textContent = "מחפש הגדרה";
+
+  const sample = await getSample();
+  if (defWordNow !== w) return;
+  if (!sample) { sampleOff = true; renderLinkOnly(); return; }
+  if (defCtl) defCtl.abort();
+  defCtl = new AbortController();
+  const prompt =
+    `You are a concise Hebrew dictionary. Define the modern Hebrew word "${w}". ` +
+    `It may be an inflected form (plural, feminine, verb tense or person, possessive suffix) or slang. ` +
+    `Reply with only one JSON object, all values in Hebrew, no niqqud except in "lemma":\n` +
+    `{"lemma": "dictionary base form, with niqqud", "pos": "part of speech, e.g. שם עצם / פועל / שם תואר", ` +
+    `"form": "short description of this form, e.g. עבר, רבים — or empty if it is the base form", ` +
+    `"definition": "one or two short, plain sentences", "example": "a short everyday sentence that uses the word exactly as given"}`;
+  try {
+    const d = await sample.json(prompt, { modelTier: "quick", signal: defCtl.signal, cache: { gcTime: 86400000 } });
+    if (!d || typeof d !== "object" || !d.definition) throw { code: "invalid_json" };
+    store.set("def:" + w, d);
+    if (defWordNow === w) renderDef(d);
+  } catch (e) {
+    if (e && e.code === "cancelled") return;
+    if (e && HIDE_CODES.includes(e.code)) sampleOff = true;
+    if (defWordNow !== w) return;
+    if (e && e.code === "rate_limited") renderLinkOnly("יותר מדי בקשות כרגע. אפשר לנסות שוב עוד רגע, או לפתוח במילוג.");
+    else renderLinkOnly();
+  }
+}
+function closeDef() {
+  if (!$("defModal").classList.contains("open")) return;
+  $("defModal").classList.remove("open");
+  defWordNow = null;
+  if (defCtl) { defCtl.abort(); defCtl = null; }
+}
+$("closeDef").addEventListener("click", closeDef);
+$("defBackdrop").addEventListener("click", closeDef);
+
+// ---------- archive: every day so far, newest first ----------
+function dayProgress(d) {
+  const main = BOARDS[d].m.split(" ");
+  const saved = d === S.date ? { found: S.found } : (store.get("otiot:" + d) || {});
+  const found = (saved.found || []).filter(f => f.cat === "main" && main.includes(f.w));
+  const all = main.reduce((n, w) => n + norm(w).length, 0);
+  const got = found.reduce((n, f) => n + norm(f.w).length, 0);
+  return { n: found.length, total: main.length, pct: all ? 100 * got / all : 0 };
+}
+function renderArchive() {
+  const body = $("archBody");
+  body.innerHTML = "";
+  const list = document.createElement("div");
+  list.className = "days";
+  [...PLAYABLE].reverse().forEach((d, k) => {
+    const p = dayProgress(d);
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "day" + (d === S.date ? " current" : "") + (p.n === p.total ? " done" : "");
+    b.style.setProperty("--i", Math.min(k, 16));
+    const name = d === TODAY ? "היום" : weekday(d);
+    b.innerHTML = `<span class="dname">${name} · ${shortDate(d)}</span>
+      <span class="dsub">לוח ${dayNumber(d)}${BOARDS[d].n ? " · " + esc(BOARDS[d].n) : ""}${BOARDS[d].t ? " · ★ " + esc(BOARDS[d].t) : ""}</span>
+      <span class="dstat">
+        <span class="dcount">${p.n === p.total ? "הושלם ✓" : `<b>${p.n}</b>/${p.total}`}</span>
+        <span class="dbar"><i style="width:${p.pct}%"></i></span>
+      </span>`;
+    if (d === S.date) b.setAttribute("aria-current", "true");
+    b.addEventListener("click", () => { closeArchive(); if (d !== S.date) loadDay(d); });
+    list.appendChild(b);
+  });
+  body.appendChild(list);
+}
+function openArchive() {
+  renderArchive();
+  $("archBody").scrollTop = 0;
+  $("archive").classList.add("open");
+  setTimeout(() => $("closeArchive").focus({ preventScroll: true }), 50);
+}
+function closeArchive() {
+  if (!$("archive").classList.contains("open")) return;
+  $("archive").classList.remove("open");
+  $("openArchive").focus({ preventScroll: true });
+}
+$("openArchive").addEventListener("click", openArchive);
+$("closeArchive").addEventListener("click", closeArchive);
+$("archBackdrop").addEventListener("click", closeArchive);
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeArchive(); });
+$("backToday").addEventListener("click", () => loadDay(TODAY));
+window.addEventListener("resize", renderPath);
+function openWords() {
+  wordsTab = "today";
+  renderAll();                                       // re-render so the stagger replays
+  $("wordsBody").scrollTop = 0;
+  $("words").classList.add("open");
+  setTimeout(() => $("closeWords").focus({ preventScroll: true }), 50);
+}
+function closeWords() {
+  if (!$("words").classList.contains("open")) return;
+  $("words").classList.remove("open");
+  $("openWords").focus({ preventScroll: true });
+}
+$("openWords").addEventListener("click", openWords);
+$("closeWords").addEventListener("click", closeWords);
+$("backdrop").addEventListener("click", closeWords);
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if ($("defModal").classList.contains("open")) { closeDef(); e.stopImmediatePropagation(); return; }
+  closeWords();
+}, true);
+function setTab(t) {
+  wordsTab = t;
+  renderWords();
+  $("wordsBody").scrollTop = 0;
+}
+
+
+function start(data) {
+  const d = data && data.date && PLAYABLE.includes(data.date) ? data.date : PLAYABLE[PLAYABLE.length - 1];
+  loadDay(d);
+}
+window.claude?.hot?.snapshot?.(() => ({ date: S.date }));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>

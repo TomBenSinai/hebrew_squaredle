@@ -1,0 +1,36 @@
+{
+  "_help": [
+    "Which board each day gets. For a date, the most specific rule wins: dates > weekdays > default.",
+    "shape: a name from shapes.json, 'NxN', an inline mask like '.X./XXX/.X.', or a list (one per week, in turn).",
+    "theme: a file name in themes/ (without .json). Its words count as main words and are highlighted.",
+    "Any setting can be added too, e.g. \"min_main\": 50 or \"min_long_words\": 8.",
+    "Shape order when a date has a theme: the date's shape > the theme's shape > the weekday's > the default."
+  ],
+  "default": {
+    "shape": "4x4"
+  },
+  "weekdays": {
+    "saturday": {
+      "shape": [
+        "heart",
+        "diamond",
+        "star",
+        "ring",
+        "plus",
+        "hourglass",
+        "wide",
+        "cross",
+        "stairs",
+        "donut"
+      ]
+    }
+  },
+  "dates": {
+    "2026-09-26": {
+      "theme": "sukkot"
+    },
+    "2026-09-19": {
+      "theme": "yomkippur"
+    }
+  }
+}

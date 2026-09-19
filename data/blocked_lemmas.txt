@@ -1,0 +1,29 @@
+# Every form of these words (any inflection, construct, suffix, infinitive) is
+# blocked: never valid, and kept off every board. Matched on Hspell's lemma.
+# The words in blocklist.txt are added automatically (a lemma only when it is itself blocked).
+אנס
+נאנס
+התאבד
+זיין
+הזדיין
+זונה
+שרמוטה
+מניאק
+כוסית
+כוסון
+כושי
+ערבוש
+פורנו
+פורנוגרפיה
+פורנוגרפי
+חרמן
+התחרמן
+חירמן
+חירבן
+מפגר
+שמוק
+הומו
+חרמנות
+חרבן
+זנה
+הונס

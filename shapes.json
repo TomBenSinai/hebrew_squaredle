@@ -1,0 +1,16 @@
+{
+  "_help": "Shapes for the board. X = a cell, . = empty. Rows must be drawn on a grid; holes block paths. Add your own here or pass --shape 'X.X/XXX/X.X'.",
+  "4x4":     {"title": "ריבוע",   "mask": ["XXXX", "XXXX", "XXXX", "XXXX"]},
+  "5x5":     {"title": "ריבוע גדול", "mask": ["XXXXX", "XXXXX", "XXXXX", "XXXXX", "XXXXX"]},
+  "diamond": {"title": "יהלום",   "mask": [".XXX.", "XXXXX", "XXXXX", "XXXXX", ".XXX."]},
+  "heart":   {"title": "לב",      "mask": [".X.X.", "XXXXX", "XXXXX", ".XXX.", "..X.."]},
+  "cross":   {"title": "מתומן", "mask": [".XX.", "XXXX", "XXXX", ".XX."]},
+  "plus":    {"title": "פלוס",    "mask": ["..XX..", "..XX..", "XXXXXX", "XXXXXX", "..XX..", "..XX.."]},
+  "ring":    {"title": "טבעת",    "mask": ["XXXXX", "XXXXX", "XX.XX", "XXXXX", "XXXXX"]},
+  "donut":   {"title": "סופגנייה", "mask": ["XXXXXX", "XXXXXX", "XX..XX", "XX..XX", "XXXXXX", "XXXXXX"]},
+  "wide":    {"title": "רחב",     "mask": ["XXXXXX", "XXXXXX", "XXXXXX"]},
+  "tall":    {"title": "גבוה",    "mask": ["XXX", "XXX", "XXX", "XXX", "XXX", "XXX"]},
+  "stairs":  {"title": "מדרגות",  "mask": ["XX....", "XXX...", ".XXX..", "..XXX.", "...XXX", "....XX"]},
+  "star":    {"title": "מגן דוד", "mask": ["...X...", "..XXX..", "XXXXXXX", ".XXXXX.", "XXXXXXX", "..XXX..", "...X..."]},
+  "hourglass": {"title": "שעון חול", "mask": ["XXXXX", ".XXX.", "..X..", ".XXX.", "XXXXX"]}
+}
