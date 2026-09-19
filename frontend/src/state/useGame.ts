@@ -25,6 +25,8 @@ export interface Game {
   /** shown cells that some unfound main word still uses (null until known) */
   live: Set<number> | null;
   toast: Toast | null;
+  /** a swiped word waiting for the server's answer, shown in place of the toast */
+  pending: string | null;
   /** a word's path lit up on the board for a moment */
   flash: { cells: number[]; bonus: boolean } | null;
   showWord: (word: string) => void;
@@ -39,6 +41,9 @@ export function useGame(date: string | null): { game: Game | null; error: string
   const [progress, setProgress] = useState<DayProgress>({ found: [], rot: 0 });
   const [liveBase, setLiveBase] = useState<number[] | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
+  const [pending, setPending] = useState<string | null>(null);
+  // only the latest swipe may set the message (answers can arrive out of order)
+  const submitSeq = useRef(0);
   const [fresh, setFresh] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [flashWord, setFlashWord] = useState<string | null>(null);
@@ -58,6 +63,8 @@ export function useGame(date: string | null): { game: Game | null; error: string
       progressRef.current = progressStore.load(date);
       setProgress(progressRef.current);
       setToast(null);
+      setPending(null);
+      submitSeq.current++;
       setFresh(null);
       setLiveBase(null);
       setFlashWord(null);
@@ -111,6 +118,8 @@ export function useGame(date: string | null): { game: Game | null; error: string
   const submit = useCallback((path: number[]) => {
     if (!board || !layout) return;
     const key = path.map(i => layout.letters[i]).join("");
+    const seq = ++submitSeq.current;
+    setPending(null);
     if (key.length < MIN_LEN) {
       if (key.length > 1) setToast({ kind: "info", text: "צריך לפחות 4 אותיות" });
       return;
@@ -124,23 +133,34 @@ export function useGame(date: string | null): { game: Game | null; error: string
       return;
     }
     const date = board.date;
+    // keep the swiped word up until the answer comes, instead of the old message
+    setToast(null);
+    setPending(withFinal(key));
+    const say = (t: Toast) => {
+      if (submitSeq.current !== seq) return;
+      setPending(null);
+      setToast(t);
+    };
     api.check(date, path.map(i => layout.base[i])).then(r => {
       if (dateRef.current !== date) return;
       if (r.status !== "main" && r.status !== "bonus") {
-        setToast({ kind: "bad", text: `${withFinal(key)} לא ברשימה` });
+        say({ kind: "bad", text: `${withFinal(key)} לא ברשימה` });
         return;
       }
       const { word: w, points, theme } = r;
-      if (progressRef.current.found.some(f => f.w === w)) return;
+      if (progressRef.current.found.some(f => f.w === w)) {
+        say({ kind: "info", text: `${w} כבר נמצאה`, word: w });
+        return;
+      }
       const found: FoundWord[] = [...progressRef.current.found, { w, cat: r.status, ...(theme ? { theme } : {}) }];
       update(date, p => ({ ...p, found }));
       const done = r.status === "main" && found.filter(f => f.cat === "main").length === board.mainTotal;
       setFresh(w);
-      if (done) setToast({ kind: "main", text: `${w}! סיימתם את כל המילים 🎉`, word: w });
-      else if (r.status === "bonus") setToast({ kind: "bonus", text: `בונוס! ${w} · ${points} נק׳`, word: w });
-      else if (theme) setToast({ kind: "main", text: `★ ${w} · מילת נושא · ${pointsText(points)}`, word: w });
-      else setToast({ kind: "main", text: `${w} · ${pointsText(points)}`, word: w });
-    }).catch(() => setToast({ kind: "bad", text: "אין חיבור לשרת, נסו שוב" }));
+      if (done) say({ kind: "main", text: `${w}! סיימתם את כל המילים 🎉`, word: w });
+      else if (r.status === "bonus") say({ kind: "bonus", text: `בונוס! ${w} · ${points} נק׳`, word: w });
+      else if (theme) say({ kind: "main", text: `★ ${w} · מילת נושא · ${pointsText(points)}`, word: w });
+      else say({ kind: "main", text: `${w} · ${pointsText(points)}`, word: w });
+    }).catch(() => say({ kind: "bad", text: "אין חיבור לשרת, נסו שוב" }));
   }, [board, layout, update, showWord]);
 
   const rotate = useCallback(() => {
@@ -154,7 +174,7 @@ export function useGame(date: string | null): { game: Game | null; error: string
 
   if (!board || !layout || board.date !== date) return { game: null, error };
   return {
-    game: { board, layout, found: progress.found, fresh, live, toast, flash, showWord, submit, rotate, isBonus },
+    game: { board, layout, found: progress.found, fresh, live, toast, pending, flash, showWord, submit, rotate, isBonus },
     error,
   };
 }

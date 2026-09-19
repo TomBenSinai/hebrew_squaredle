@@ -28,7 +28,7 @@ python generate_days.py --date 2026-10-03 --min-long-words 8               # any
 ```
 
 `--date` always overwrites that day and records the change in `schedule.json`, so later
-bulk runs keep it. `--no-save` tries it without recording.
+bulk runs keep it. `--no-save` just prints the board (nothing is written).
 
 ## The schedule (`schedule.json`)
 
