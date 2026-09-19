@@ -1,0 +1,35 @@
+/* The board is as big as fits in the space left. */
+.boardwrap {
+  /* one cell's size: whatever fits the shape's bounding box in the space left */
+  --cell: min(calc(100cqw / var(--cols, 4)), calc((100cqh - 3.2rem) / var(--rows, 4)),
+              calc(480px / var(--maxd, 4)));
+  flex: 1;
+  min-height: 0;
+  container-type: size;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.board {
+  position: relative;
+  flex: none;
+  width: calc(var(--cell) * var(--cols, 4));
+  height: calc(var(--cell) * var(--rows, 4));
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.tiles {
+  position: absolute; inset: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 4), 1fr);
+  grid-template-rows: repeat(var(--rows, 4), 1fr);
+  gap: calc(var(--cell) * .16);
+}
+.trace { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.trace polyline { fill: none; stroke: var(--cobalt); stroke-opacity: .35; stroke-linecap: round; stroke-linejoin: round; }
+.tiles.spin { transition: transform .46s cubic-bezier(.45, .05, .2, 1); transform: rotate(-90deg) scale(.94); }
+.tiles.settle .tile { animation: settle .32s ease-out both; }
+@keyframes settle { from { transform: scale(.9); opacity: .6; } }

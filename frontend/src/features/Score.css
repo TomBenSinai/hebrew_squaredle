@@ -1,0 +1,13 @@
+.score { display: grid; gap: 8px; }
+.count { display: flex; align-items: baseline; gap: 10px; }
+.count .num {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(2.6rem, 11vw, 3.4rem);
+  line-height: .95;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+}
+.count .num small { font-size: .5em; font-weight: 600; color: var(--muted); letter-spacing: 0; }
+.count .label { font-family: var(--display); font-weight: 600; font-size: 1.15rem; }
+.count .rank { margin-inline-start: auto; color: var(--muted); font-weight: 600; font-size: .95rem; }

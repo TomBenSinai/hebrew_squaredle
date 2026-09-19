@@ -1,0 +1,12 @@
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  flex: none;
+  padding: 7px 12px;
+  border-radius: 99px;
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  font-weight: 600; font-size: .9rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.pill.strong, .pill:hover { border-color: var(--ink); }

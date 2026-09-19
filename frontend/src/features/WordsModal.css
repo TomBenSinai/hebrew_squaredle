@@ -1,0 +1,30 @@
+.wgroup { padding-block: 16px 4px; }
+.wgroup h3 {
+  font-family: var(--display); font-weight: 800;
+  font-size: 1.55rem; line-height: 1.1;
+  margin: 0 0 6px;
+}
+.wgroup.bonus h3 { color: var(--amber); }
+.wgroup.theme h3 { color: var(--cobalt); }
+.wgroup.theme h3::before { content: "★ "; }
+.wlist { display: flex; flex-wrap: wrap; gap: 6px 26px; }
+.w {
+  border: 0; background: none; padding: 2px 0; cursor: pointer;
+  font-size: 1.25rem; color: var(--ink);
+  text-decoration: underline dotted 1.5px;
+  text-underline-offset: 7px;
+  text-decoration-color: var(--muted);
+}
+.w.fresh { text-decoration-style: solid; text-decoration-color: var(--ink); }
+.wleft { margin: 10px 0 0; color: var(--muted); font-style: italic; font-size: 1.05rem; }
+.wleft.done { font-style: normal; color: var(--ink); font-weight: 600; }
+
+/* the list drifts in as the modal opens */
+.modal.open .wgroup {
+  animation: rise .4s var(--ease-out) both;
+  animation-delay: calc(110ms + var(--i, 0) * 45ms);
+}
+
+.wordspanel { height: 100%; }
+.wordspanel .sheethead h2 { display: flex; align-items: baseline; gap: 10px; }
+.wcount { font-size: .55em; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }

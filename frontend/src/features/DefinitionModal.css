@@ -1,0 +1,12 @@
+.modal .sheet.defcard { height: auto; max-height: min(80%, 560px); max-width: 460px; }
+.defbody { padding: 14px 22px 22px; overflow-y: auto; display: grid; gap: 10px; }
+.defmeta { color: var(--muted); font-size: .95rem; margin: 0; min-height: 1.4em; }
+.defmeta b { color: var(--ink); font-weight: 600; }
+.deftext { font-size: 1.2rem; line-height: 1.55; margin: 0; }
+.deftext.loading { color: var(--muted); }
+.deftext.loading::after { content: ""; display: inline-block; width: 1.2em; text-align: start; animation: dots 1.2s steps(4) infinite; }
+@keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+.defex { margin: 0; color: var(--muted); font-size: 1.02rem; border-inline-start: 3px solid var(--line); padding-inline-start: 10px; }
+.defmore { margin: 0; padding-inline-start: 1.4em; color: var(--ink); font-size: 1rem; display: grid; gap: 4px; }
+.defnote { margin: 2px 0 0; color: var(--muted); font-size: .78rem; }
+.defactions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }

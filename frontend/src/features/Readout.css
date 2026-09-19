@@ -1,0 +1,16 @@
+.readout { position: relative; height: 2.6rem; width: 100%; display: grid; place-items: center; }
+.current {
+  font-family: var(--display); font-weight: 600;
+  font-size: 1.9rem; line-height: 1; letter-spacing: .02em;
+}
+.toast {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font-weight: 600; font-size: 1.05rem;
+}
+.toast.main { color: var(--cobalt); }
+.toast.bonus { color: var(--amber); }
+.toast.bad { color: var(--bad); }
+.toast.info { color: var(--muted); }
+.toastbtn { border: 0; background: none; color: inherit; font: inherit; cursor: pointer; padding: 4px 8px; }
+.toastbtn .tw { text-decoration: underline dotted 1.5px; text-underline-offset: 5px; }

@@ -1,0 +1,37 @@
+/* One screen: the play column fills the height, the board takes what's left. */
+.app {
+  height: 100%;
+  max-width: 520px;
+  margin-inline: auto;
+  display: grid;
+  grid-template-rows: 100%;
+}
+.play {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tools { display: flex; gap: 8px; }
+.tools .btn { flex: 1; }
+.tools .btn b { font-variant-numeric: tabular-nums; }
+.status { grid-column: 1 / -1; align-self: center; justify-self: center; color: var(--muted); font-size: 1.1rem; }
+
+/* On a computer the word list sits beside the board (to its right) instead of in a
+   modal, and the game stays in the centre: two equal side columns, the left one empty. */
+.side { display: none; }
+@media (min-width: 1100px) {
+  .app {
+    max-width: none;
+    grid-template-columns: minmax(260px, 1fr) minmax(0, 520px) minmax(260px, 1fr);
+    grid-template-areas: "side play .";       /* RTL: the first column is the right one */
+    column-gap: 32px;
+  }
+  .play { grid-area: play; }
+  .side {
+    display: block; grid-area: side; min-height: 0; padding-block: 4px;
+    width: 100%; max-width: 380px;
+    justify-self: end;                        /* RTL: hug the board, not the screen edge */
+  }
+  .tools .wordsbtn { display: none; }
+}

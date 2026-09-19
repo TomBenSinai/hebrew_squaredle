@@ -1,0 +1,23 @@
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, #root { height: 100%; }
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-inline: 16px;
+  padding-block: 10px 12px;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--cobalt); outline-offset: 2px; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before { animation: none !important; transition: none !important; }
+}

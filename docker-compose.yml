@@ -1,0 +1,28 @@
+# Dev stack: `docker compose up --build`, then open http://localhost:5174
+# Host ports: RIVUON_WEB_PORT (5174), RIVUON_API_PORT (8001).
+services:
+  backend:
+    build: ./backend
+    volumes:
+      - ./:/repo                      # wordgame.py, boards/, shapes.json, backend code (live reload)
+      - backend-data:/data
+    environment:
+      RIVUON_DB: /data/rivuon.db
+      # RIVUON_TODAY: "2026-09-25"    # pretend it's another day
+    ports:
+      - "127.0.0.1:${RIVUON_API_PORT:-8001}:8000"
+
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules             # keep the container's own node_modules
+    environment:
+      VITE_API_TARGET: http://backend:8000
+    ports:
+      - "${RIVUON_WEB_PORT:-5174}:5173"
+    depends_on:
+      - backend
+
+volumes:
+  backend-data:

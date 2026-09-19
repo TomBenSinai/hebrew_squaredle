@@ -1,0 +1,5 @@
+.chip {
+  display: inline-block; margin-inline-start: 6px; padding: 1px 9px;
+  border-radius: 99px; background: var(--cobalt); color: var(--cobalt-ink);
+  font-weight: 600; font-size: .78rem; vertical-align: 1px;
+}
