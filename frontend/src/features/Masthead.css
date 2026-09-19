@@ -1,0 +1,21 @@
+.masthead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 8px;
+}
+.masthead h1 {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(1.45rem, 5.5vw, 2.1rem);
+  line-height: 1;
+  margin: 0;
+  letter-spacing: -.01em;
+  white-space: nowrap;
+}
+.brand { display: grid; gap: 2px; }
+.when { color: var(--muted); font-size: .82rem; line-height: 1.2; }
+.when b, .when .shape { color: var(--ink); font-weight: 600; }
+.headbtns { display: flex; align-items: center; gap: 8px; }

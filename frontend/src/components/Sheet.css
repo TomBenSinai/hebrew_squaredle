@@ -1,0 +1,19 @@
+.sheet {
+  position: relative;
+  display: flex; flex-direction: column;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.sheethead {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px 12px;
+  border-bottom: 1.5px solid var(--ink);
+}
+.sheethead h2 { font-family: var(--display); font-weight: 800; font-size: 2rem; line-height: 1; margin: 0; }
+.sheetbody {
+  flex: 1; min-height: 0;
+  overflow-y: auto; overscroll-behavior: contain;
+  padding: 6px 22px 26px;
+}

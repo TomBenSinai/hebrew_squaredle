@@ -1,0 +1,53 @@
+:root {
+  --ground: #ECECEA;
+  --paper: #FFFFFF;
+  --ink: #111111;
+  --muted: #6A6A67;
+  --line: #D2D2CF;
+  --cobalt: #111111;
+  --cobalt-ink: #FFFFFF;
+  --cobalt-soft: #E3E3E0;
+  --amber: #A86F06;
+  --amber-fill: #E3A52B;
+  --amber-soft: #F6EACB;
+  --bad: #B3261E;
+  --shadow: 0 1px 0 rgba(0, 0, 0, .06), 0 6px 14px -9px rgba(0, 0, 0, .3);
+  --display: "Rubik", "Segoe UI", "Arial Hebrew", Arial, sans-serif;
+  --body: "Assistant", "Segoe UI", "Arial Hebrew", Arial, sans-serif;
+  --ease-out: cubic-bezier(.2, .9, .25, 1);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0B0B0B;
+    --paper: #1A1A1A;
+    --ink: #F2F2F0;
+    --muted: #9A9A96;
+    --line: #2E2E2E;
+    --cobalt: #F2F2F0;
+    --cobalt-ink: #0B0B0B;
+    --cobalt-soft: #333333;
+    --amber: #F0B94D;
+    --amber-fill: #F0B94D;
+    --amber-soft: #382B12;
+    --bad: #FF8A80;
+    --shadow: 0 1px 0 rgba(0, 0, 0, .4), 0 8px 18px -10px rgba(0, 0, 0, .8);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0B0B0B;
+  --paper: #1A1A1A;
+  --ink: #F2F2F0;
+  --muted: #9A9A96;
+  --line: #2E2E2E;
+  --cobalt: #F2F2F0;
+  --cobalt-ink: #0B0B0B;
+  --cobalt-soft: #333333;
+  --amber: #F0B94D;
+  --amber-fill: #F0B94D;
+  --amber-soft: #382B12;
+  --bad: #FF8A80;
+  --shadow: 0 1px 0 rgba(0, 0, 0, .4), 0 8px 18px -10px rgba(0, 0, 0, .8);
+  color-scheme: dark;
+}

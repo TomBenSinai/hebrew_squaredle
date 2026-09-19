@@ -1,0 +1,30 @@
+.modal {
+  position: fixed; inset: 0;
+  display: grid; place-items: center;
+  padding: 16px;
+  visibility: hidden; pointer-events: none;
+  transition: visibility 0s linear .4s;           /* stay visible while closing */
+}
+.modal.open { visibility: visible; pointer-events: auto; transition: visibility 0s; }
+.backdrop {
+  position: absolute; inset: 0;
+  background: rgba(8, 8, 8, .5);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+.modal.open .backdrop { opacity: 1; }
+.modal .sheet {
+  width: 100%; max-width: 520px;
+  height: min(86%, 760px);
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, .5);
+  transform: translateY(24px) scale(.96);
+  opacity: 0;
+  transition: transform .4s var(--ease-out), opacity .25s ease;
+}
+.modal.open .sheet { transform: none; opacity: 1; }
+.closebtn {
+  font-size: 1.6rem; line-height: 1;
+  width: 40px; height: 40px;
+  border: 0; background: none; cursor: pointer; color: var(--ink);
+}
