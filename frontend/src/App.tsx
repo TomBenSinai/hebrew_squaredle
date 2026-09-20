@@ -5,6 +5,7 @@ import type { DaysResponse } from "./api/types";
 import { ArchiveModal } from "./features/ArchiveModal";
 import { Board, boardVars } from "./features/Board";
 import { DefinitionModal } from "./features/DefinitionModal";
+import { HelpModal, helpSeen, markHelpSeen } from "./features/HelpModal";
 import { Masthead } from "./features/Masthead";
 import { Readout } from "./features/Readout";
 import { Score } from "./features/Score";
@@ -41,6 +42,9 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
   const [wordsOpen, setWordsOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [defWord, setDefWord] = useState<string | null>(null);
+  // the rules greet a first-time player, once
+  const [helpOpen, setHelpOpen] = useState(() => !helpSeen());
+  const closeHelp = () => { setHelpOpen(false); markHelpSeen(); };
 
   const tileRefs = useRef<(HTMLDivElement | null)[]>([]);
   const { phase, spin } = useSpin(game.rotate);
@@ -61,7 +65,8 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
     <div className="app">
       <section className="play" aria-label="הלוח">
         <Masthead day={board} isToday={isToday} canGoToday={days.days.some(d => d.date === days.today)}
-          onToday={() => setDate(days.today)} onArchive={() => setArchiveOpen(true)} />
+          onToday={() => setDate(days.today)} onArchive={() => setArchiveOpen(true)}
+          onHelp={() => setHelpOpen(true)} />
 
         <Score found={mainFound} total={board.mainTotal} rank={rankFor(fraction)} fraction={fraction} />
 
@@ -85,6 +90,7 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
         today={days.today} current={board.date}
         progress={archiveOpen ? progressStore.all() : {}} onPick={pickDay} />
       <DefinitionModal word={defWord} onClose={() => setDefWord(null)} onShow={showOnBoard} />
+      <HelpModal open={helpOpen} onClose={closeHelp} />
     </div>
   );
 }

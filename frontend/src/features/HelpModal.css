@@ -1,0 +1,39 @@
+.modal .sheet.helpcard { height: auto; max-height: min(88%, 740px); }
+.helpbody { padding-bottom: 22px; }
+.helplead { margin: 12px 0 0; font-size: 1.15rem; color: var(--muted); }
+.helpsec { padding-block: 16px 0; }
+.helpsec h3 {
+  font-family: var(--display); font-weight: 800;
+  font-size: 1.35rem; line-height: 1.1;
+  margin: 0 0 6px;
+}
+.helpsec ul { margin: 0; padding-inline-start: 1.15em; display: grid; gap: 7px; }
+.helpsec li { font-size: 1.02rem; line-height: 1.5; }
+.helpsec li b { font-weight: 700; }
+.helpsec li b.bonusword { color: var(--amber); }
+.helpactions { margin-top: 22px; }
+.helpactions .btn { width: 100%; padding-block: 11px; font-size: 1.05rem; }
+
+/* The swipe demo: a small board with the path drawn under the lit tiles. */
+.helpdemo { display: block; width: 156px; height: 156px; margin-inline: auto; }
+.helpdemo rect { fill: var(--paper); stroke: var(--line); stroke-width: 1.5; }
+.helpdemo text { font-family: var(--display); font-weight: 600; font-size: 20px; fill: var(--cobalt); }
+.helpdemo .on rect { fill: var(--cobalt); stroke: var(--cobalt); }
+.helpdemo .on text { fill: var(--cobalt-ink); }
+.helpdemo polyline { fill: none; stroke: var(--cobalt); stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+.helpcap { margin: 8px 0 0; text-align: center; color: var(--muted); font-size: .98rem; }
+.helpcap b { color: var(--ink); font-weight: 600; }
+
+/* each block drifts in as the modal opens, and the path draws itself */
+.modal.open .helplead,
+.modal.open .helpsec,
+.modal.open .helpactions {
+  animation: rise .4s var(--ease-out) both;
+  animation-delay: calc(110ms + var(--i, 0) * 60ms);
+}
+/* the path is given pathLength="100", so this works whatever route it takes */
+.modal.open .helpdemo polyline {
+  stroke-dasharray: 100;
+  animation: draw .8s var(--ease-out) .35s both;
+}
+@keyframes draw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }

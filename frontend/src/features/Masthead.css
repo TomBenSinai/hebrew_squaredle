@@ -15,7 +15,19 @@
   letter-spacing: -.01em;
   white-space: nowrap;
 }
-.brand { display: grid; gap: 2px; }
+/* Absorbs the squeeze: a narrow header shortens the date line (it wraps) rather
+   than stealing width from the buttons. */
+.brand { display: grid; gap: 2px; flex: 1 1 auto; min-width: 0; }
 .when { color: var(--muted); font-size: .82rem; line-height: 1.2; }
 .when b, .when .shape { color: var(--ink); font-weight: 600; }
-.headbtns { display: flex; align-items: center; gap: 8px; }
+/* Never shrinks: even half a pixel of shrink would wrap a pill onto a second row
+   and grow the header. With the compact calendar below, three pills fit one line
+   from 320px up. flex-wrap only guards against a future label wider than the row. */
+.headbtns { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* On a narrow phone an archive day shows three pills; the calendar goes icon-only
+   so they still fit on one line and the header doesn't grow a second row. */
+@media (max-width: 420px) {
+  .pill.cal { width: 40px; height: 40px; padding: 0; justify-content: center; }
+  .pill.cal .pilllabel { display: none; }
+}

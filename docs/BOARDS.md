@@ -7,11 +7,11 @@ All commands run from the project folder with Python 3.10+. Nothing needs the in
 ```bash
 python generate_days.py --days 60                      # the next 60 days (skips days already made)
 python generate_days.py --start 2026-10-01 --days 30 --force   # remake a range
-python build_web.py                                    # rebuild web/index.html
 ```
 
-Deploy `web/index.html` (a single file). Keep `boards/daily/` under version control:
-it's the record of what every day was.
+The app serves `boards/daily/` straight from disk, so a new day is live as soon as it
+is written. Keep `boards/daily/` under version control: it's the record of what every
+day was.
 
 ## Look at a day
 
@@ -71,7 +71,7 @@ shapes calibrate their own word range.
 - `settings`: any generation setting for this theme's days.
 - `shape`: default shape for the theme (a date entry can override).
 
-Then: `python generate_days.py --date 2026-09-19 --theme yomkippur` and `python build_web.py`.
+Then: `python generate_days.py --date 2026-09-19 --theme yomkippur`.
 
 ### Recipe for a good theme
 

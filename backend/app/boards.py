@@ -86,7 +86,7 @@ class Day:
 
     @property
     def shape_title(self) -> str:
-        """Named only for special shapes (ones with holes), as build_web.py does."""
+        """Named only for special shapes (ones with holes)."""
         shape = self.board.shape
         if all(set(row) == {"X"} for row in shape.mask):
             return ""

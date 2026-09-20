@@ -27,7 +27,8 @@ board on the same day (Israel time).
 | סיבוב | Rotates the board 90° (same board, new view; helps you see words) |
 | המילים | Found words, grouped by length; theme words first; bonus words in their own section. Unfound words are never revealed; it only says how many are left |
 | ארכיון | Every past day with your progress; tap to play it. Future days stay hidden |
-| Definition card | Tap any found word: a short definition (written by Claude when the page runs on claude.ai), a link to the full Milog entry, and "show on board" |
+| ? | The rules, in the app's own words. It opens by itself on a first visit (`rivuon:help-seen` in `localStorage`) and from the header any time after |
+| Definition card | Tap any found word: a short definition (scraped from Milog by the backend), a link to the full Milog entry, and "show on board" |
 
 Progress is saved per day in the browser (`localStorage`, key `otiot:<date>`), so a
 refresh or a later visit continues where you stopped.

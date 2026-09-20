@@ -23,7 +23,6 @@ and [skills/rivuon-boards/SKILL.md](skills/rivuon-boards/SKILL.md) (a Claude ski
 | `schedule.json` | Which shape/theme each day gets: default, per weekday, per date |
 | `shapes.json` | The shape library (X = cell, . = empty) |
 | `themes/*.json` | Themes: title, required words, theme words, minimum theme words, optional shape |
-| `build_web.py`, `web/template.html` | Bundle stored boards into one playable offline page |
 | `build_wordlists.py` | Rebuilds `data/main.txt` and `data/bonus.txt` (needs `pip install wordfreq`, so run it online) |
 | `test_wordgame.py` | `python -m unittest test_wordgame -v` |
 | `data/main.txt`, `data/bonus.txt` | Built lists: `word<TAB>frequency` (22,083 main / 60,446 bonus) |
@@ -45,7 +44,6 @@ python generate_days.py --date 2027-05-12 --theme independence  # a themed day (
 python generate_days.py --date 2026-09-20 --shape "XXXXX/X...X/XXXXX" --no-save   # try an inline shape
 python generate_days.py --shapes                                # show the shape library
 python generate_days.py --show 2026-09-19                       # print a stored board
-python build_web.py                                             # rebuild the playable page (web/index.html)
 ```
 
 ## Shapes
@@ -113,7 +111,7 @@ without its own shape, the theme's `shape` is used, else the weekday/default one
   such themes set `main_zipf`: only words at least that common count as MAIN, the rest
   become BONUS.
 
-The page shows the theme title under the name, and a special shape's name.
+The app shows the theme title under the name, and a special shape's name.
 
 ```python
 from wordgame import Board, Game
