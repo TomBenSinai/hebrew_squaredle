@@ -11,8 +11,7 @@
 .helpsec li { font-size: 1.02rem; line-height: 1.5; }
 .helpsec li b { font-weight: 700; }
 .helpsec li b.bonusword { color: var(--amber); }
-.helpnote { margin: 18px 0 0; color: var(--muted); font-size: .95rem; }
-.helpactions { margin-top: 14px; }
+.helpactions { margin-top: 22px; }
 .helpactions .btn { width: 100%; padding-block: 11px; font-size: 1.05rem; }
 
 /* The swipe demo: a small board with the path drawn under the lit tiles. */
@@ -28,7 +27,6 @@
 /* each block drifts in as the modal opens, and the path draws itself */
 .modal.open .helplead,
 .modal.open .helpsec,
-.modal.open .helpnote,
 .modal.open .helpactions {
   animation: rise .4s var(--ease-out) both;
   animation-delay: calc(110ms + var(--i, 0) * 60ms);

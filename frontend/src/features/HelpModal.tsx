@@ -79,7 +79,6 @@ export function HelpModal({ open, onClose }: { open: boolean; onClose: () => voi
           </ul>
         </section>
 
-        <p className="helpnote" style={at(5)}>ההתקדמות נשמרת מעצמה - אפשר לעצור ולחזור בכל רגע</p>
         <div className="helpactions" style={at(5)}>
           <Button variant="primary" onClick={onClose}>יאללה, מתחילים</Button>
         </div>
