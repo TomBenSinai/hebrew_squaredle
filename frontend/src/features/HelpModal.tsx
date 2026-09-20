@@ -16,9 +16,10 @@ export function markHelpSeen() {
 /** Stagger: the nth block drifts in a beat after the one before it. */
 const at = (i: number) => ({ "--i": i } as CSSProperties);
 
-// A 3x3 board spelling שלום, to show what a swipe looks like.
-const ROWS = [["ש", "ל", "ד"], ["ר", "ו", "מ"], ["ג", "י", "ת"]];
-const PATH: [number, number][] = [[0, 0], [0, 1], [1, 1], [1, 2]];
+// A 3x3 board spelling שלום: two diagonal steps and a turn back up, so the
+// demo shows a path doing what the rules say it may do.
+const ROWS = [["ש", "ד", "ק"], ["ר", "ל", "מ"], ["ג", "י", "ו"]];
+const PATH: [number, number][] = [[0, 0], [1, 1], [2, 2], [1, 2]];
 const X = (col: number) => (2 - col) * 52 + 22;    // RTL: column 0 is the rightmost
 const Y = (row: number) => row * 52 + 22;
 
@@ -26,7 +27,7 @@ function SwipeDemo() {
   const on = new Set(PATH.map(([r, c]) => r * 3 + c));
   return (
     <svg className="helpdemo" viewBox="0 0 148 148" role="img" aria-label="הדגמה: החלקה על האותיות ש־ל־ו־מ">
-      <polyline points={PATH.map(([r, c]) => `${X(c)},${Y(r)}`).join(" ")} />
+      <polyline pathLength={100} points={PATH.map(([r, c]) => `${X(c)},${Y(r)}`).join(" ")} />
       {ROWS.map((row, r) => row.map((letter, c) => (
         <g key={`${r}-${c}`} className={on.has(r * 3 + c) ? "on" : undefined}>
           <rect x={X(c) - 22} y={Y(r) - 22} width="44" height="44" rx="5" />
@@ -42,7 +43,7 @@ export function HelpModal({ open, onClose }: { open: boolean; onClose: () => voi
   return (
     <Modal open={open} onClose={onClose} title="איך משחקים" sheetClassName="helpcard">
       <SheetBody className="helpbody">
-        <p className="helplead" style={at(0)}>ריבועון חדש בכל יום, ואותו הלוח לכולם.</p>
+        <p className="helplead" style={at(0)}>ריבועון חדש בכל יום, ואותו הלוח לכולם</p>
 
         <div className="helpsec" style={at(1)}>
           <SwipeDemo />
@@ -52,11 +53,11 @@ export function HelpModal({ open, onClose }: { open: boolean; onClose: () => voi
         <section className="helpsec" style={at(2)}>
           <h3>הכללים</h3>
           <ul>
-            <li><b>החליקו</b> על אותיות שנוגעות זו בזו, בכל שמונה הכיוונים, כדי ליצור מילים.</li>
-            <li><b>אי אפשר לחזור</b> על אותה משבצת פעמיים.</li>
-            <li><b>מילים של ארבע אותיות ומעלה.</b></li>
-            <li><b>אותיות סופיות הן אותיות רגילות</b> - כשאות מגיעה בסוף המילה היא הופכת אוטומטית לאות הסופית.</li>
-            <li>אות שלא נמצאת באף מילה מרכזית מאפירה. אפשר עדיין להשתמש בה כדי ליצור מילות בונוס.</li>
+            <li><b>החליקו</b> על אותיות שנוגעות זו בזו, בכל שמונה הכיוונים, כדי ליצור מילים</li>
+            <li><b>אי אפשר לחזור</b> על אותה משבצת פעמיים</li>
+            <li><b>מילים של ארבע אותיות ומעלה</b></li>
+            <li><b>אותיות סופיות הן אותיות רגילות</b> - כשאות מגיעה בסוף המילה היא הופכת אוטומטית לאות הסופית</li>
+            <li>אות שלא נמצאת באף מילה מרכזית מאפירה. אפשר עדיין להשתמש בה כדי ליצור מילות בונוס</li>
           </ul>
         </section>
 
@@ -64,7 +65,7 @@ export function HelpModal({ open, onClose }: { open: boolean; onClose: () => voi
           <h3>סוגי מילים</h3>
           <ul>
             <li><b>מילים מרכזיות</b> - מילים נפוצות שנמצאות בלוח של היום</li>
-            <li><b className="bonusword">מילות בונוס</b> - מילים עם צורות מיוחדות יותר - סמיכות, הטיה (ילדיו, ארונה), ומילות סלנג. הן שוות כפול נקודות אבל לא צריך אותן כדי לסיים את הלוח היומי.</li>
+            <li><b className="bonusword">מילות בונוס</b> - מילים עם צורות מיוחדות יותר - סמיכות, הטיה (ילדיו, ארונה), ומילות סלנג. הן שוות כפול נקודות אבל לא צריך אותן כדי לסיים את הלוח היומי</li>
             <li><b>★ מילות נושא</b> - מילים המופיעות בימים עם משמעות מיוחדת כמו חגים או מועדים נוספים</li>
           </ul>
         </section>
@@ -72,13 +73,13 @@ export function HelpModal({ open, onClose }: { open: boolean; onClose: () => voi
         <section className="helpsec" style={at(4)}>
           <h3>כפתורים</h3>
           <ul>
-            <li><b>סיבוב</b> מסובב את הלוח. עוזר אם צריכים רענון או זווית אחרת על האותיות.</li>
-            <li><b>לחיצה על מילה</b> תפתח את ההגדרה שלה במילוג.</li>
-            <li><b>ארכיון</b> פותח רשימה של ימי עבר.</li>
+            <li><b>סיבוב</b> מסובב את הלוח. עוזר אם צריכים רענון או זווית אחרת על האותיות</li>
+            <li><b>לחיצה על מילה</b> תפתח את ההגדרה שלה במילוג</li>
+            <li><b>ארכיון</b> פותח רשימה של ימי עבר</li>
           </ul>
         </section>
 
-        <p className="helpnote" style={at(5)}>ההתקדמות נשמרת מעצמה - אפשר לעצור ולחזור בכל רגע.</p>
+        <p className="helpnote" style={at(5)}>ההתקדמות נשמרת מעצמה - אפשר לעצור ולחזור בכל רגע</p>
         <div className="helpactions" style={at(5)}>
           <Button variant="primary" onClick={onClose}>יאללה, מתחילים</Button>
         </div>
