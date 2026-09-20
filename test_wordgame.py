@@ -11,6 +11,7 @@ from dataclasses import replace
 from wordgame import (BLOCKED, BONUS, MAIN, PRESETS, Board, Game, Lexicon, Settings, Shape,
                       Theme, daily_board, is_valid_path, main_cells, neighbors, normalize, preset,
                       settings_for, solve, word_points)
+from wordgame import _long_targets
 
 DATA = Path(__file__).parent / "data"
 LEX = Lexicon.load(DATA)
@@ -115,9 +116,10 @@ class TestGeneration(unittest.TestCase):
                 with self.subTest(size=size, day=b.date):
                     self.assertEqual(b.size, size)
                     self.assertTrue(s.min_main <= len(b.main) <= s.max_main)
-                    self.assertTrue(any(len(normalize(w)) >= s.min_longest for w in b.main))
-                    self.assertGreaterEqual(
-                        sum(1 for w in b.main if len(normalize(w)) >= s.long_len), s.min_long_words)
+                    lens = [len(normalize(w)) for w in b.main]
+                    self.assertTrue(s.min_longest <= max(lens) <= s.max_longest)
+                    self.assertTrue(s.min_long_words <= sum(k >= s.long_len for k in lens)
+                                    <= s.max_long_words + 1)
                     self.assertEqual(main_cells(b.grid, LEX), (1 << len(b.grid)) - 1)   # no dead letters
                     c = Counter(b.grid)
                     self.assertLessEqual(max(c.values()), s.max_same_letter)
@@ -125,6 +127,29 @@ class TestGeneration(unittest.TestCase):
                     self.assertLessEqual(len(b.bonus), s.max_bonus_ratio * len(b.main))
                     found = solve(b.grid, LEX)
                     self.assertFalse([w for w, (cat, _) in found.items() if cat == BLOCKED])
+
+    def test_long_words_vary(self):
+        # the longest word and the number of long words change from day to day
+        for size in SIZES:
+            s = preset(size)
+            longest = {max(len(normalize(w)) for w in b.main) for b in self.boards[size]}
+            longs = {sum(len(normalize(w)) >= s.long_len for w in b.main) for b in self.boards[size]}
+            with self.subTest(size=size):
+                self.assertGreater(len(longest), 1)
+                self.assertGreater(len(longs), 3)
+
+    def test_long_targets(self):
+        rng = random.Random(1)
+        floor = preset(4, max_longest=0, max_long_words=0)
+        self.assertEqual(_long_targets(floor, rng), (6, 99, 2, 10 ** 6, 6))
+        for _ in range(50):
+            lg_lo, lg_hi, lw_lo, lw_hi, long_len = _long_targets(preset(4), rng)
+            self.assertTrue(6 <= lg_lo == lg_hi <= 8)
+            self.assertTrue(2 <= lw_lo <= lw_hi <= 10)
+            self.assertEqual(long_len, 6)
+        # a day whose longest word is below long_len counts its own length instead
+        short = preset(4, min_longest=5, max_longest=5)
+        self.assertEqual(_long_targets(short, rng)[4], 5)
 
     def test_paths_spell_words(self):
         for size in SIZES:

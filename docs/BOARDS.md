@@ -91,13 +91,30 @@ Then: `python generate_days.py --date 2026-09-19 --theme yomkippur` and `python 
 3. **Put the rest in `words`**, not `required`.
 4. **Generate and check** the main count. If it's far above the usual range (packed
    boards are crowded), add `"main_zipf"` (4.0 for a 4×4 with 7 words, 4.5 for a
-   6×6 with 15). If generation fails, lower `min_long_words` / `min_longest`, or raise
+   6×6 with 15). If generation fails, lower `min_long_words` / `max_long_words` /
+   `min_longest` / `max_longest`, or raise
    `max_same_letter` in the theme `settings`.
+
+## Word lengths vary by day
+
+A board's longest word and how many long words it holds are picked per day, from
+the seed, so days don't all feel the same:
+
+- `min_longest`..`max_longest` — the day's longest main word is *exactly* a length
+  drawn from this range (nothing longer is allowed on the board). A 4×4 draws 6, 7
+  or 8; bigger shapes reach further.
+- `min_long_words`..`max_long_words` — the day's target number of `long_len`+ letter
+  words; the board lands within ±1 of it. On a day whose longest word is shorter
+  than `long_len`, that day's own length counts as "long" instead.
+
+Set a `max_` below its `min_` (or to 0) to go back to a plain floor with no ceiling
+and no day-to-day variation.
 
 ## Settings reference
 
 `python generate_days.py --help` and `--presets`. Every setting is also a flag:
-`--min-main --max-main --spread --min-longest --long-len --min-long-words
+`--min-main --max-main --spread --min-longest --max-longest --long-len
+--min-long-words --max-long-words
 --all-cells-used --max-same-letter --min-distinct --main-zipf --max-steps
 --max-attempts --relax`.
 

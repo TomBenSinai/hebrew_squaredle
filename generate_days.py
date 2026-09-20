@@ -46,9 +46,11 @@ HELP = {
     "min_main": "fewest MAIN words on a board",
     "max_main": "most MAIN words on a board",
     "spread": "each day aims at a random target in the range, +- this much",
-    "min_longest": "at least one MAIN word this long",
+    "min_longest": "shortest the day's longest MAIN word may be",
+    "max_longest": "longest it may be (each day picks a length in between), 0 = no limit",
     "long_len": "what counts as a long word (letters)",
-    "min_long_words": "at least this many long MAIN words per board",
+    "min_long_words": "fewest long MAIN words on a board",
+    "max_long_words": "most long MAIN words (each day aims at a count in between, +-1), 0 = no limit",
     "all_cells_used": "1 = every letter is part of some MAIN word, 0 = allow unused letters",
     "max_same_letter": "no letter on more cells than this",
     "min_distinct": "at least this many different letters",
@@ -207,8 +209,8 @@ def main() -> None:
         show_shapes()
         return
     if a.presets:
-        cols = ["min_main", "max_main", "min_longest", "long_len", "min_long_words",
-                "max_same_letter", "min_distinct"]
+        cols = ["min_main", "max_main", "min_longest", "max_longest", "long_len",
+                "min_long_words", "max_long_words", "max_same_letter", "min_distinct"]
         print("size " + "  ".join(f"{c:>15}" for c in cols))
         for size, s in sorted(PRESETS.items()):
             print(f"{size}x{size:<2}" + "  ".join(f"{getattr(s, c):>15}" for c in cols))
