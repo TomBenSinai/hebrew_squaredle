@@ -26,7 +26,9 @@ export function Masthead({ day, isToday, canGoToday, onToday, onArchive, onHelp 
       </div>
       <div className="headbtns">
         {!isToday && canGoToday && <Pill strong onClick={onToday}>חזרה להיום</Pill>}
-        <Pill icon={<CalendarIcon />} onClick={onArchive}>ארכיון</Pill>
+        <Pill className="cal" icon={<CalendarIcon />} aria-label="ארכיון" title="ארכיון" onClick={onArchive}>
+          <span className="pilllabel">ארכיון</span>
+        </Pill>
         <Pill className="round" aria-label="איך משחקים" title="איך משחקים" onClick={onHelp}>?</Pill>
       </div>
     </header>

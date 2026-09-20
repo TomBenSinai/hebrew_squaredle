@@ -4,13 +4,22 @@ import "./HelpModal.css";
 
 const SEEN_KEY = "rivuon:help-seen";
 
-/** Has the player already been shown the rules? (true when storage is unavailable.) */
+// Some browsers (Safari in private mode) read storage fine but throw on write,
+// which would reopen the rules on every load. Fall back to sessionStorage, which
+// survives a refresh, and then to memory.
+let seenInMemory = false;
+
+/** Has the player already been shown the rules? (true when storage is unreadable.) */
 export function helpSeen(): boolean {
-  try { return localStorage.getItem(SEEN_KEY) === "1"; } catch { return true; }
+  if (seenInMemory) return true;
+  try { return localStorage.getItem(SEEN_KEY) === "1" || sessionStorage.getItem(SEEN_KEY) === "1"; }
+  catch { return true; }
 }
 
 export function markHelpSeen() {
+  seenInMemory = true;
   try { localStorage.setItem(SEEN_KEY, "1"); } catch { /* private mode etc. */ }
+  try { sessionStorage.setItem(SEEN_KEY, "1"); } catch { /* ditto */ }
 }
 
 /** Stagger: the nth block drifts in a beat after the one before it. */
@@ -26,7 +35,7 @@ const Y = (row: number) => row * 52 + 22;
 function SwipeDemo() {
   const on = new Set(PATH.map(([r, c]) => r * 3 + c));
   return (
-    <svg className="helpdemo" viewBox="0 0 148 148" role="img" aria-label="הדגמה: החלקה על האותיות ש־ל־ו־מ">
+    <svg className="helpdemo" viewBox="-2 -2 152 152" role="img" aria-label="הדגמה: החלקה על האותיות ש־ל־ו־מ">
       <polyline pathLength={100} points={PATH.map(([r, c]) => `${X(c)},${Y(r)}`).join(" ")} />
       {ROWS.map((row, r) => row.map((letter, c) => (
         <g key={`${r}-${c}`} className={on.has(r * 3 + c) ? "on" : undefined}>
@@ -57,7 +66,7 @@ export function HelpModal({ open, onClose }: { open: boolean; onClose: () => voi
             <li><b>אי אפשר לחזור</b> על אותה משבצת פעמיים</li>
             <li><b>מילים של ארבע אותיות ומעלה</b></li>
             <li><b>אותיות סופיות הן אותיות רגילות</b> - כשאות מגיעה בסוף המילה היא הופכת אוטומטית לאות הסופית</li>
-            <li>אות שלא נמצאת באף מילה מרכזית מאפירה. אפשר עדיין להשתמש בה כדי ליצור מילות בונוס</li>
+            <li>אות מאפירה כשאין בה עוד צורך לאף מילה מרכזית שנותרה. אפשר עדיין להשתמש בה כדי ליצור מילות בונוס</li>
           </ul>
         </section>
 
