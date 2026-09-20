@@ -43,7 +43,7 @@ export function HelpModal({ open, onClose }: { open: boolean; onClose: () => voi
   return (
     <Modal open={open} onClose={onClose} title="איך משחקים" sheetClassName="helpcard">
       <SheetBody className="helpbody">
-        <p className="helplead" style={at(0)}>ריבועון חדש בכל יום, ואותו הלוח לכולם</p>
+        <p className="helplead" style={at(0)}>ריבועון חדש כל יום</p>
 
         <div className="helpsec" style={at(1)}>
           <SwipeDemo />
