@@ -18,12 +18,10 @@ python generate_days.py --start YYYY-MM-DD --days N --force   # regenerate a ran
 python generate_days.py --date YYYY-MM-DD --shape heart       # one special day (written into schedule.json; --no-save to just try)
 python generate_days.py --date YYYY-MM-DD --theme sukkot      # themed day
 python generate_days.py --show YYYY-MM-DD | --shapes | --presets
-python build_web.py                                # bundle boards/daily/*.json into web/index.html
-
 python build_wordlists.py                          # rebuild data/main.txt, bonus.txt, blocked_forms.txt (online)
 ```
 
-React app + API (in progress, lives alongside `web/`):
+React app + API:
 
 ```bash
 docker compose up --build                          # frontend http://localhost:5174, API 127.0.0.1:8001
@@ -42,7 +40,6 @@ docker compose exec -w /repo backend python -m unittest test_wordgame   # tests 
   - `seed_for()`/`daily_board()`: seed = sha256 of salt + layout + date, so boards are deterministic **given the word lists and settings**. The 5x5 key format is kept for backward compatibility — don't change seed keys.
   - `Board` (JSON round-trip via `to_json`/`from_json`, `save_board`) and `Game` (`submit_path`/`submit_word`, scoring via `word_points`, bonus words worth double).
 - **`generate_days.py`**: `plan_for()` merges `schedule.json` layers (default < weekday < date). Shape precedence: date's own shape > theme's `shape` > weekday/default; a list of shapes rotates by ISO week. A theme's `settings` apply unless the date entry sets the same key. Generation runs in a process pool (`_init` loads the Lexicon per worker).
-- **`build_web.py`**: substitutes the boards JSON into `web/template.html` at `/*BOARDS*/{}` and `/*EPOCH*/`, producing a single self-contained `web/index.html` (shows today's board in Israel time, hides future ones). All UI/game logic for the page lives in `template.html`; `web/index.html` is generated — edit the template.
 - **`backend/`** (FastAPI, its own deps in `backend/requirements.txt`): imports `wordgame.py` and serves `boards/daily`. Future days return 404. The board endpoint never sends word lists: swipes are checked server-side (`POST /boards/{date}/check` takes cell indexes on the *unrotated* board). Progress is saved in SQLite, keyed by `X-Player-Id` (an anonymous id from the browser, to be replaced by login in `deps.current_player`). `/define/{word}` scrapes Milog (it has no CORS).
 - **`frontend/`** (Vite + React + TS): base components in `src/components/` (Button, Pill, Chip, Modal, ProgressBar, Tile), screens in `src/features/`, game state in `src/state/useGame.ts`, progress in `src/state/progressStore.ts` (localStorage first, synced to the API). `lib/layout.ts` maps rotated cells back to the stored ones (`layout.base`).
 - **Word data pipeline**: `sources/` (Hspell lists, AGPL) → `analyze_hspell.py` → `data/morph.tsv` → `build_wordlists.py` (+ hand lists `slang.txt`, `extra_spellings.txt`, `function_words.txt`, `exclude.txt`, `blocklist.txt`, `blocked_lemmas.txt`) → `data/main.txt`, `data/bonus.txt` (`word<TAB>zipf`), `data/blocked_forms.txt`. Blocking works on Hspell lemmas, so every inflection of a blocked lemma is blocked.
@@ -50,5 +47,5 @@ docker compose exec -w /repo backend python -m unittest test_wordgame   # tests 
 ## Ground rules
 
 - `boards/daily/*.json` are the record of played days. **Never regenerate today or past days** unless explicitly asked (it resets players' saved progress). Word-list or setting changes should only be applied to future days (`--start <tomorrow> --force`).
-- After any board change: run the tests, then `python build_web.py`.
-- Don't add third-party dependencies to the game side (`wordgame.py`, `generate_days.py`, `build_web.py`, tests).
+- After any board change: run the tests.
+- Don't add third-party dependencies to the game side (`wordgame.py`, `generate_days.py`, tests).

@@ -1,13 +1,13 @@
 ---
 name: rivuon-boards
-description: Create, theme, and publish daily boards for ריבועון (the Hebrew Squaredle-style word game) — scheduling days, special shapes, holiday themes, and rebuilding the page. Use when asked to make boards, a themed/holiday day, a new shape, or to fix words in the game.
+description: Create, theme, and publish daily boards for ריבועון (the Hebrew Squaredle-style word game) — scheduling days, special shapes, and holiday themes. Use when asked to make boards, a themed/holiday day, a new shape, or to fix words in the game.
 ---
 
 # ריבועון boards
 
-The project folder holds `wordgame.py` (core), `generate_days.py` (CLI), `build_web.py`
-(page builder), `schedule.json`, `shapes.json`, `themes/*.json`, `data/*` (word lists),
-`boards/daily/*.json` (stored days), `web/template.html` → `web/index.html`.
+The project folder holds `wordgame.py` (core), `generate_days.py` (CLI),
+`schedule.json`, `shapes.json`, `themes/*.json`, `data/*` (word lists),
+`boards/daily/*.json` (stored days), and the app in `backend/` and `frontend/`.
 Full references: `docs/BOARDS.md` (how-to), `docs/ALGORITHM.md` (how it works),
 `docs/GAME.md` (rules and UI). Read `docs/BOARDS.md` before the first change.
 
@@ -20,15 +20,13 @@ Full references: `docs/BOARDS.md` (how-to), `docs/ALGORITHM.md` (how it works),
 - Word-list changes (`data/*.txt` + `python build_wordlists.py`, needs `wordfreq`
   online) affect only days generated afterwards; regenerate future days only
   (`--start <tomorrow> --days N --force`).
-- After any board change: `python -m unittest test_wordgame` then `python build_web.py`,
-  then deploy/republish `web/index.html`.
+- After any board change: `python -m unittest test_wordgame`.
 
 ## Tasks
 
 ### Fill upcoming days
 ```bash
 python generate_days.py --days 60        # skips days already made
-python build_web.py
 ```
 
 ### Make one day special (shape and/or settings)
@@ -79,4 +77,4 @@ View with `--shapes`. Irregular shapes self-calibrate; check `--show` output for
 ## Checks before finishing
 - `python -m unittest test_wordgame` passes.
 - `--show` for every changed day: no blocked words, sensible main count, theme words present.
-- Open `web/index.html` at phone width: board fits the screen, theme chip shows.
+- Open the app at phone width: board fits the screen, theme chip shows.

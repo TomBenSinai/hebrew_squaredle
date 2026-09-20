@@ -92,9 +92,9 @@ always give the same board. Boards also depend on the word lists, so they are
 pre-generated and stored as JSON (`boards/daily/`): editing lists never changes a
 day already made.
 
-## 6. The page
+## 6. The app
 
-`build_web.py` inserts all stored boards into `web/template.html` → `web/index.html`, one
-self-contained HTML/CSS/JS file. The page picks today's board by Israel date, checks
-swiped paths against that board's word lists (no solver runs in the browser), and keeps
-progress in `localStorage`.
+The backend serves the stored boards from `boards/daily/` and picks today's by Israel
+date; future days 404. Swiped paths are checked server-side, so no word list and no
+solver ever reaches the browser. The frontend keeps progress in `localStorage` and
+syncs it to the API.
