@@ -7,3 +7,14 @@ export function CalendarIcon() {
     </svg>
   );
 }
+
+/** A board with an arrow sweeping over it, anticlockwise - the way the tiles actually turn. */
+export function RotateIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <rect x="8.5" y="10.75" width="7" height="7" rx="1.8" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M20 14.25A8 8 0 0 0 4 14.25M1.6 11.85 4 14.25l2.4-2.4" fill="none" stroke="currentColor"
+        strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

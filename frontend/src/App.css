@@ -12,9 +12,36 @@
   flex-direction: column;
   gap: 10px;
 }
-.tools { display: flex; gap: 8px; }
+/* Centred, because the round button is a fixed 40px and the words button a little taller. */
+.tools { display: flex; align-items: center; gap: 8px; }
 .tools .btn { flex: 1; }
 .tools .btn b { font-variant-numeric: tabular-nums; }
+/* Every press turns the icon another quarter, the way the board goes, and it stays there.
+   The wrapper turns rather than the <svg> itself: Chrome ignores a transform built with
+   calc(var(...)) on an SVG element. The angle is inline because the count has no bound. */
+.tools .spinbtn .spinicon {
+  display: flex;
+  transition: transform .46s cubic-bezier(.45, .05, .2, 1);
+}
+/* The label the icon replaced, shown on hover and to anyone tabbing to the button. */
+.tools .spinbtn .tip {
+  position: absolute; bottom: calc(100% + 8px); left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 9px;
+  border-radius: 7px;
+  background: var(--ink); color: var(--paper);
+  font-family: var(--body); font-size: .8rem; font-weight: 600;
+  white-space: nowrap;
+  opacity: 0; pointer-events: none;
+  transition: opacity .14s var(--ease-out);
+}
+@media (hover: hover) {
+  .tools .spinbtn:hover .tip { opacity: 1; }
+}
+.tools .spinbtn:focus-visible .tip { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .tools .spinbtn .spinicon, .tools .spinbtn .tip { transition: none; }
+}
 .status { grid-column: 1 / -1; align-self: center; justify-self: center; color: var(--muted); font-size: 1.1rem; }
 
 /* On a computer the word list sits beside the board (to its right) instead of in a
