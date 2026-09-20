@@ -16,10 +16,10 @@ export function markHelpSeen() {
 /** Stagger: the nth block drifts in a beat after the one before it. */
 const at = (i: number) => ({ "--i": i } as CSSProperties);
 
-// A 3x3 board spelling שלום: two diagonal steps and a turn back up, so the
+// A 3x3 board spelling שלום: sideways, one diagonal step, then down, so the
 // demo shows a path doing what the rules say it may do.
-const ROWS = [["ש", "ד", "ק"], ["ר", "ל", "מ"], ["ג", "י", "ו"]];
-const PATH: [number, number][] = [[0, 0], [1, 1], [2, 2], [1, 2]];
+const ROWS = [["ש", "ל", "ק"], ["ר", "ד", "ו"], ["ג", "י", "מ"]];
+const PATH: [number, number][] = [[0, 0], [0, 1], [1, 2], [2, 2]];
 const X = (col: number) => (2 - col) * 52 + 22;    // RTL: column 0 is the rightmost
 const Y = (row: number) => row * 52 + 22;
 
