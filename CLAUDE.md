@@ -9,7 +9,7 @@ Further docs: `README.md`, `docs/BOARDS.md` (how-to for boards/shapes/themes —
 ## Commands
 
 ```bash
-python -m unittest test_wordgame -v                          # all tests
+python -m unittest test_wordgame -v                          # all tests (~2 min: they generate boards)
 python -m unittest test_wordgame.TestThemes -v               # one class
 python -m unittest test_wordgame.TestBasics.test_neighbors   # one test
 
@@ -48,4 +48,10 @@ docker compose exec -w /repo backend python -m unittest test_wordgame   # tests 
 
 - `boards/daily/*.json` are the record of played days. **Never regenerate today or past days** unless explicitly asked (it resets players' saved progress). Word-list or setting changes should only be applied to future days (`--start <tomorrow> --force`).
 - After any board change: run the tests.
+- `test_wordgame.py` generates real boards, so the full run takes minutes. Only run
+  it when the change can reach board generation — `wordgame.py`, `generate_days.py`,
+  `schedule.json`, `shapes.json`, `themes/`, `data/` or the test file itself.
+  **Don't** run it for `frontend/`, `backend/` or docs; use `cd frontend && npx tsc -b`
+  for the frontend instead. When only one area moved, run that class (`TestThemes`,
+  `TestShapes`, `TestSchedule`, `TestGame`, …) and save the full suite for the end.
 - Don't add third-party dependencies to the game side (`wordgame.py`, `generate_days.py`, tests).
