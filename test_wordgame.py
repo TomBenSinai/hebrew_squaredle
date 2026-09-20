@@ -11,7 +11,7 @@ from dataclasses import replace
 from wordgame import (BLOCKED, BONUS, MAIN, PRESETS, Board, Game, Lexicon, Settings, Shape,
                       Theme, daily_board, is_valid_path, main_cells, neighbors, normalize, preset,
                       settings_for, solve, word_points)
-from wordgame import _long_targets
+from wordgame import _long_targets, _relax
 
 DATA = Path(__file__).parent / "data"
 LEX = Lexicon.load(DATA)
@@ -150,6 +150,49 @@ class TestGeneration(unittest.TestCase):
         # a day whose longest word is below long_len counts its own length instead
         short = preset(4, min_longest=5, max_longest=5)
         self.assertEqual(_long_targets(short, rng)[4], 5)
+        # no word is under 4 letters, so a lower floor is raised to 4 rather than
+        # letting a ceiling be drawn below anything the board could reach
+        self.assertEqual(_long_targets(preset(4, min_longest=0), rng)[:2], (4, 99))
+        for _ in range(20):
+            lg_lo, lg_hi = _long_targets(preset(4, min_longest=0, max_longest=8), rng)[:2]
+            self.assertTrue(4 <= lg_lo == lg_hi <= 8)
+
+    def test_floor_only_override_drops_the_ceiling(self):
+        # "at least 6" is a floor, not the range 6..<whatever the preset carried>
+        s = preset(4, min_longest=6, min_long_words=3)
+        self.assertEqual((s.max_longest, s.max_long_words), (0, 0))
+        self.assertEqual(_long_targets(s, random.Random(1))[:4], (6, 99, 3, 10 ** 6))
+        # setting both still asks for a range, and the preset itself is untouched
+        self.assertEqual(preset(4, min_longest=6, max_longest=7).max_longest, 7)
+        self.assertEqual((preset(4).max_longest, preset(4).max_long_words), (8, 9))
+        # the same holds for any other shape, via settings_for
+        star = settings_for(Shape.parse("X.X/XXX/X.X", "plus"), LEX, samples=8,
+                            min_long_words=2)
+        self.assertEqual(star.max_long_words, 0)
+
+    def test_relax_drops_the_ceilings(self):
+        # a lower "no main word longer than X" is a stricter rule, so a relaxed
+        # round clears the ceilings instead of shrinking them
+        step, looser = _relax(preset(4))
+        self.assertEqual((looser.max_longest, looser.max_long_words), (0, 0))
+        self.assertLess(looser.min_longest, preset(4).min_longest)
+        self.assertIn("max_longest 8->0 (no ceiling)", step)
+        self.assertEqual(_long_targets(looser, random.Random(1))[1], 99)
+        # a ceiling the caller turned off (max below min) stays off as the floor
+        # drops, and isn't reported as loosened
+        off = preset(4, min_longest=6, max_longest=1, min_long_words=3, max_long_words=2)
+        step, looser = _relax(off)
+        self.assertEqual((looser.max_longest, looser.max_long_words), (0, 0))
+        self.assertFalse([r for r in step
+                          if r.startswith(("max_longest", "max_long_words"))])
+        lg_lo, lg_hi, lw_lo, lw_hi, _ = _long_targets(looser, random.Random(1))
+        self.assertEqual((lg_hi, lw_hi), (99, 10 ** 6))
+        # and the failure message names the knobs that now cause it
+        with self.assertRaises(RuntimeError) as e:
+            daily_board(date(2026, 9, 20), LEX,
+                        preset(4, min_main=400, max_main=500, max_steps=200,
+                               max_attempts=1, relax=0))
+        self.assertIn("max_longest", str(e.exception))
 
     def test_paths_spell_words(self):
         for size in SIZES:

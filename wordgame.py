@@ -361,11 +361,13 @@ class Settings:
                                 # lands within +-spread of it (so days vary)
     min_longest: int = 6        # at least one MAIN word this long (a "big find")
     max_longest: int = 0        # >0: each day picks a length in min_longest..max_longest
-                                # and the longest MAIN word is exactly that long
+                                # and the longest MAIN word is exactly that long.
+                                # Overriding min_longest alone clears it (_override)
     long_len: int = 6           # what counts as a "long" word ...
     min_long_words: int = 1     # ... and at least this many long MAIN words per board
     max_long_words: int = 0     # >0: each day picks a count in min_long_words..max_long_words
-                                # and the board has that many long words, +-1
+                                # and the board has that many long words, +-1.
+                                # Overriding min_long_words alone clears it (_override)
     all_cells_used: int = 1     # 1: every cell is part of some MAIN word (no dead letters)
     max_same_letter: int = 3    # no letter on more than this many cells
     min_distinct: int = 14      # at least this many different letters
@@ -417,6 +419,22 @@ PRESETS: dict[int, Settings] = {
 }
 
 
+# A floor and the ceiling that bounds it. Overriding only the floor drops the
+# ceiling: a caller asking for "at least N" means a floor, not the range
+# N..<whatever the preset happened to carry>.
+_CEILING_OF = {"min_longest": "max_longest", "min_long_words": "max_long_words"}
+
+
+def _override(base: Settings, overrides: dict) -> Settings:
+    """`replace(base, **overrides)`, except that setting a floor without its
+    ceiling also clears the inherited ceiling (see _CEILING_OF)."""
+    o = dict(overrides)
+    for lo, hi in _CEILING_OF.items():
+        if lo in o and hi not in o:
+            o[hi] = 0
+    return replace(base, **o)
+
+
 def preset(size: int = 5, **overrides) -> Settings:
     """
     Settings for a full square, with any field overridden:
@@ -444,7 +462,7 @@ def preset(size: int = 5, **overrides) -> Settings:
             max_same_letter=max(math.ceil(cells / 22), round(p.max_same_letter * k)),
             min_distinct=min(22, cells, round(p.min_distinct * math.sqrt(k))),
         )
-    return replace(base, **overrides)
+    return _override(base, overrides)
 
 
 def _random_varied(rng, lex, n, max_same, min_distinct):
@@ -491,8 +509,8 @@ def settings_for(shape: Shape, lex: Lexicon, samples: int = 120, **overrides) ->
     the square presets were chosen). Any field can still be overridden.
     """
     if shape.is_full_square and shape.rows in PRESETS:
-        return replace(preset(shape.rows), shape_name=shape.name or f"{shape.rows}x{shape.rows}",
-                       **overrides)
+        return _override(preset(shape.rows), {
+            "shape_name": shape.name or f"{shape.rows}x{shape.rows}", **overrides})
     p10, med, long90, max_same, min_distinct = _calibrate(shape, lex, samples)
     n = shape.n_cells
     min_main = max(8, round(p10 * 0.75))
@@ -508,7 +526,7 @@ def settings_for(shape: Shape, lex: Lexicon, samples: int = 120, **overrides) ->
         min_long_words=max(1, round(max_long * 0.25)), max_long_words=max_long,
         max_same_letter=max_same, min_distinct=min_distinct,
     )
-    return replace(base, **overrides)
+    return _override(base, overrides)
 
 
 # ============================================================== boards
@@ -572,26 +590,52 @@ class Board:
 
 # ============================================================== generation
 
-def _relaxed_max_long(s: Settings) -> int:
-    """A lower ceiling for the day's long-word target, so a relaxed round asks
-    for less than the round that just failed (0 stays 0: no ceiling at all)."""
-    return max(1, round(s.max_long_words * 0.6)) if s.max_long_words else 0
-
-
 def _long_targets(s: Settings, rng) -> tuple[int, int, int, int, int]:
     """The day's (longest lo, longest hi, long-word count lo, hi, long_len). A max
     below its min (or 0) means there's no upper bound: just the floor, as before.
     On a day whose longest word is shorter than `long_len`, that length is the
-    day's "long" instead, so the count is still asked of the board's big words."""
-    lg_lo, lg_hi = s.min_longest, 99
-    if s.max_longest >= s.min_longest:
-        lg_lo = lg_hi = rng.randint(s.min_longest, s.max_longest)
+    day's "long" instead, so the count is still asked of the board's big words.
+    No word is under 4 letters, so a lower floor than that is no floor at all -
+    it is raised, or a ceiling drawn beneath it would be unreachable."""
+    lg_lo, lg_hi = max(4, s.min_longest), 99
+    if s.max_longest >= lg_lo:
+        lg_lo = lg_hi = rng.randint(lg_lo, s.max_longest)
     long_len = min(s.long_len, lg_hi)
     lw_lo, lw_hi = s.min_long_words, 10 ** 6
     if s.max_long_words >= s.min_long_words:
         t = rng.randint(s.min_long_words, s.max_long_words)
         lw_lo, lw_hi = max(s.min_long_words, t - 1), t + 1
     return lg_lo, lg_hi, lw_lo, lw_hi, long_len
+
+
+def _relax(cur: Settings) -> tuple[list[str], Settings]:
+    """Loosen the rules that are hardest on unusual shapes, for another round.
+    Returns what was loosened (for board.relaxed) and the looser settings.
+
+    The day's ceilings go first and for good: "no MAIN word longer than X" only
+    gets *harder* as X falls, so a smaller ceiling is not a relaxation. Clearing
+    them also means a ceiling the caller deliberately turned off (a `max_` below
+    its `min_`) can't come back to life as the floor drops."""
+    step = []
+    if cur.min_long_words > 1:
+        step.append(f"min_long_words {cur.min_long_words}->{max(1, cur.min_long_words - 2)}")
+    if cur.max_long_words >= cur.min_long_words:
+        step.append(f"max_long_words {cur.max_long_words}->0 (no ceiling)")
+    if cur.min_longest > 5:
+        step.append(f"min_longest {cur.min_longest}->{cur.min_longest - 1}")
+    if cur.max_longest >= cur.min_longest:
+        step.append(f"max_longest {cur.max_longest}->0 (no ceiling)")
+    step.append(f"main range {cur.min_main}-{cur.max_main}->"
+                f"{round(cur.min_main * .8)}-{round(cur.max_main * 1.2)}")
+    if cur.max_bonus_ratio and not cur.main_zipf:
+        step.append(f"max_bonus_ratio {cur.max_bonus_ratio:g}->{cur.max_bonus_ratio * 1.25:g}")
+    return step, replace(cur, min_long_words=max(1, cur.min_long_words - 2),
+                         max_long_words=0,
+                         min_longest=max(5, cur.min_longest - 1),
+                         max_longest=0,
+                         min_main=round(cur.min_main * .8), max_main=round(cur.max_main * 1.2),
+                         max_bonus_ratio=cur.max_bonus_ratio * 1.25,
+                         max_attempts=max(6, cur.max_attempts // 2))
 
 
 def _evaluate(grid, lex, s: Settings, shape: Shape, lo: int, hi: int, theme_keys,
@@ -774,32 +818,13 @@ def generate(seed: int, lex: Lexicon, s: Settings | None = None, date_str: str =
         cost, grid = _anneal(lex, cur, shape, rng, lo, hi, theme_keys, required, longs)
         if cost == 0:
             break
-        # loosen the rules that are hardest on unusual shapes, then try again
-        step = []
-        if cur.min_long_words > 1:
-            step.append(f"min_long_words {cur.min_long_words}->{max(1, cur.min_long_words - 2)}")
-        if cur.max_long_words > 1:
-            step.append(f"max_long_words {cur.max_long_words}->{_relaxed_max_long(cur)}")
-        if cur.min_longest > 5:
-            step.append(f"min_longest {cur.min_longest}->{cur.min_longest - 1}")
-        if cur.max_longest > max(5, cur.min_longest - 1):
-            step.append(f"max_longest {cur.max_longest}->{max(5, cur.min_longest - 1, cur.max_longest - 1)}")
-        step.append(f"main range {cur.min_main}-{cur.max_main}->"
-                    f"{round(cur.min_main * .8)}-{round(cur.max_main * 1.2)}")
-        if cur.max_bonus_ratio and not cur.main_zipf:
-            step.append(f"max_bonus_ratio {cur.max_bonus_ratio:g}->{cur.max_bonus_ratio * 1.25:g}")
+        step, cur = _relax(cur)
         relaxed += step
-        cur = replace(cur, min_long_words=max(1, cur.min_long_words - 2),
-                      max_long_words=_relaxed_max_long(cur),
-                      min_longest=max(5, cur.min_longest - 1),
-                      max_longest=cur.max_longest and max(5, cur.min_longest - 1, cur.max_longest - 1),
-                      min_main=round(cur.min_main * .8), max_main=round(cur.max_main * 1.2),
-                      max_bonus_ratio=cur.max_bonus_ratio * 1.25,
-                      max_attempts=max(6, cur.max_attempts // 2))
     if cost:
         raise RuntimeError(
             f"No {shape.name or 'board'} ({shape.n_cells} cells) met the requirements "
-            f"(best cost {cost:g}). Loosen the settings (min_main/max_main, min_longest, "
+            f"(best cost {cost:g}). Loosen the settings (max_longest/max_long_words - set "
+            f"them to 0 to drop the day's exact-length rules - min_main/max_main, min_longest, "
             f"min_long_words, min_distinct, max_same_letter, max_bonus_ratio) or raise max_steps/max_attempts.")
 
     found = _solve(grid, lex, True, shape)[0]

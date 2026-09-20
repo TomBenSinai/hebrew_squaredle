@@ -43,7 +43,7 @@ Goal: a board meeting the day's **settings**:
 | Setting | Meaning |
 |---|---|
 | `min_main` / `max_main`, `spread` | Main-word range; each day aims at a random target inside it, ± spread |
-| `min_longest`, `max_longest` | The day's longest main word: each day picks a length in this range, and nothing on the board is longer |
+| `min_longest`, `max_longest` | The day's longest main word: each day picks a length in this range, and no *main* word is longer (bonus words aren't capped). Setting only `min_longest` clears the ceiling |
 | `long_len`, `min_long_words`, `max_long_words` | Long words (`long_len`+ letters): each day picks a target count in this range and lands within ±1 of it |
 | `all_cells_used` | Every letter is part of some main word |
 | `max_same_letter`, `min_distinct` | Letter variety |

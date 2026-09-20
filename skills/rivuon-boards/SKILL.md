@@ -59,7 +59,9 @@ python generate_days.py --date YYYY-MM-DD --shape "XXXXX/X...X/XXXXX"
    at several thresholds.
 7. **Generation fails** (cost > 0) → the required words leave too little freedom:
    loosen in the theme `settings`: `min_longest` 6, `min_long_words` 2–3,
-   `max_same_letter` 3, `min_distinct` 10. Or require fewer words.
+   `max_same_letter` 3, `min_distinct` 10. Or require fewer words. Setting a
+   `min_` on its own drops the shape's matching `max_` ceiling, which is usually
+   what a packed board needs — to keep the day-to-day range, set both.
 8. Rebuild, test, publish; report the board, the theme words on it and the main count.
 
 ### New shape
