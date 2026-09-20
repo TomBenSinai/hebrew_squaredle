@@ -9,9 +9,10 @@ interface Props {
   canGoToday: boolean;
   onToday: () => void;
   onArchive: () => void;
+  onHelp: () => void;
 }
 
-export function Masthead({ day, isToday, canGoToday, onToday, onArchive }: Props) {
+export function Masthead({ day, isToday, canGoToday, onToday, onArchive, onHelp }: Props) {
   return (
     <header className="masthead">
       <div className="brand">
@@ -26,6 +27,7 @@ export function Masthead({ day, isToday, canGoToday, onToday, onArchive }: Props
       <div className="headbtns">
         {!isToday && canGoToday && <Pill strong onClick={onToday}>חזרה להיום</Pill>}
         <Pill icon={<CalendarIcon />} onClick={onArchive}>ארכיון</Pill>
+        <Pill className="round" aria-label="איך משחקים" title="איך משחקים" onClick={onHelp}>?</Pill>
       </div>
     </header>
   );

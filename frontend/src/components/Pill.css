@@ -10,3 +10,11 @@
   cursor: pointer;
 }
 .pill.strong, .pill:hover { border-color: var(--ink); }
+/** Icon-only pill, e.g. the "?" that opens the rules. */
+.pill.round {
+  align-self: stretch;                 /* as tall as the pills beside it */
+  width: 39px;
+  padding: 0;
+  justify-content: center;
+  font-family: var(--display); font-weight: 800; font-size: 1.15rem;
+}
