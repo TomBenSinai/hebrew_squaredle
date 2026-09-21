@@ -16,8 +16,8 @@ interface Props {
 
 // where the tile numbers unlock, in the numbers' own colors
 const HINT_MARKS: Mark[] = [
-  { at: 100 * HINT_STARTS_AT, color: "var(--hint-starts)", label: "כאן נפתח המספר הכחול - כמה מילים שמתחילות באות נותרו" },
-  { at: 100 * HINT_USES_AT, color: "var(--hint-uses)", label: "כאן נפתח המספר הירוק - כמה מילים שעוברות באות נותרו" },
+  { at: 100 * HINT_STARTS_AT, color: "var(--hint-starts)", label: "רמז ראשון - כמה מילים שמתחילות באות נותרו" },
+  { at: 100 * HINT_USES_AT, color: "var(--hint-uses)", label: "רמז שני - כמה מילים שעוברות באות נותרו" },
 ];
 
 export function Score({ found, total, points, rank, fraction, fresh }: Props) {
