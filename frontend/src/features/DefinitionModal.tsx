@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, LinkButton, Modal } from "../components";
+import { Button, ExternalLinkIcon, LinkButton, Modal } from "../components";
 import { api } from "../api/client";
 import type { Definition } from "../api/types";
 import "./DefinitionModal.css";
@@ -51,7 +51,7 @@ export function DefinitionModal({ word, onClose, onShow }: Props) {
           <p className="deftext">ההגדרה המלאה נמצאת במילוג.</p>
         )}
         <div className="defactions">
-          <LinkButton variant="primary" external href={milogUrl(w)}>למילוג ↗</LinkButton>
+          <LinkButton variant="primary" external href={milogUrl(w)}>למילוג<ExternalLinkIcon /></LinkButton>
           <Button onClick={() => onShow(w)}>הצגה על הלוח</Button>
         </div>
       </div>

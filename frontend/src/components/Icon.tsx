@@ -18,3 +18,13 @@ export function RotateIcon() {
     </svg>
   );
 }
+
+/** A box with an arrow leaving it: the link opens in a new tab. */
+export function ExternalLinkIcon() {
+  return (
+    <svg className="ext-icon" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+      <path d="M13 4h7v7M20 4l-9 9M18 14v4.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10"
+        fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
