@@ -8,13 +8,20 @@ import { progressStore } from "./progressStore";
 
 export const MIN_LEN = 4;
 
-export type ToastKind = "main" | "bonus" | "bad" | "info" | "hint-starts" | "hint-uses";
+export type ToastKind = "main" | "bonus" | "bad" | "info";
 export interface Toast {
   kind: ToastKind;
   text: string;
   /** a found word inside `text`: tapping it opens its definition */
   word?: string;
+  /** a second line: the find unlocked the next tile numbers */
+  note?: { kind: "hint-starts" | "hint-uses"; text: string };
 }
+
+const HINT_NOTES = {
+  1: { kind: "hint-starts", text: "רמז חדש: המספר הכחול - כמה מילים מתחילות באות" },
+  2: { kind: "hint-uses", text: "רמז חדש: המספר הירוק - בכמה מילים האות נמצאת" },
+} as const;
 
 export interface Game {
   board: PublicBoard;
@@ -62,8 +69,6 @@ export function useGame(date: string | null): { game: Game | null; error: string
   dateRef.current = date;
   // the latest progress, readable at once (swipes can come faster than renders)
   const progressRef = useRef(progress);
-  // the hint level the player has already been told about (null: day just opened)
-  const shownLevel = useRef<HintLevel | null>(null);
 
   useEffect(() => {
     if (!date) return;
@@ -79,7 +84,6 @@ export function useGame(date: string | null): { game: Game | null; error: string
       submitSeq.current++;
       setFresh(null);
       setCounts(null);
-      shownLevel.current = null;
       setFlashWord(null);
     }).catch(() => { if (!stale) setError("לא הצלחנו לטעון את הלוח"); });
     return () => { stale = true; };
@@ -113,24 +117,6 @@ export function useGame(date: string | null): { game: Game | null; error: string
     if (!layout || !counts) return null;
     return { level, starts: layout.base.map(b => counts.starts[b]), uses: layout.base.map(b => counts.uses[b]) };
   }, [layout, counts, level]);
-
-  // say so when a find unlocks the next numbers (not when a day opens with them)
-  const hintTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => {
-    if (!board) return;
-    const before = shownLevel.current;
-    shownLevel.current = level;
-    if (before === null || level <= before) return;
-    const seq = submitSeq.current;
-    // after the found word's own message has had a moment
-    hintTimer.current = setTimeout(() => {
-      if (submitSeq.current !== seq) return;
-      setToast(level === 1
-        ? { kind: "hint-starts", text: "רמז חדש: המספר הכחול - כמה מילים מתחילות באות" }
-        : { kind: "hint-uses", text: "רמז חדש: המספר הירוק - בכמה מילים האות נמצאת" });
-    }, 1500);
-  }, [board, level]);
-  useEffect(() => () => clearTimeout(hintTimer.current), []);
 
   const update = useCallback((date: string, fn: (p: DayProgress) => DayProgress) => {
     const next = fn(progressRef.current);
@@ -189,14 +175,19 @@ export function useGame(date: string | null): { game: Game | null; error: string
         say({ kind: "info", text: `${w} כבר נמצאה`, word: w });
         return;
       }
-      const found: FoundWord[] = [...progressRef.current.found, { w, cat: r.status, ...(theme ? { theme } : {}) }];
+      const before = progressRef.current.found;
+      const found: FoundWord[] = [...before, { w, cat: r.status, ...(theme ? { theme } : {}) }];
       update(date, p => ({ ...p, found }));
+      // this find opened the next tile numbers: say so under its own message
+      const levelOf = (f: FoundWord[]) => hintLevel(letterFraction(f, board.mainLetters));
+      const unlocked = levelOf(found);
+      const note = unlocked > levelOf(before) ? HINT_NOTES[unlocked as 1 | 2] : undefined;
       const done = r.status === "main" && found.filter(f => f.cat === "main").length === board.mainTotal;
       setFresh(w);
       if (done) say({ kind: "main", text: `${w}! סיימתם את כל המילים 🎉`, word: w });
       else if (r.status === "bonus") say({ kind: "bonus", text: `בונוס! ${w} · ${points} נק׳`, word: w });
-      else if (theme) say({ kind: "main", text: `★ ${w} · מילת נושא · ${pointsText(points)}`, word: w });
-      else say({ kind: "main", text: `${w} · ${pointsText(points)}`, word: w });
+      else if (theme) say({ kind: "main", text: `★ ${w} · מילת נושא · ${pointsText(points)}`, word: w, note });
+      else say({ kind: "main", text: `${w} · ${pointsText(points)}`, word: w, note });
     }).catch(() => say({ kind: "bad", text: "אין חיבור לשרת, נסו שוב" }));
   }, [board, layout, update]);
 

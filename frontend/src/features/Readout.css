@@ -14,7 +14,13 @@
 .toast.info { color: var(--muted); }
 .toastbtn { border: 0; background: none; color: inherit; font: inherit; cursor: pointer; padding: 4px 8px; }
 .toastbtn .tw { text-decoration: underline dotted 1.5px; text-underline-offset: 5px; }
-.toast.hint-starts, .toast.hint-uses { font-size: .98rem; animation: hintin .4s var(--ease-out) both; }
-.toast.hint-starts { color: var(--hint-starts); }
-.toast.hint-uses { color: var(--hint-uses); }
-@keyframes hintin { from { opacity: 0; transform: translateY(4px); } }
+/* under a find that unlocked tile numbers, in that number's color */
+.toast .note {
+  font-size: .85rem; line-height: 1.15;
+  animation: notein .4s var(--ease-out) .25s both;
+}
+.toast .note.hint-starts { color: var(--hint-starts); }
+.toast .note.hint-uses { color: var(--hint-uses); }
+.toast:has(.note) { align-content: center; gap: 1px; }
+.toast:has(.note) .toastbtn { padding-block: 0; }
+@keyframes notein { from { opacity: 0; transform: translateY(4px); } }
