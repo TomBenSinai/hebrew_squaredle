@@ -20,7 +20,7 @@ export interface Toast {
 
 const HINT_NOTES = {
   1: { kind: "hint-starts", text: "נפתח רמז חדש! המספר הכחול - כמה מילים שמתחילות באות הזו נותרו" },
-  2: { kind: "hint-uses", text: "נפתח רמז חדש! המספר הירוק - כמה מילים שעוברות באות הזו נותרו" },
+  2: { kind: "hint-uses", text: "נפתח רמז חדש! המספר הכתום - כמה מילים שעוברות באות הזו נותרו" },
 } as const;
 
 export interface Game {

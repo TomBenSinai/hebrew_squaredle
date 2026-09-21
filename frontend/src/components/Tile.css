@@ -17,7 +17,7 @@
 .tile.show { background: var(--cobalt-soft); }
 .tile.show.bonus { background: var(--amber-soft); }
 /* Small counts in the corners: words that start here (top, where Hebrew
-   starts reading, blue) and words that pass through (bottom, green). */
+   starts reading, blue) and words that pass through (bottom, orange). */
 .tile .hint {
   position: absolute;
   font-family: var(--body);
