@@ -202,6 +202,21 @@ docker exec <nginx> nginx -t && docker exec <nginx> nginx -s reload
 Renewal needs nothing new: the existing certbot loop renews every certificate
 in its `/etc/letsencrypt`, ribuon's included.
 
+### 3. Make sure the renewed certificate is actually served
+
+Certbot writing a new certificate is not enough - nginx holds the old one in
+memory until it is reloaded, and a `certbot renew` loop has no way to signal a
+container it does not know about. Without this, both sites eventually serve an
+expired certificate while the files on disk are perfectly current:
+
+```bash
+(crontab -l 2>/dev/null || true; \
+ echo '0 3 * * * docker exec <nginx> nginx -s reload >/dev/null 2>&1') | crontab -
+```
+
+A reload is graceful - in-flight requests finish on the old workers - so a
+daily one costs nothing.
+
 ### To undo
 
 `docker compose -f docker-compose.behind-proxy.yml down`, restore the nginx
