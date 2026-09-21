@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button } from "./components";
+import { Button, Pill, RotateIcon } from "./components";
 import { api } from "./api/client";
 import type { DaysResponse } from "./api/types";
 import { ArchiveModal } from "./features/ArchiveModal";
@@ -47,7 +47,7 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
   const closeHelp = () => { setHelpOpen(false); markHelpSeen(); };
 
   const tileRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const { phase, spin } = useSpin(game.rotate);
+  const { phase, turns, spin } = useSpin(game.rotate);
   const { path, handlers } = useSwipe(layout, tileRefs, game.submit, phase !== "idle");
 
   const isToday = board.date === days.today;
@@ -78,7 +78,10 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
         </div>
 
         <div className="tools">
-          <Button onClick={spin}>סיבוב</Button>
+          <Pill className="round spinbtn" aria-label="סיבוב הלוח" onClick={spin}>
+            <span className="spinicon" style={{ transform: `rotate(${turns * -90}deg)` }}><RotateIcon /></span>
+            <span className="tip" aria-hidden="true">סיבוב</span>
+          </Pill>
           <Button className="wordsbtn" onClick={() => setWordsOpen(true)}>המילים (<b>{found.length}</b>)</Button>
         </div>
       </section>

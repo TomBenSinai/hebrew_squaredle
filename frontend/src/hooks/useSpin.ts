@@ -7,11 +7,14 @@ const reduceMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)
 /** The board turns a quarter, then snaps back with the letters re-laid upright. */
 export function useSpin(rotate: () => void) {
   const [phase, setPhase] = useState<SpinPhase>("idle");
+  // Counts up rather than wrapping at 4, so the button's icon always turns onwards.
+  const [turns, setTurns] = useState(0);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
   const spin = useCallback(() => {
     if (phase !== "idle") return;
+    setTurns(t => t + 1);
     if (reduceMotion()) { rotate(); return; }
     setPhase("spin");
     timers.current = [
@@ -20,5 +23,5 @@ export function useSpin(rotate: () => void) {
     ];
   }, [phase, rotate]);
 
-  return { phase, spin };
+  return { phase, turns, spin };
 }
