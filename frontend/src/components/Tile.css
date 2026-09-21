@@ -18,18 +18,27 @@
 .tile.show.bonus { background: var(--amber-soft); }
 /* Small counts in the corners: words that start here (top, where Hebrew
    starts reading, blue) and words that pass through (bottom, orange). */
+/* Each sits on a chip tinted with its own color, which reads better than
+   bare colored digits and tells the two apart at a glance. */
 .tile .hint {
   position: absolute;
+  min-width: 1.5em;
+  padding: .16em .3em;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--hint) 15%, var(--paper));
+  color: var(--hint);
   font-family: var(--body);
-  font-weight: 700;
-  font-size: max(10px, calc(var(--cell) * .15));
+  font-weight: 800;
+  font-size: max(11px, calc(var(--cell) * .17));
   line-height: 1;
+  text-align: center;
   font-variant-numeric: tabular-nums;
   pointer-events: none;
   animation: hintpop .45s var(--ease-out) both;
 }
-.tile .hint.starts { top: 9%; right: 10%; color: var(--hint-starts); }
-.tile .hint.uses { bottom: 9%; left: 10%; color: var(--hint-uses); }
-.tile.on .hint { color: inherit; opacity: .7; }
+.tile .hint.starts { --hint: var(--hint-starts); top: 6%; right: 6%; }
+.tile .hint.uses { --hint: var(--hint-uses); bottom: 6%; left: 6%; }
+/* on a swiped (dark) tile the chip turns plain paper so it still shows */
+.tile.on .hint { background: var(--paper); }
 @keyframes hintpop { from { transform: scale(1.8); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .tile .hint { animation: none; } }
