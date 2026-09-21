@@ -1,0 +1,15 @@
+# Production API image. The repo (wordgame.py, boards/, shapes.json and this
+# backend) is bind-mounted read-only at /repo, so a `git pull` is enough to
+# publish new boards; only dependency changes need a rebuild.
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /repo/backend
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+ENV PYTHONPATH=/repo RIVUON_ROOT=/repo RIVUON_DB=/data/rivuon.db
+EXPOSE 8000
+# One worker on purpose: progress lives in a SQLite file guarded by a process lock.
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

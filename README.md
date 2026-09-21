@@ -12,6 +12,7 @@ Python 3.10+, standard library only (the game side runs offline as-is).
 
 **More docs:** [docs/GAME.md](docs/GAME.md) (rules and screen), [docs/ALGORITHM.md](docs/ALGORITHM.md)
 (how boards are made), [docs/BOARDS.md](docs/BOARDS.md) (how-to for boards, shapes and themes),
+[docs/DEPLOY.md](docs/DEPLOY.md) (putting it online at ribuon.com),
 and [skills/rivuon-boards/SKILL.md](skills/rivuon-boards/SKILL.md) (a Claude skill for creating boards).
 
 ## Files

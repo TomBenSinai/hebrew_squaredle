@@ -1,0 +1,40 @@
+# Caddy config for ribuon.com. Mounted read-only into the `web` container by
+# docker-compose.prod.yml; RIVUON_DOMAIN comes from the .env in the repo root.
+#
+# Certificates are issued and renewed automatically - nothing to do but point
+# the DNS at this machine and leave ports 80 and 443 open.
+{
+	# Uncomment for certificate-expiry mail from Let's Encrypt:
+	# email you@example.com
+}
+
+www.{$RIVUON_DOMAIN:ribuon.com} {
+	redir https://{$RIVUON_DOMAIN:ribuon.com}{uri} permanent
+}
+
+{$RIVUON_DOMAIN:ribuon.com} {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	# The API. Same origin as the site, so no CORS and no third-party cookies.
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		root * /srv
+		# Vite hashes asset filenames, so those can be cached forever; index.html
+		# must not be, or a deploy never reaches anyone.
+		@hashed path /assets/*
+		header @hashed Cache-Control "public, max-age=31536000, immutable"
+		@rest not path /assets/*
+		header @rest Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}
