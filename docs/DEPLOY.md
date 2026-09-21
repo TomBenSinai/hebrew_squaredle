@@ -24,16 +24,18 @@ the orange cloud on once the certificate has been issued.
 
 ## 1. DNS
 
-At the registrar for `ribuon.com`, point both names at the server's IP:
+`ribuon.com` is registered through Squarespace, and its DNS is served by
+`nse1-4.squarespacedns.com`. In the Squarespace DNS panel, delete the parking
+records and point both names at the VPS (`164.92.191.7`):
 
 ```
-A     ribuon.com       <server-ip>
-A     www.ribuon.com   <server-ip>
+A     ribuon.com       164.92.191.7
+A     www.ribuon.com   164.92.191.7
 ```
 
 (Plus `AAAA` records if the VPS has IPv6.) Wait until `dig +short ribuon.com`
-returns the IP before starting the stack - Caddy needs the name to resolve to
-get a certificate.
+returns that address before asking for a certificate - the HTTP-01 challenge
+resolves the name from outside.
 
 ## 2. Server prep
 
@@ -140,31 +142,77 @@ docker compose -f docker-compose.prod.yml start api
 The certificates live in the `caddy-data` volume. Keep it; deleting it makes
 Caddy re-issue, and Let's Encrypt rate-limits repeats of the same name.
 
-## If the server already serves other sites
+## Sharing a server with another site
 
-Don't run this `web` container - it wants 80 and 443. Instead build the site and
-let the existing proxy serve it:
+This is the case on the VPS the game actually runs on: a `nginx:alpine`
+container from another compose project holds 80 and 443, with a `certbot`
+container renewing its certificate from a webroot. Nothing has to move. That
+nginx starts routing by hostname, and ribuon runs as its own compose project
+with **nothing published to the host** - the front nginx reaches it by
+container name over the shared Docker network.
+
+```
+:443  nginx (the other site's)  ->  miri-regev-...   its own root
+                                ->  ribuon.com       rivuon-web:80
+                                                       |- /srv        the site
+                                                       `- /api/*   -> rivuon-api:8000
+```
+
+Use `docker-compose.behind-proxy.yml` instead of `docker-compose.prod.yml`.
+It is the same two containers with `auto_https off`, no host ports, and the
+front proxy's network joined from outside.
+
+### 1. Bring ribuon up
 
 ```bash
-compose="docker compose -f docker-compose.prod.yml"
-$compose up -d api                       # api only
-$compose build web
-id=$(docker create "$($compose images -q web)")
-docker cp "$id:/srv" /var/www/ribuon.com && docker rm "$id"
+git clone git@github.com:TomBenSinai/hebrew_squaredle.git /root/rivuon
+cd /root/rivuon
+cp deploy/env.example .env
+# set RIVUON_PROXY_NETWORK to the front proxy's network:
+docker inspect <that-nginx-container> --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}'
+
+docker compose -f docker-compose.behind-proxy.yml up -d --build
+docker exec <that-nginx-container> wget -qO- http://rivuon-web/api/health   # proves the hop
 ```
 
-and publish the API on the loopback (add `ports: ["127.0.0.1:8001:8000"]` to
-`api`), then in nginx:
+Free the build cache afterwards if the disk is tight: `docker builder prune -f`.
 
-```nginx
-root /var/www/ribuon.com;
-location / { try_files $uri /index.html; }
-location /api/ { proxy_pass http://127.0.0.1:8001; }
+### 2. Certificate, then the vhost
+
+`deploy/nginx-ribuon.conf` holds the server blocks. The port-80 block has to be
+live *before* certbot can answer the challenge, so it goes in two passes. Back
+the config up first, and never reload without `nginx -t`.
+
+```bash
+conf=/root/mbti-app/frontend/nginx.conf            # whatever that nginx mounts into conf.d
+cp "$conf" "$conf.bak-$(date +%F)"
+
+# pass 1: the listen-80 block only (up to the first `listen 443`)
+sed -n '1,/^server {$/p' /root/rivuon/deploy/nginx-ribuon.conf  # ...append that block
+docker exec <nginx> nginx -t && docker exec <nginx> nginx -s reload
+
+# the certificate, through the webroot that nginx already serves
+docker compose -f /root/mbti-app/docker-compose.yml run --rm certbot \
+  certonly --webroot -w /var/www/certbot -d ribuon.com -d www.ribuon.com
+
+# pass 2: append the two listen-443 blocks
+docker exec <nginx> nginx -t && docker exec <nginx> nginx -s reload
 ```
 
-The rules that matter wherever it is served: `/api` must be the **same origin**
-as the page, `index.html` must not be cached, and `/assets/*` may be cached
-forever.
+Renewal needs nothing new: the existing certbot loop renews every certificate
+in its `/etc/letsencrypt`, ribuon's included.
+
+### To undo
+
+`docker compose -f docker-compose.behind-proxy.yml down`, restore the nginx
+config from the `.bak` copy, and reload. The other site is never touched: its
+container, its config file's own server blocks and its certificate all stay as
+they were.
+
+### Wherever it is served
+
+Three rules survive any proxy: `/api` must be the **same origin** as the page,
+`index.html` must not be cached, and `/assets/*` may be cached forever.
 
 ## Troubleshooting
 

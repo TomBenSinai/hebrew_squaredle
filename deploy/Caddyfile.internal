@@ -1,0 +1,36 @@
+# Caddy behind someone else's reverse proxy (docker-compose.behind-proxy.yml).
+#
+# The proxy in front owns ports 80/443 and terminates TLS; this Caddy only
+# speaks plain HTTP on :80 inside the Docker network. Everything else is the
+# same as deploy/Caddyfile, so /api stays same-origin with the page.
+
+{
+	auto_https off
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+:80 {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		root * /srv
+		@hashed path /assets/*
+		header @hashed Cache-Control "public, max-age=31536000, immutable"
+		@rest not path /assets/*
+		header @rest Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}
