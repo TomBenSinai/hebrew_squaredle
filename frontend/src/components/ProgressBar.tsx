@@ -6,6 +6,7 @@ export interface Mark {
   at: number;
   /** any CSS color */
   color: string;
+  /** what the point means, shown on hover, focus or tap */
   label: string;
 }
 
@@ -25,13 +26,23 @@ export function ProgressBar({ value, variant = "bar", label, marks = [] }: Props
   if (variant === "slim") {
     return <span className="pbar slim" aria-hidden="true"><i style={{ width }} /></span>;
   }
-  return (
+  const bar = (
     <div className="pbar" role="progressbar" aria-label={label}
       aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(value)}>
       <i style={{ width }} />
+    </div>
+  );
+  if (!marks.length) return bar;
+  // the marks sit outside the bar, which clips, so their labels can show above it
+  return (
+    <div className="pbarwrap">
+      {bar}
       {marks.map(m => (
-        <b key={m.at} className={"mark" + (value >= m.at ? " reached" : "")} title={m.label}
-          style={{ insetInlineStart: `${m.at}%`, "--mark": m.color } as CSSProperties} />
+        <span key={m.at} className={"mark" + (value >= m.at ? " reached" : "")} tabIndex={0}
+          role="note" aria-label={m.label}
+          style={{ insetInlineStart: `${m.at}%`, "--mark": m.color, "--at": m.at } as CSSProperties}>
+          <span className="tip" aria-hidden="true">{m.label}</span>
+        </span>
       ))}
     </div>
   );
