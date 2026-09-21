@@ -16,7 +16,9 @@
 .toastbtn .tw { text-decoration: underline dotted 1.5px; text-underline-offset: 5px; }
 /* under a find that unlocked tile numbers, in that number's color */
 .toast .note {
-  font-size: .85rem; line-height: 1.15;
+  /* one line even on a 360px phone */
+  font-size: min(.85rem, 3.5vw); line-height: 1.15;
+  text-wrap: balance;
   animation: notein .4s var(--ease-out) .25s both;
 }
 .toast .note.hint-starts { color: var(--hint-starts); }
