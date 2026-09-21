@@ -1,0 +1,38 @@
+<!doctype html>
+<!--
+  Source of frontend/public/og.png, the link preview card. Regenerate after a
+  wording or colour change (needs Chrome and a network, for the web fonts):
+
+    chrome --headless --window-size=1200,630 --virtual-time-budget=8000 \
+      --screenshot=frontend/public/og.png deploy/og-image.html
+-->
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800&family=Assistant:wght@600&display=swap">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1200px; height: 630px; background: #111111; color: #F2F2F0;
+    display: flex; align-items: center; justify-content: center; gap: 64px;
+    font-family: "Rubik", "Arial Hebrew", sans-serif;
+  }
+  .mark { display: grid; grid-template-columns: 104px 104px; gap: 18px; flex: none; }
+  .mark i { width: 104px; height: 104px; border-radius: 24px; background: #F2F2F0; }
+  .mark i.hot { background: #E3A52B; }
+  h1 { font-size: 132px; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+  p { font-family: "Assistant", "Arial Hebrew", sans-serif; font-weight: 600;
+      font-size: 42px; color: #9A9A96; margin-top: 22px; }
+  .dot { color: #E3A52B; }
+</style>
+</head>
+<body>
+  <div>
+    <h1>ריבועון</h1>
+    <p>משחק מילים יומי <span class="dot">·</span> ribuon.com</p>
+  </div>
+  <div class="mark"><i class="hot"></i><i></i><i></i><i></i></div>
+</body>
+</html>
