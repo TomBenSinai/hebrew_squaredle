@@ -28,7 +28,7 @@ export function Tile({ letter, row, col, state = "idle", dead, starts, uses, ref
     <div ref={ref} className={cls} style={{ gridRow: row + 1, gridColumn: col + 1 }} aria-label={"האות " + letter}>
       {letter}
       {/* keyed by the count, so it pops again each time it drops */}
-      {!!starts && <span key={`s${starts}`} className="hint starts" aria-hidden="true">{starts}</span>}
+      {!!starts && <span key={`s${starts}`} className={"hint starts" + (starts >= 10 ? " wide" : "")} aria-hidden="true">{starts}</span>}
       {!!uses && <span key={`u${uses}`} className="hint uses" aria-hidden="true">{uses}</span>}
     </div>
   );
