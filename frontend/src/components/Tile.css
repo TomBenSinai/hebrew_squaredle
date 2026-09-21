@@ -16,13 +16,9 @@
 .tile.on { background: var(--cobalt); color: var(--cobalt-ink); transform: scale(.94); opacity: 1; }
 .tile.show { background: var(--cobalt-soft); }
 .tile.show.bonus { background: var(--amber-soft); }
-/* Small counts in the corners: words that start here (top, where Hebrew
-   starts reading, blue) and words that pass through (bottom, orange). */
-/* Two forms, so color isn't the only difference:
-   - starts: a folded corner where a Hebrew word begins, there only while
-     some word still starts on this letter, the count printed on it;
-   - uses: a plain numeral like a Scrabble tile's value. */
-.tile:has(.hint) { overflow: hidden; }
+/* Small counts in the corners, plain numerals like a Scrabble tile's value:
+   words that start here (top, where Hebrew starts reading) and words that
+   pass through (bottom). */
 .tile .hint {
   position: absolute;
   font-family: var(--display);
@@ -31,28 +27,11 @@
   line-height: 1;
   font-variant-numeric: tabular-nums;
   pointer-events: none;
-}
-.tile .hint.starts {
-  top: 0; right: 0;
-  width: 44%; aspect-ratio: 1;
-  text-align: right;
-  padding: 6% 7% 0 0;
-  box-sizing: border-box;
-  background: var(--hint-starts);
-  color: var(--paper);
-  clip-path: polygon(0 0, 100% 0, 100% 100%);
-  transform-origin: top right;
-  animation: fold .4s var(--ease-out) both;
-}
-/* two digits: smaller and tucked closer in, to clear the fold's edge */
-.tile .hint.starts.wide { font-size: max(10px, calc(var(--cell) * .13)); padding: 5% 5% 0 0; }
-.tile .hint.uses {
-  bottom: 8%; left: 10%;
-  color: var(--hint-uses);
   animation: tick .4s var(--ease-out) both;
 }
-/* a swiped tile flips to ink: the numeral follows it */
-.tile.on .hint.uses { color: inherit; opacity: .75; }
-@keyframes fold { from { transform: scale(0); } }
-@keyframes tick { from { transform: translateY(40%); opacity: 0; } }
+.tile .hint.starts { top: 8%; right: 10%; color: var(--hint-starts); }
+.tile .hint.uses { bottom: 8%; left: 10%; color: var(--hint-uses); }
+/* a swiped tile flips to ink: the numerals follow it */
+.tile.on .hint { color: inherit; opacity: .75; }
+@keyframes tick { from { transform: translateY(-40%); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .tile .hint { animation: none; } }

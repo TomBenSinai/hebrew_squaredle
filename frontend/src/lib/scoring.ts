@@ -21,9 +21,11 @@ export function letterFraction(found: FoundWord[], mainLetters: number): number 
 /** Tile numbers unlock with progress: first how many words start at a letter, then how many use it. */
 export const HINT_STARTS_AT = 0.45;
 export const HINT_USES_AT = 0.75;
+/** The second hint (words using a letter) is switched off for now: it never unlocks. */
+export const SHOW_USES_HINT = false;
 export type HintLevel = 0 | 1 | 2;
 export const hintLevel = (frac: number): HintLevel =>
-  frac >= HINT_USES_AT ? 2 : frac >= HINT_STARTS_AT ? 1 : 0;
+  SHOW_USES_HINT && frac >= HINT_USES_AT ? 2 : frac >= HINT_STARTS_AT ? 1 : 0;
 
 /** Same as word_points in wordgame.py: by letter count, bonus words double. */
 const POINTS_BY_LENGTH: Record<number, number> = { 4: 1, 5: 2, 6: 3, 7: 5 };
