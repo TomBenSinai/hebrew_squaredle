@@ -129,7 +129,6 @@ export function useGame(date: string | null): { game: Game | null; error: string
       setToast(prev.cat === "bonus"
         ? { kind: "bonus", text: `בונוס · ${prev.w} כבר נמצאה`, word: prev.w }
         : { kind: "info", text: `${prev.w} כבר נמצאה`, word: prev.w });
-      showWord(prev.w);
       return;
     }
     const date = board.date;
@@ -161,7 +160,7 @@ export function useGame(date: string | null): { game: Game | null; error: string
       else if (theme) say({ kind: "main", text: `★ ${w} · מילת נושא · ${pointsText(points)}`, word: w });
       else say({ kind: "main", text: `${w} · ${pointsText(points)}`, word: w });
     }).catch(() => say({ kind: "bad", text: "אין חיבור לשרת, נסו שוב" }));
-  }, [board, layout, update, showWord]);
+  }, [board, layout, update]);
 
   const rotate = useCallback(() => {
     if (board) update(board.date, p => ({ ...p, rot: (p.rot + 1) % 4 }));
