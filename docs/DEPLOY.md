@@ -86,6 +86,8 @@ there (that is the API and the database round-trip, not just localStorage).
 
 ## 5. Updating
 
+Reach the server by its name, not its address: `ssh root@ribuon.com`.
+
 ```bash
 cd /srv/rivuon && git pull
 ```
@@ -164,6 +166,8 @@ front proxy's network joined from outside.
 
 ### 1. Bring ribuon up
 
+Log in with `ssh root@ribuon.com`, then:
+
 ```bash
 git clone git@github.com:TomBenSinai/hebrew_squaredle.git /root/rivuon
 cd /root/rivuon
@@ -216,6 +220,15 @@ expired certificate while the files on disk are perfectly current:
 
 A reload is graceful - in-flight requests finish on the old workers - so a
 daily one costs nothing.
+
+### Updating
+
+```bash
+ssh root@ribuon.com
+cd /root/rivuon && git pull --ff-only
+docker compose -f docker-compose.behind-proxy.yml up -d --build web   # or api, per section 5
+curl -s https://ribuon.com/api/health
+```
 
 ### To undo
 
