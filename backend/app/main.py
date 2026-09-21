@@ -3,7 +3,8 @@
   GET  /api/days                        playable days (newest last) with totals
   GET  /api/boards/{date}               letters, shape, counts (never the words)
   POST /api/boards/{date}/check         {path: [cells]} -> main / bonus / not_a_word ...
-  POST /api/boards/{date}/live-cells    {found: [words]} -> cells some unfound main word still uses
+  POST /api/boards/{date}/live-cells    {found: [words]} -> cells some unfound main word still uses,
+                                        and per cell how many unfound main words start at / use it
   GET  /api/progress                    this player's progress on every day
   GET  /api/progress/{date}
   PUT  /api/progress/{date}             {found, rot}; merged with what's stored, words re-checked
@@ -68,7 +69,8 @@ def check(body: CheckIn, d: Day = Depends(day)):
 
 @app.post("/api/boards/{date}/live-cells")
 def live_cells(body: FoundIn, d: Day = Depends(day)):
-    return {"cells": d.live_cells(body.found)}
+    counts = d.cell_counts(body.found)
+    return {"cells": [c for c, n in enumerate(counts["uses"]) if n], **counts}
 
 
 @app.get("/api/progress")

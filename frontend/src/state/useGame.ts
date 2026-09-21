@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api/client";
-import type { DayProgress, FoundWord, PublicBoard } from "../api/types";
+import type { CellCounts, DayProgress, FoundWord, PublicBoard } from "../api/types";
 import { norm, withFinal } from "../lib/hebrew";
 import { findPath, makeLayout, type Layout } from "../lib/layout";
-import { pointsText } from "../lib/scoring";
+import { hintLevel, letterFraction, pointsText, type HintLevel } from "../lib/scoring";
 import { progressStore } from "./progressStore";
 
 export const MIN_LEN = 4;
 
-export type ToastKind = "main" | "bonus" | "bad" | "info";
+export type ToastKind = "main" | "bonus" | "bad" | "info" | "hint";
 export interface Toast {
   kind: ToastKind;
   text: string;
@@ -24,6 +24,8 @@ export interface Game {
   fresh: string | null;
   /** shown cells that some unfound main word still uses (null until known) */
   live: Set<number> | null;
+  /** tile numbers the player has unlocked, per shown cell (null until known) */
+  hints: Hints | null;
   toast: Toast | null;
   /** a swiped word waiting for the server's answer, shown in place of the toast */
   pending: string | null;
@@ -35,11 +37,19 @@ export interface Game {
   isBonus: (word: string) => boolean;
 }
 
+export interface Hints {
+  level: HintLevel;
+  /** unfound main words that start at each shown cell */
+  starts: number[];
+  /** unfound main words that pass through each shown cell */
+  uses: number[];
+}
+
 /** One day's board and this player's progress on it. */
 export function useGame(date: string | null): { game: Game | null; error: string | null } {
   const [board, setBoard] = useState<PublicBoard | null>(null);
   const [progress, setProgress] = useState<DayProgress>({ found: [], rot: 0 });
-  const [liveBase, setLiveBase] = useState<number[] | null>(null);
+  const [counts, setCounts] = useState<CellCounts | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   const [pending, setPending] = useState<string | null>(null);
   // only the latest swipe may set the message (answers can arrive out of order)
@@ -52,6 +62,8 @@ export function useGame(date: string | null): { game: Game | null; error: string
   dateRef.current = date;
   // the latest progress, readable at once (swipes can come faster than renders)
   const progressRef = useRef(progress);
+  // the hint level the player has already been told about (null: day just opened)
+  const shownLevel = useRef<HintLevel | null>(null);
 
   useEffect(() => {
     if (!date) return;
@@ -66,7 +78,8 @@ export function useGame(date: string | null): { game: Game | null; error: string
       setPending(null);
       submitSeq.current++;
       setFresh(null);
-      setLiveBase(null);
+      setCounts(null);
+      shownLevel.current = null;
       setFlashWord(null);
     }).catch(() => { if (!stale) setError("לא הצלחנו לטעון את הלוח"); });
     return () => { stale = true; };
@@ -77,22 +90,47 @@ export function useGame(date: string | null): { game: Game | null; error: string
     [board, progress.rot],
   );
 
-  // grey out letters no remaining main word needs; only main finds change this
+  // grey out letters no remaining main word needs, and count what's left on
+  // each; only main finds change this
   const mainKey = progress.found.filter(f => f.cat === "main").map(f => f.w).join(" ");
   useEffect(() => {
     if (!board) return;
     let stale = false;
     api.liveCells(board.date, mainKey ? mainKey.split(" ") : [])
-      .then(r => { if (!stale) setLiveBase(r.cells); })
+      .then(r => { if (!stale) setCounts(r); })
       .catch(() => {});
     return () => { stale = true; };
   }, [board, mainKey]);
 
   const live = useMemo(() => {
-    if (!layout || !liveBase) return null;
-    const set = new Set(liveBase);
+    if (!layout || !counts) return null;
+    const set = new Set(counts.cells);
     return new Set(layout.base.flatMap((b, i) => (set.has(b) ? [i] : [])));
-  }, [layout, liveBase]);
+  }, [layout, counts]);
+
+  const level = board ? hintLevel(letterFraction(progress.found, board.mainLetters)) : 0;
+  const hints = useMemo((): Hints | null => {
+    if (!layout || !counts) return null;
+    return { level, starts: layout.base.map(b => counts.starts[b]), uses: layout.base.map(b => counts.uses[b]) };
+  }, [layout, counts, level]);
+
+  // say so when a find unlocks the next numbers (not when a day opens with them)
+  const hintTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => {
+    if (!board) return;
+    const before = shownLevel.current;
+    shownLevel.current = level;
+    if (before === null || level <= before) return;
+    const seq = submitSeq.current;
+    // after the found word's own message has had a moment
+    hintTimer.current = setTimeout(() => {
+      if (submitSeq.current !== seq) return;
+      setToast(level === 1
+        ? { kind: "hint", text: "✨ המספר למעלה: כמה מילים מתחילות באות" }
+        : { kind: "hint", text: "✨ המספר למטה: בכמה מילים האות נמצאת" });
+    }, 1500);
+  }, [board, level]);
+  useEffect(() => () => clearTimeout(hintTimer.current), []);
 
   const update = useCallback((date: string, fn: (p: DayProgress) => DayProgress) => {
     const next = fn(progressRef.current);
@@ -173,7 +211,7 @@ export function useGame(date: string | null): { game: Game | null; error: string
 
   if (!board || !layout || board.date !== date) return { game: null, error };
   return {
-    game: { board, layout, found: progress.found, fresh, live, toast, pending, flash, showWord, submit, rotate, isBonus },
+    game: { board, layout, found: progress.found, fresh, live, hints, toast, pending, flash, showWord, submit, rotate, isBonus },
     error,
   };
 }

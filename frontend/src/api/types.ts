@@ -28,6 +28,16 @@ export type CheckResult =
   | { status: Category; word: string; points: number; theme: boolean }
   | { status: "not_a_word" | "too_short" | "bad_path" };
 
+/** Per stored cell, over the main words not found yet. */
+export interface CellCounts {
+  /** cells some of them still use */
+  cells: number[];
+  /** how many start at each cell */
+  starts: number[];
+  /** how many pass through each cell */
+  uses: number[];
+}
+
 export interface FoundWord {
   w: string;
   cat: Category;

@@ -147,27 +147,32 @@ class Day:
                 out.append({"w": r["word"], "cat": r["status"], "theme": r["theme"]})
         return out
 
-    def live_cells(self, found) -> list[int]:
-        """Cells that some main word not found yet still passes through."""
+    def cell_counts(self, found) -> dict:
+        """For each cell, how many main words not found yet start there and pass
+        through it. A word counts once per cell however many paths spell it."""
         found = set(found)
         letters, nbrs = self.board.grid, self.nbrs
-        live: set[int] = set()
+        starts, uses = [0] * len(letters), [0] * len(letters)
 
-        def walk(key: str, k: int, cell: int, used: list[int]) -> None:
+        def walk(key: str, k: int, cell: int, used: list[int], hit: set[int]) -> bool:
             if k == len(key):
-                live.update(used)
-                return
+                hit.update(used)
+                return True
+            ok = False
             for n in nbrs[cell]:
                 if letters[n] == key[k] and n not in used:
                     used.append(n)
-                    walk(key, k + 1, n, used)
+                    ok = walk(key, k + 1, n, used, hit) or ok
                     used.pop()
+            return ok
 
         for w in self.board.main:
             if w in found:
                 continue
-            key = normalize(w)
+            key, hit = normalize(w), set()
             for s, ch in enumerate(letters):
-                if ch == key[0]:
-                    walk(key, 1, s, [s])
-        return sorted(live)
+                if ch == key[0] and walk(key, 1, s, [s], hit):
+                    starts[s] += 1
+            for c in hit:
+                uses[c] += 1
+        return {"starts": starts, "uses": uses}
