@@ -1,0 +1,48 @@
+# Production stack for ribuon.com -- see docs/DEPLOY.md.
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# web: Caddy. Terminates TLS (automatic certificates), serves the built site
+#      and proxies /api to the api service, so everything is one origin.
+# api: uvicorn/FastAPI. Reads the repo read-only; progress lives in a volume.
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    volumes:
+      - ./:/repo:ro                   # wordgame.py, boards/, shapes.json, backend code
+      - rivuon-db:/data               # rivuon.db, the players' progress
+    environment:
+      RIVUON_DB: /data/rivuon.db
+    expose:
+      - "8000"                        # reachable from web only, never from outside
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      RIVUON_DOMAIN: ${RIVUON_DOMAIN:-ribuon.com}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data              # certificates -- keep this volume, or you re-issue
+      - caddy-config:/config
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"                 # HTTP/3
+
+volumes:
+  rivuon-db:
+  caddy-data:
+  caddy-config:
