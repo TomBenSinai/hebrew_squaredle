@@ -1,4 +1,5 @@
-import { ProgressBar } from "../components";
+import { ProgressBar, type Mark } from "../components";
+import { HINT_STARTS_AT, HINT_USES_AT } from "../lib/scoring";
 import "./Score.css";
 
 interface Props {
@@ -13,6 +14,12 @@ interface Props {
   fresh: string | null;
 }
 
+// where the tile numbers unlock, in the numbers' own colors
+const HINT_MARKS: Mark[] = [
+  { at: 100 * HINT_STARTS_AT, color: "var(--hint-starts)", label: "רמז: כמה מילים מתחילות בכל אות" },
+  { at: 100 * HINT_USES_AT, color: "var(--hint-uses)", label: "רמז: בכמה מילים כל אות נמצאת" },
+];
+
 export function Score({ found, total, points, rank, fraction, fresh }: Props) {
   return (
     <div className="score">
@@ -26,7 +33,7 @@ export function Score({ found, total, points, rank, fraction, fresh }: Props) {
           <span className="rank">{rank}</span>
         </span>
       </div>
-      <ProgressBar value={100 * fraction} label="התקדמות" />
+      <ProgressBar value={100 * fraction} label="התקדמות" marks={HINT_MARKS} />
     </div>
   );
 }

@@ -19,6 +19,23 @@
   animation: crawl 1.2s linear infinite;
 }
 @keyframes crawl { to { background-position: -22.6px 0, 0 0; } }
+.pbar .mark {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  width: 10px; height: 10px;
+  margin-inline-start: -5px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 2px var(--mark);
+  transition: background .3s ease, transform .3s var(--ease-out);
+}
+.pbar .mark.reached {
+  background: var(--mark);
+  box-shadow: 0 0 0 2px var(--paper);
+  transform: translateY(-50%) scale(1.15);
+}
 
 .pbar.slim {
   display: block;

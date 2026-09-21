@@ -8,7 +8,7 @@ import { progressStore } from "./progressStore";
 
 export const MIN_LEN = 4;
 
-export type ToastKind = "main" | "bonus" | "bad" | "info" | "hint";
+export type ToastKind = "main" | "bonus" | "bad" | "info" | "hint-starts" | "hint-uses";
 export interface Toast {
   kind: ToastKind;
   text: string;
@@ -126,8 +126,8 @@ export function useGame(date: string | null): { game: Game | null; error: string
     hintTimer.current = setTimeout(() => {
       if (submitSeq.current !== seq) return;
       setToast(level === 1
-        ? { kind: "hint", text: "✨ המספר למעלה: כמה מילים מתחילות באות" }
-        : { kind: "hint", text: "✨ המספר למטה: בכמה מילים האות נמצאת" });
+        ? { kind: "hint-starts", text: "רמז חדש: המספר הכחול - כמה מילים מתחילות באות" }
+        : { kind: "hint-uses", text: "רמז חדש: המספר הירוק - בכמה מילים האות נמצאת" });
     }, 1500);
   }, [board, level]);
   useEffect(() => () => clearTimeout(hintTimer.current), []);

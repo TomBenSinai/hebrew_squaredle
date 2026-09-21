@@ -11,6 +11,8 @@
   --amber-fill: #E3A52B;
   --amber-soft: #F6EACB;
   --bad: #B3261E;
+  --hint-starts: #1F5FC4;
+  --hint-uses: #1E8A4F;
   --shadow: 0 1px 0 rgba(0, 0, 0, .06), 0 6px 14px -9px rgba(0, 0, 0, .3);
   --display: "Rubik", "Segoe UI", "Arial Hebrew", Arial, sans-serif;
   --body: "Assistant", "Segoe UI", "Arial Hebrew", Arial, sans-serif;
@@ -31,6 +33,8 @@
     --amber-fill: #F0B94D;
     --amber-soft: #382B12;
     --bad: #FF8A80;
+    --hint-starts: #7EABF5;
+    --hint-uses: #6FD39A;
     --shadow: 0 1px 0 rgba(0, 0, 0, .4), 0 8px 18px -10px rgba(0, 0, 0, .8);
     color-scheme: dark;
   }
@@ -48,6 +52,8 @@
   --amber-fill: #F0B94D;
   --amber-soft: #382B12;
   --bad: #FF8A80;
+  --hint-starts: #7EABF5;
+  --hint-uses: #6FD39A;
   --shadow: 0 1px 0 rgba(0, 0, 0, .4), 0 8px 18px -10px rgba(0, 0, 0, .8);
   color-scheme: dark;
 }

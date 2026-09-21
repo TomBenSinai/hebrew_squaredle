@@ -11,6 +11,8 @@
 .helpsec li { font-size: 1.02rem; line-height: 1.5; }
 .helpsec li b { font-weight: 700; }
 .helpsec li b.bonusword { color: var(--amber); }
+.helpsec li b.hintstarts { color: var(--hint-starts); }
+.helpsec li b.hintuses { color: var(--hint-uses); }
 .helpactions { margin-top: 22px; }
 .helpactions .btn { width: 100%; padding-block: 11px; font-size: 1.05rem; }
 

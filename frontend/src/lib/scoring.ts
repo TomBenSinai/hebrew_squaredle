@@ -19,8 +19,8 @@ export function letterFraction(found: FoundWord[], mainLetters: number): number 
 }
 
 /** Tile numbers unlock with progress: first how many words start at a letter, then how many use it. */
-export const HINT_STARTS_AT = 0.25;
-export const HINT_USES_AT = 0.5;
+export const HINT_STARTS_AT = 0.45;
+export const HINT_USES_AT = 0.75;
 export type HintLevel = 0 | 1 | 2;
 export const hintLevel = (frac: number): HintLevel =>
   frac >= HINT_USES_AT ? 2 : frac >= HINT_STARTS_AT ? 1 : 0;
