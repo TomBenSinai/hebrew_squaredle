@@ -13,7 +13,7 @@ import { WordsModal, WordsPanel } from "./features/WordsModal";
 import { useSpin } from "./hooks/useSpin";
 import { useSwipe } from "./hooks/useSwipe";
 import { withFinal } from "./lib/hebrew";
-import { letterFraction, rankFor } from "./lib/scoring";
+import { letterFraction, rankFor, totalPoints } from "./lib/scoring";
 import { progressStore } from "./state/progressStore";
 import { useGame, type Game } from "./state/useGame";
 import "./App.css";
@@ -68,7 +68,8 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
           onToday={() => setDate(days.today)} onArchive={() => setArchiveOpen(true)}
           onHelp={() => setHelpOpen(true)} />
 
-        <Score found={mainFound} total={board.mainTotal} rank={rankFor(fraction)} fraction={fraction} />
+        <Score found={mainFound} total={board.mainTotal} points={totalPoints(found)} rank={rankFor(fraction)}
+          fraction={fraction} fresh={game.fresh} />
 
         <div className="boardwrap" style={boardVars(layout)}>
           <Readout current={withFinal(path.map(i => layout.letters[i]).join("")) || game.pending || ""}

@@ -18,6 +18,12 @@ export function letterFraction(found: FoundWord[], mainLetters: number): number 
   return mainLetters ? got / mainLetters : 0;
 }
 
+/** Same as word_points in wordgame.py: by letter count, bonus words double. */
+const POINTS_BY_LENGTH: Record<number, number> = { 4: 1, 5: 2, 6: 3, 7: 5 };
+export const wordPoints = (f: FoundWord) =>
+  (POINTS_BY_LENGTH[letterCount(f.w)] ?? 11) * (f.cat === "bonus" ? 2 : 1);
+export const totalPoints = (found: FoundWord[]) => found.reduce((n, f) => n + wordPoints(f), 0);
+
 export const MAX_GROUP = 8;
 export const groupOf = (w: string) => Math.min(letterCount(w), MAX_GROUP);
 export const groupTitle = (len: number) => (len >= MAX_GROUP ? `${MAX_GROUP}+ אותיות` : `${len} אותיות`);
