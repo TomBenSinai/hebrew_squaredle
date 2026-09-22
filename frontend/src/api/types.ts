@@ -32,10 +32,10 @@ export type CheckResult =
 export interface CellCounts {
   /** cells some of them still use */
   cells: number[];
-  /** how many start at each cell */
-  starts: number[];
-  /** how many pass through each cell */
-  uses: number[];
+  /** how many start at each cell; only sent once that hint is unlocked */
+  starts?: number[];
+  /** how many pass through each cell; only sent once that hint is unlocked */
+  uses?: number[];
 }
 
 export interface FoundWord {
