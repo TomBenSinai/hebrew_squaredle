@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent, type RefObject } from "react";
 import { Tile, type TileState } from "../components";
 import type { Layout } from "../lib/layout";
+import type { Hints } from "../state/useGame";
 import type { SpinPhase } from "../hooks/useSpin";
 import "./Board.css";
 
@@ -8,6 +9,7 @@ interface Props {
   layout: Layout;
   path: number[];
   live: Set<number> | null;
+  hints: Hints | null;
   flash: { cells: number[]; bonus: boolean } | null;
   spin: SpinPhase;
   tileRefs: RefObject<(HTMLDivElement | null)[]>;
@@ -20,7 +22,7 @@ interface Props {
 }
 
 /** The letter grid (any shape) with the swipe trace drawn over it. */
-export function Board({ layout, path, live, flash, spin, tileRefs, handlers }: Props) {
+export function Board({ layout, path, live, hints, flash, spin, tileRefs, handlers }: Props) {
   const boardRef = useRef<HTMLDivElement>(null);
   const [trace, setTrace] = useState({ box: "0 0 0 0", points: "", width: 0 });
 
@@ -55,7 +57,9 @@ export function Board({ layout, path, live, flash, spin, tileRefs, handlers }: P
         {layout.letters.map((ch, i) => (
           <Tile key={`${layout.base[i]}`} ref={el => { tileRefs.current[i] = el; }}
             letter={ch} row={layout.cells[i][0]} col={layout.cells[i][1]}
-            state={stateOf(i)} dead={live ? !live.has(i) : false} />
+            state={stateOf(i)} dead={live ? !live.has(i) : false}
+            starts={hints && hints.level >= 1 ? hints.starts?.[i] : undefined}
+            uses={hints && hints.level >= 2 ? hints.uses?.[i] : undefined} />
         ))}
       </div>
     </div>

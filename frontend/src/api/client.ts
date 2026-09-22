@@ -1,5 +1,5 @@
 import type {
-  CheckResult, DayProgress, DaysResponse, Definition, FoundWord, PublicBoard,
+  CellCounts, CheckResult, DayProgress, DaysResponse, Definition, FoundWord, PublicBoard,
 } from "./types";
 
 export class ApiError extends Error {
@@ -28,7 +28,7 @@ export const api = {
   /** path: cell indexes on the stored (unrotated) board */
   check: (date: string, path: number[]) => post<CheckResult>(`/boards/${date}/check`, { path }),
   liveCells: (date: string, found: string[]) =>
-    post<{ cells: number[] }>(`/boards/${date}/live-cells`, { found }),
+    post<CellCounts>(`/boards/${date}/live-cells`, { found }),
   define: (word: string, signal?: AbortSignal) =>
     request<Definition>(`/define/${encodeURIComponent(word)}`, { signal }),
 

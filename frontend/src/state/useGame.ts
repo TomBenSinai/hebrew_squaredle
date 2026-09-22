@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api/client";
-import type { DayProgress, FoundWord, PublicBoard } from "../api/types";
+import type { CellCounts, DayProgress, FoundWord, PublicBoard } from "../api/types";
 import { norm, withFinal } from "../lib/hebrew";
 import { findPath, makeLayout, type Layout } from "../lib/layout";
-import { pointsText } from "../lib/scoring";
+import { hintLevel, letterFraction, pointsText, type HintLevel } from "../lib/scoring";
 import { progressStore } from "./progressStore";
 
 export const MIN_LEN = 4;
@@ -14,7 +14,14 @@ export interface Toast {
   text: string;
   /** a found word inside `text`: tapping it opens its definition */
   word?: string;
+  /** a second line: the find unlocked the next tile numbers */
+  note?: { kind: "hint-starts" | "hint-uses"; text: string };
 }
+
+const HINT_NOTES = {
+  1: { kind: "hint-starts", text: "נפתח רמז חדש! המספר האדום - כמה מילים שמתחילות באות הזו נותרו" },
+  2: { kind: "hint-uses", text: "נפתח רמז חדש! המספר הכחול - כמה מילים שעוברות באות הזו נותרו" },
+} as const;
 
 export interface Game {
   board: PublicBoard;
@@ -24,6 +31,8 @@ export interface Game {
   fresh: string | null;
   /** shown cells that some unfound main word still uses (null until known) */
   live: Set<number> | null;
+  /** tile numbers the player has unlocked, per shown cell (null until known) */
+  hints: Hints | null;
   toast: Toast | null;
   /** a swiped word waiting for the server's answer, shown in place of the toast */
   pending: string | null;
@@ -35,11 +44,20 @@ export interface Game {
   isBonus: (word: string) => boolean;
 }
 
+export interface Hints {
+  level: HintLevel;
+  /** unfound main words that start at each shown cell */
+  starts?: number[];
+  /** unfound main words that pass through each shown cell */
+  uses?: number[];
+}
+
 /** One day's board and this player's progress on it. */
 export function useGame(date: string | null): { game: Game | null; error: string | null } {
   const [board, setBoard] = useState<PublicBoard | null>(null);
   const [progress, setProgress] = useState<DayProgress>({ found: [], rot: 0 });
-  const [liveBase, setLiveBase] = useState<number[] | null>(null);
+  // with the main finds they were counted for (mainKey below)
+  const [counts, setCounts] = useState<(CellCounts & { key: string }) | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   const [pending, setPending] = useState<string | null>(null);
   // only the latest swipe may set the message (answers can arrive out of order)
@@ -66,7 +84,7 @@ export function useGame(date: string | null): { game: Game | null; error: string
       setPending(null);
       submitSeq.current++;
       setFresh(null);
-      setLiveBase(null);
+      setCounts(null);
       setFlashWord(null);
     }).catch(() => { if (!stale) setError("לא הצלחנו לטעון את הלוח"); });
     return () => { stale = true; };
@@ -77,22 +95,53 @@ export function useGame(date: string | null): { game: Game | null; error: string
     [board, progress.rot],
   );
 
-  // grey out letters no remaining main word needs; only main finds change this
+  // grey out letters no remaining main word needs, and count what's left on
+  // each; only main finds change this
   const mainKey = progress.found.filter(f => f.cat === "main").map(f => f.w).join(" ");
   useEffect(() => {
     if (!board) return;
     let stale = false;
-    api.liveCells(board.date, mainKey ? mainKey.split(" ") : [])
-      .then(r => { if (!stale) setLiveBase(r.cells); })
-      .catch(() => {});
-    return () => { stale = true; };
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // the numbers stay hidden until counts for these finds arrive, so keep
+    // trying: back off up to 30s, and go again as soon as we're back online
+    let delay = 2000;
+    const load = () => {
+      clearTimeout(timer);
+      api.liveCells(board.date, mainKey ? mainKey.split(" ") : [])
+        .then(r => { if (!stale) setCounts({ ...r, key: mainKey }); })
+        .catch(() => {
+          if (stale) return;
+          timer = setTimeout(load, delay);
+          delay = Math.min(delay * 2, 30000);
+        });
+    };
+    load();
+    window.addEventListener("online", load);
+    return () => {
+      stale = true;
+      clearTimeout(timer);
+      window.removeEventListener("online", load);
+    };
   }, [board, mainKey]);
 
   const live = useMemo(() => {
-    if (!layout || !liveBase) return null;
-    const set = new Set(liveBase);
+    if (!layout || !counts) return null;
+    const set = new Set(counts.cells);
     return new Set(layout.base.flatMap((b, i) => (set.has(b) ? [i] : [])));
-  }, [layout, liveBase]);
+  }, [layout, counts]);
+
+  const level = board ? hintLevel(letterFraction(progress.found, board.mainLetters)) : 0;
+  // numbers counted before the latest find would still include it: show none
+  // until the new counts arrive (the greying above can lag, it only errs safe)
+  const hints = useMemo((): Hints | null => {
+    if (!layout || !counts || counts.key !== mainKey) return null;
+    const { starts, uses } = counts;
+    return {
+      level,
+      starts: starts && layout.base.map(b => starts[b]),
+      uses: uses && layout.base.map(b => uses[b]),
+    };
+  }, [layout, counts, mainKey, level]);
 
   const update = useCallback((date: string, fn: (p: DayProgress) => DayProgress) => {
     const next = fn(progressRef.current);
@@ -151,14 +200,19 @@ export function useGame(date: string | null): { game: Game | null; error: string
         say({ kind: "info", text: `${w} כבר נמצאה`, word: w });
         return;
       }
-      const found: FoundWord[] = [...progressRef.current.found, { w, cat: r.status, ...(theme ? { theme } : {}) }];
+      const before = progressRef.current.found;
+      const found: FoundWord[] = [...before, { w, cat: r.status, ...(theme ? { theme } : {}) }];
       update(date, p => ({ ...p, found }));
+      // this find opened the next tile numbers: say so under its own message
+      const levelOf = (f: FoundWord[]) => hintLevel(letterFraction(f, board.mainLetters));
+      const unlocked = levelOf(found);
+      const note = unlocked > levelOf(before) ? HINT_NOTES[unlocked as 1 | 2] : undefined;
       const done = r.status === "main" && found.filter(f => f.cat === "main").length === board.mainTotal;
       setFresh(w);
       if (done) say({ kind: "main", text: `${w}! סיימתם את כל המילים 🎉`, word: w });
       else if (r.status === "bonus") say({ kind: "bonus", text: `בונוס! ${w} · ${points} נק׳`, word: w });
-      else if (theme) say({ kind: "main", text: `★ ${w} · מילת נושא · ${pointsText(points)}`, word: w });
-      else say({ kind: "main", text: `${w} · ${pointsText(points)}`, word: w });
+      else if (theme) say({ kind: "main", text: `★ ${w} · מילת נושא · ${pointsText(points)}`, word: w, note });
+      else say({ kind: "main", text: `${w} · ${pointsText(points)}`, word: w, note });
     }).catch(() => say({ kind: "bad", text: "אין חיבור לשרת, נסו שוב" }));
   }, [board, layout, update]);
 
@@ -173,7 +227,7 @@ export function useGame(date: string | null): { game: Game | null; error: string
 
   if (!board || !layout || board.date !== date) return { game: null, error };
   return {
-    game: { board, layout, found: progress.found, fresh, live, toast, pending, flash, showWord, submit, rotate, isBonus },
+    game: { board, layout, found: progress.found, fresh, live, hints, toast, pending, flash, showWord, submit, rotate, isBonus },
     error,
   };
 }

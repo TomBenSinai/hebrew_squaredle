@@ -16,6 +16,7 @@ export function Readout({ current, toast, onWord }: Props) {
       {!current && toast && (
         <div className={`toast ${toast.kind}`} role="status">
           {toast.word ? <ToastWord toast={toast} word={toast.word} onWord={onWord} /> : toast.text}
+          {toast.note && <span className={`note ${toast.note.kind}`}>{toast.note.text}</span>}
         </div>
       )}
     </div>
