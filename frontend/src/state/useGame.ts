@@ -47,16 +47,17 @@ export interface Game {
 export interface Hints {
   level: HintLevel;
   /** unfound main words that start at each shown cell */
-  starts: number[];
+  starts?: number[];
   /** unfound main words that pass through each shown cell */
-  uses: number[];
+  uses?: number[];
 }
 
 /** One day's board and this player's progress on it. */
 export function useGame(date: string | null): { game: Game | null; error: string | null } {
   const [board, setBoard] = useState<PublicBoard | null>(null);
   const [progress, setProgress] = useState<DayProgress>({ found: [], rot: 0 });
-  const [counts, setCounts] = useState<CellCounts | null>(null);
+  // with the main finds they were counted for (mainKey below)
+  const [counts, setCounts] = useState<(CellCounts & { key: string }) | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   const [pending, setPending] = useState<string | null>(null);
   // only the latest swipe may set the message (answers can arrive out of order)
@@ -100,10 +101,27 @@ export function useGame(date: string | null): { game: Game | null; error: string
   useEffect(() => {
     if (!board) return;
     let stale = false;
-    api.liveCells(board.date, mainKey ? mainKey.split(" ") : [])
-      .then(r => { if (!stale) setCounts(r); })
-      .catch(() => {});
-    return () => { stale = true; };
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // the numbers stay hidden until counts for these finds arrive, so keep
+    // trying: back off up to 30s, and go again as soon as we're back online
+    let delay = 2000;
+    const load = () => {
+      clearTimeout(timer);
+      api.liveCells(board.date, mainKey ? mainKey.split(" ") : [])
+        .then(r => { if (!stale) setCounts({ ...r, key: mainKey }); })
+        .catch(() => {
+          if (stale) return;
+          timer = setTimeout(load, delay);
+          delay = Math.min(delay * 2, 30000);
+        });
+    };
+    load();
+    window.addEventListener("online", load);
+    return () => {
+      stale = true;
+      clearTimeout(timer);
+      window.removeEventListener("online", load);
+    };
   }, [board, mainKey]);
 
   const live = useMemo(() => {
@@ -113,10 +131,17 @@ export function useGame(date: string | null): { game: Game | null; error: string
   }, [layout, counts]);
 
   const level = board ? hintLevel(letterFraction(progress.found, board.mainLetters)) : 0;
+  // numbers counted before the latest find would still include it: show none
+  // until the new counts arrive (the greying above can lag, it only errs safe)
   const hints = useMemo((): Hints | null => {
-    if (!layout || !counts) return null;
-    return { level, starts: layout.base.map(b => counts.starts[b]), uses: layout.base.map(b => counts.uses[b]) };
-  }, [layout, counts, level]);
+    if (!layout || !counts || counts.key !== mainKey) return null;
+    const { starts, uses } = counts;
+    return {
+      level,
+      starts: starts && layout.base.map(b => starts[b]),
+      uses: uses && layout.base.map(b => uses[b]),
+    };
+  }, [layout, counts, mainKey, level]);
 
   const update = useCallback((date: string, fn: (p: DayProgress) => DayProgress) => {
     const next = fn(progressRef.current);

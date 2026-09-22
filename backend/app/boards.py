@@ -17,6 +17,11 @@ from . import config
 
 MIN_LEN = 4
 MAX_GROUP = 8          # words of 8+ letters share one group
+# tile numbers unlock with the share of main letters found; keep in step with
+# HINT_STARTS_AT, HINT_USES_AT and SHOW_USES_HINT in frontend/src/lib/scoring.ts
+HINT_STARTS_AT = 0.6
+HINT_USES_AT = 0.75
+SHOW_USES_HINT = False
 
 
 class BoardNotFound(Exception):
@@ -176,3 +181,18 @@ class Day:
             for c in hit:
                 uses[c] += 1
         return {"starts": starts, "uses": uses}
+
+    def live_cells(self, found) -> dict:
+        """Cells some unfound main word still uses, plus the tile numbers the
+        player has unlocked. `found` comes from the client, so it is checked
+        first: only real main words count towards the unlock."""
+        words = [f["w"] for f in self.classify(found) if f["cat"] == MAIN]
+        total = self.main_letters()
+        frac = sum(len(normalize(w)) for w in words) / total if total else 0
+        counts = self.cell_counts(words)
+        out: dict = {"cells": [c for c, n in enumerate(counts["uses"]) if n]}
+        if frac >= HINT_STARTS_AT:
+            out["starts"] = counts["starts"]
+        if SHOW_USES_HINT and frac >= HINT_USES_AT:
+            out["uses"] = counts["uses"]
+        return out
