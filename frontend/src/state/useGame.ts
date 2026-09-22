@@ -101,10 +101,27 @@ export function useGame(date: string | null): { game: Game | null; error: string
   useEffect(() => {
     if (!board) return;
     let stale = false;
-    api.liveCells(board.date, mainKey ? mainKey.split(" ") : [])
-      .then(r => { if (!stale) setCounts({ ...r, key: mainKey }); })
-      .catch(() => {});
-    return () => { stale = true; };
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // the numbers stay hidden until counts for these finds arrive, so keep
+    // trying: back off up to 30s, and go again as soon as we're back online
+    let delay = 2000;
+    const load = () => {
+      clearTimeout(timer);
+      api.liveCells(board.date, mainKey ? mainKey.split(" ") : [])
+        .then(r => { if (!stale) setCounts({ ...r, key: mainKey }); })
+        .catch(() => {
+          if (stale) return;
+          timer = setTimeout(load, delay);
+          delay = Math.min(delay * 2, 30000);
+        });
+    };
+    load();
+    window.addEventListener("online", load);
+    return () => {
+      stale = true;
+      clearTimeout(timer);
+      window.removeEventListener("online", load);
+    };
   }, [board, mainKey]);
 
   const live = useMemo(() => {
