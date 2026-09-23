@@ -3,6 +3,18 @@
   font-family: var(--display); font-weight: 600;
   font-size: 1.9rem; line-height: 1; letter-spacing: .02em;
 }
+/* a word out with the server: it settles back to grey and a dip runs along it.
+   Both wait out the first .3s, so a quick answer never flickers. */
+.current.waiting { animation: waitdim .3s var(--ease-out) .3s both; }
+.current .wl { display: inline-block; animation: waitsift 1.25s var(--ease-out) infinite; }
+@keyframes waitdim { to { color: var(--muted); } }
+@keyframes waitsift {
+  0%, 46%, 100% { opacity: 1; transform: none; }
+  20% { opacity: .28; transform: translateY(-3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .current.waiting { color: var(--muted); }
+}
 .toast {
   position: absolute; inset: 0;
   display: grid; place-items: center;

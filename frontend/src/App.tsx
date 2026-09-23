@@ -50,6 +50,7 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
   const { phase, turns, spin } = useSpin(game.rotate);
   const { path, handlers } = useSwipe(layout, tileRefs, game.submit, phase !== "idle");
 
+  const swiping = withFinal(path.map(i => layout.letters[i]).join(""));
   const isToday = board.date === days.today;
   const mainFound = found.filter(f => f.cat === "main").length;
   const fraction = letterFraction(found, board.mainLetters);
@@ -72,7 +73,7 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
           fraction={fraction} fresh={game.fresh} />
 
         <div className="boardwrap" style={boardVars(layout)}>
-          <Readout current={withFinal(path.map(i => layout.letters[i]).join("")) || game.pending || ""}
+          <Readout current={swiping || game.pending || ""} waiting={!swiping && !!game.pending}
             toast={game.toast} onWord={setDefWord} />
           <Board layout={layout} path={path} live={game.live} hints={game.hints} flash={game.flash} spin={phase}
             tileRefs={tileRefs} handlers={handlers} />
