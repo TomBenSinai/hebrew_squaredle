@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api/client";
-import type { CellCounts, DayProgress, FoundWord, PublicBoard } from "../api/types";
+import type { CellCounts, DayProgress, FoundWord, PublicBoard, Reveal } from "../api/types";
 import { norm, withFinal } from "../lib/hebrew";
 import { findPath, makeLayout, type Layout } from "../lib/layout";
-import { hintLevel, letterFraction, pointsText, type HintLevel } from "../lib/scoring";
+import { hintById, letterFraction, openHints, pointsText, type HintId } from "../lib/scoring";
 import { progressStore } from "./progressStore";
 
 export const MIN_LEN = 4;
@@ -14,14 +14,9 @@ export interface Toast {
   text: string;
   /** a found word inside `text`: tapping it opens its definition */
   word?: string;
-  /** a second line: the find unlocked the next tile numbers */
-  note?: { kind: "hint-starts" | "hint-uses"; text: string };
+  /** a second line: the find opened a new hint */
+  note?: { hint: HintId; text: string };
 }
-
-const HINT_NOTES = {
-  1: { kind: "hint-starts", text: "נפתח רמז חדש! המספר האדום - כמה מילים שמתחילות באות הזו נותרו" },
-  2: { kind: "hint-uses", text: "נפתח רמז חדש! המספר הכחול - כמה מילים שעוברות באות הזו נותרו" },
-} as const;
 
 export interface Game {
   board: PublicBoard;
@@ -33,6 +28,8 @@ export interface Game {
   live: Set<number> | null;
   /** tile numbers the player has unlocked, per shown cell (null until known) */
   hints: Hints | null;
+  /** the main words still missing, part-spelled; null until the hint is open */
+  reveals: Reveal[] | null;
   toast: Toast | null;
   /** a swiped word waiting for the server's answer, shown in place of the toast */
   pending: string | null;
@@ -45,7 +42,6 @@ export interface Game {
 }
 
 export interface Hints {
-  level: HintLevel;
   /** unfound main words that start at each shown cell */
   starts?: number[];
   /** unfound main words that pass through each shown cell */
@@ -130,18 +126,19 @@ export function useGame(date: string | null): { game: Game | null; error: string
     return new Set(layout.base.flatMap((b, i) => (set.has(b) ? [i] : [])));
   }, [layout, counts]);
 
-  const level = board ? hintLevel(letterFraction(progress.found, board.mainLetters)) : 0;
-  // numbers counted before the latest find would still include it: show none
-  // until the new counts arrive (the greying above can lag, it only errs safe)
+  // the server only sends what the player has unlocked, but numbers counted
+  // before the latest find would still include it: show none until the new
+  // counts arrive (the greying above can lag, it only errs safe)
+  const shownCounts = counts && counts.key === mainKey ? counts : null;
   const hints = useMemo((): Hints | null => {
-    if (!layout || !counts || counts.key !== mainKey) return null;
-    const { starts, uses } = counts;
+    if (!layout || !shownCounts) return null;
+    const { starts, uses } = shownCounts;
     return {
-      level,
       starts: starts && layout.base.map(b => starts[b]),
       uses: uses && layout.base.map(b => uses[b]),
     };
-  }, [layout, counts, mainKey, level]);
+  }, [layout, shownCounts]);
+  const reveals = shownCounts?.reveals ?? null;
 
   const update = useCallback((date: string, fn: (p: DayProgress) => DayProgress) => {
     const next = fn(progressRef.current);
@@ -205,10 +202,12 @@ export function useGame(date: string | null): { game: Game | null; error: string
       const before = progressRef.current.found;
       const found: FoundWord[] = [...before, { w, cat: r.status, ...(theme ? { theme } : {}) }];
       update(date, p => ({ ...p, found }));
-      // this find opened the next tile numbers: say so under its own message
-      const levelOf = (f: FoundWord[]) => hintLevel(letterFraction(f, board.mainLetters));
-      const unlocked = levelOf(found);
-      const note = unlocked > levelOf(before) ? HINT_NOTES[unlocked as 1 | 2] : undefined;
+      // this find opened a new hint: say so under its own message
+      const openFor = (f: FoundWord[]) => openHints(letterFraction(f, board.mainLetters));
+      const was = openFor(before);
+      const opened = [...openFor(found)].find(id => !was.has(id));
+      const hint = opened && hintById(opened);
+      const note = hint ? { hint: hint.id, text: hint.note } : undefined;
       const done = r.status === "main" && found.filter(f => f.cat === "main").length === board.mainTotal;
       // the word is scored either way, but a newer swipe keeps the underline
       if (latest()) setFresh(w);
@@ -230,7 +229,7 @@ export function useGame(date: string | null): { game: Game | null; error: string
 
   if (!board || !layout || board.date !== date) return { game: null, error };
   return {
-    game: { board, layout, found: progress.found, fresh, live, hints, toast, pending, flash, showWord, submit, rotate, isBonus },
+    game: { board, layout, found: progress.found, fresh, live, hints, reveals, toast, pending, flash, showWord, submit, rotate, isBonus },
     error,
   };
 }

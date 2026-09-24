@@ -1,3 +1,13 @@
+/* the sort hint: a toggle above the first group */
+.wsort { display: flex; justify-content: flex-end; padding-top: 12px; }
+.sortbtn {
+  border: 1.5px solid var(--line); border-radius: 999px; background: none;
+  padding: 4px 12px; cursor: pointer;
+  font: inherit; font-size: .95rem; color: var(--muted);
+}
+.sortbtn.on { border-color: var(--hint-sort); color: var(--hint-sort); font-weight: 600; }
+.sortbtn.on::before { content: "✓ "; }
+
 .wgroup { padding-block: 16px 4px; }
 .wgroup h3 {
   font-family: var(--display); font-weight: 800;
@@ -16,6 +26,10 @@
   text-decoration-color: var(--muted);
 }
 .w.fresh { text-decoration-style: solid; text-decoration-color: var(--ink); }
+/* the reveal hint: a word not found yet, spelled only at its ends */
+.slot { cursor: default; letter-spacing: .06em; text-decoration: none; }
+.slot .on { color: var(--hint-reveal); font-weight: 600; }
+.slot .off { color: var(--muted); opacity: .6; }
 .wleft { margin: 10px 0 0; color: var(--muted); font-style: italic; font-size: 1.05rem; }
 .wleft.done { font-style: normal; color: var(--ink); font-weight: 600; }
 

@@ -1,13 +1,18 @@
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import { Modal, Sheet, SheetBody } from "../components";
-import type { FoundWord, PublicBoard } from "../api/types";
-import { groupOf, groupTitle, leftText } from "../lib/scoring";
+import type { FoundWord, PublicBoard, Reveal } from "../api/types";
+import { norm } from "../lib/hebrew";
+import { groupOf, groupOfLength, groupTitle, leftText, type HintId } from "../lib/scoring";
 import "./WordsModal.css";
 
 interface ListProps {
   board: PublicBoard;
   found: FoundWord[];
   fresh: string | null;
+  /** the main words still missing, part-spelled; null while the hint is shut */
+  reveals: Reveal[] | null;
+  /** the hints this player has opened on this board */
+  hintsOpen: Set<HintId>;
   onWord: (word: string) => void;
 }
 
@@ -31,44 +36,102 @@ export function WordsPanel({ className, ...list }: ListProps & { className?: str
   );
 }
 
-/** Found words grouped by length, with how many are left in each group. */
-function WordsList({ board, found, fresh, onWord }: ListProps) {
+const SORT_KEY = "rivuon:words-az";
+const readSort = () => { try { return localStorage.getItem(SORT_KEY) === "1"; } catch { return false; } };
+const writeSort = (on: boolean) => { try { localStorage.setItem(SORT_KEY, on ? "1" : "0"); } catch { /* private mode */ } };
+
+/** One line of a group: a word already found, or a slot for one still missing. */
+type Entry = { word: string } | { slot: Reveal };
+const sortKey = (e: Entry) => ("word" in e ? norm(e.word) : e.slot.pre);
+
+/**
+ * Found words grouped by length, with how many are left in each group. Two
+ * hints land here: sorting the groups by alphabet, and slots that part-spell
+ * the main words still missing.
+ */
+function WordsList({ board, found, fresh, reveals, hintsOpen, onWord }: ListProps) {
+  const [az, setAz] = useState(readSort);
+  const toggleSort = () => setAz(on => { writeSort(!on); return !on; });
+
   const main = found.filter(f => f.cat === "main").map(f => f.w);
   const bonus = found.filter(f => f.cat === "bonus").map(f => f.w);
+  const canSort = hintsOpen.has("sort");
+  const slotsOf = (length: number) =>
+    hintsOpen.has("reveal") && reveals
+      ? reveals.filter(r => groupOfLength(r.n) === length).map((slot): Entry => ({ slot }))
+      : [];
+
   const groups: GroupProps[] = [];
   if (board.theme && board.themeTotal) {
     const got = found.filter(f => f.theme).map(f => f.w);
-    groups.push({ title: `מילות הנושא: ${board.theme}`, words: got, left: board.themeTotal - got.length, kind: "theme" });
+    groups.push({
+      title: `מילות הנושא: ${board.theme}`, entries: got.map(word => ({ word })),
+      left: board.themeTotal - got.length, kind: "theme",
+    });
   }
   for (const { length, total } of board.groups) {
     const got = main.filter(w => groupOf(w) === length);
-    groups.push({ title: groupTitle(length), words: got, left: total - got.length });
+    groups.push({
+      title: groupTitle(length),
+      entries: [...got.map((word): Entry => ({ word })), ...slotsOf(length)],
+      left: total - got.length,
+    });
   }
-  groups.push({ title: "בונוס", words: bonus, left: board.bonusTotal - bonus.length, kind: "bonus" });
-  return <>{groups.map((g, i) => <WordGroup key={g.title} {...g} index={i} fresh={fresh} onWord={onWord} />)}</>;
+  groups.push({
+    title: "בונוס", entries: bonus.map(word => ({ word })),
+    left: board.bonusTotal - bonus.length, kind: "bonus",
+  });
+
+  if (canSort && az) {
+    for (const g of groups) g.entries = [...g.entries].sort((a, b) => sortKey(a).localeCompare(sortKey(b), "he"));
+  }
+  return (
+    <>
+      {canSort && (
+        <div className="wsort">
+          <button type="button" className={"sortbtn" + (az ? " on" : "")} aria-pressed={az} onClick={toggleSort}>
+            מיון לפי א-ב
+          </button>
+        </div>
+      )}
+      {groups.map((g, i) => <WordGroup key={g.title} {...g} index={i} fresh={fresh} onWord={onWord} />)}
+    </>
+  );
 }
 
 interface GroupProps {
   title: string;
-  words: string[];
+  entries: Entry[];
   left: number;
   kind?: "theme" | "bonus";
 }
 
-function WordGroup({ title, words, left, kind, index, fresh, onWord }:
+function WordGroup({ title, entries, left, kind, index, fresh, onWord }:
   GroupProps & { index: number; fresh: string | null; onWord: (w: string) => void }) {
   return (
     <div className={"wgroup" + (kind ? " " + kind : "")} style={{ "--i": index } as CSSProperties}>
       <h3>{title}</h3>
-      {words.length > 0 && (
+      {entries.length > 0 && (
         <div className="wlist">
-          {words.map(w => (
-            <button key={w} type="button" className={"w" + (w === fresh ? " fresh" : "")}
-              title="הגדרה" onClick={() => onWord(w)}>{w}</button>
-          ))}
+          {entries.map((e, i) => ("word" in e
+            ? <button key={e.word} type="button" className={"w" + (e.word === fresh ? " fresh" : "")}
+                title="הגדרה" onClick={() => onWord(e.word)}>{e.word}</button>
+            : <Slot key={`slot${i}`} reveal={e.slot} />))}
         </div>
       )}
       <p className={"wleft" + (left === 0 ? " done" : "")}>{left === 0 ? "כל המילים נמצאו ✓" : leftText(left)}</p>
     </div>
+  );
+}
+
+/** A word not found yet: its opening (and sometimes closing) letters, the rest blanked. */
+function Slot({ reveal: { n, pre, post } }: { reveal: Reveal }) {
+  const blanks = n - pre.length - post.length;
+  return (
+    <span className="w slot" aria-label={`מילה בת ${n} אותיות שמתחילה ב־${pre}`}>
+      <span className="on">{pre}</span>
+      {Array.from({ length: blanks }, (_, i) => <span key={i} className="off" aria-hidden="true">·</span>)}
+      {post && <span className="on">{post}</span>}
+    </span>
   );
 }

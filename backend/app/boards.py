@@ -17,11 +17,14 @@ from . import config
 
 MIN_LEN = 4
 MAX_GROUP = 8          # words of 8+ letters share one group
-# tile numbers unlock with the share of main letters found; keep in step with
-# HINT_STARTS_AT, HINT_USES_AT and SHOW_USES_HINT in frontend/src/lib/scoring.ts
+# hints unlock with the share of main letters found; keep in step with
+# HINT_AT and SHOW_USES_HINT in frontend/src/lib/scoring.ts
+HINT_REVEAL_AT = 0.5
 HINT_STARTS_AT = 0.6
 HINT_USES_AT = 0.75
 SHOW_USES_HINT = False
+
+REGULAR_TO_FINAL = str.maketrans("\u05db\u05de\u05e0\u05e4\u05e6", "\u05da\u05dd\u05df\u05e3\u05e5")
 
 
 class BoardNotFound(Exception):
@@ -73,6 +76,21 @@ def day_number(date: str, epoch: str | None = None) -> int:
 
 def group_of(word: str) -> int:
     return min(len(normalize(word)), MAX_GROUP)
+
+
+def reveal_mask(word: str) -> dict:
+    """What the reveal hint shows of a word: a few letters at each end.
+
+    Four and five letters give away the first letter only; from six on another
+    letter opens at the end, then at the start, and so on (6 -> first and last,
+    7 -> first two and last). The middle always stays hidden.
+    """
+    key = normalize(word)
+    n = len(key)
+    front = max(1, -(-(n - 4) // 2))
+    back = min(max(0, (n - 4) // 2), n - front - 1)   # never give the whole word away
+    post = key[n - back:].translate(REGULAR_TO_FINAL) if back else ""
+    return {"n": n, "pre": key[:front], "post": post}
 
 
 class Day:
@@ -183,14 +201,18 @@ class Day:
         return {"starts": starts, "uses": uses}
 
     def live_cells(self, found) -> dict:
-        """Cells some unfound main word still uses, plus the tile numbers the
-        player has unlocked. `found` comes from the client, so it is checked
-        first: only real main words count towards the unlock."""
+        """Cells some unfound main word still uses, plus the hints the player has
+        unlocked: the tile numbers and the part-spelled words still missing.
+        `found` comes from the client, so it is checked first: only real main
+        words count towards the unlock."""
         words = [f["w"] for f in self.classify(found) if f["cat"] == MAIN]
         total = self.main_letters()
         frac = sum(len(normalize(w)) for w in words) / total if total else 0
         counts = self.cell_counts(words)
         out: dict = {"cells": [c for c, n in enumerate(counts["uses"]) if n]}
+        if frac >= HINT_REVEAL_AT:
+            got = set(words)
+            out["reveals"] = [reveal_mask(w) for w in self.board.main if w not in got]
         if frac >= HINT_STARTS_AT:
             out["starts"] = counts["starts"]
         if SHOW_USES_HINT and frac >= HINT_USES_AT:

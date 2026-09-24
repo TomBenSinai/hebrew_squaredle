@@ -58,8 +58,8 @@ export function Board({ layout, path, live, hints, flash, spin, tileRefs, handle
           <Tile key={`${layout.base[i]}`} ref={el => { tileRefs.current[i] = el; }}
             letter={ch} row={layout.cells[i][0]} col={layout.cells[i][1]}
             state={stateOf(i)} dead={live ? !live.has(i) : false}
-            starts={hints && hints.level >= 1 ? hints.starts?.[i] : undefined}
-            uses={hints && hints.level >= 2 ? hints.uses?.[i] : undefined} />
+            starts={hints?.starts?.[i]}
+            uses={hints?.uses?.[i]} />
         ))}
       </div>
     </div>

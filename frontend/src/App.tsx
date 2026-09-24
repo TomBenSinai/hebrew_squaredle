@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Pill, RotateIcon } from "./components";
 import { api } from "./api/client";
 import type { DaysResponse } from "./api/types";
@@ -6,6 +6,7 @@ import { ArchiveModal } from "./features/ArchiveModal";
 import { Board, boardVars } from "./features/Board";
 import { DefinitionModal } from "./features/DefinitionModal";
 import { HelpModal, helpSeen, markHelpSeen } from "./features/HelpModal";
+import { HintModal, hintSeen, markHintSeen } from "./features/HintModal";
 import { Masthead } from "./features/Masthead";
 import { Readout } from "./features/Readout";
 import { Score } from "./features/Score";
@@ -13,7 +14,7 @@ import { WordsModal, WordsPanel } from "./features/WordsModal";
 import { useSpin } from "./hooks/useSpin";
 import { useSwipe } from "./hooks/useSwipe";
 import { withFinal } from "./lib/hebrew";
-import { letterFraction, rankFor, totalPoints } from "./lib/scoring";
+import { HINTS, letterFraction, openHints, rankFor, totalPoints, type HintId } from "./lib/scoring";
 import { progressStore } from "./state/progressStore";
 import { useGame, type Game } from "./state/useGame";
 import "./App.css";
@@ -55,6 +56,22 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
   const mainFound = found.filter(f => f.cat === "main").length;
   const fraction = letterFraction(found, board.mainLetters);
 
+  // each hint is explained once, the first time this player ever gets it
+  const hintsOpen = useMemo(() => openHints(fraction), [fraction]);
+  const [hintIntro, setHintIntro] = useState<HintId | null>(null);
+  const nextUnexplained = useCallback(
+    (open: Set<HintId>) => HINTS.find(h => open.has(h.id) && !hintSeen(h.id))?.id ?? null,
+    [],
+  );
+  useEffect(() => {
+    const next = nextUnexplained(hintsOpen);
+    if (next) setHintIntro(next);
+  }, [hintsOpen, nextUnexplained]);
+  const closeHintIntro = () => {
+    if (hintIntro) markHintSeen(hintIntro);
+    setHintIntro(nextUnexplained(hintsOpen));
+  };
+
   const pickDay = (d: string) => { setArchiveOpen(false); if (d !== board.date) setDate(d); };
   const showOnBoard = useCallback((w: string) => {
     setDefWord(null);
@@ -88,14 +105,17 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
         </div>
       </section>
 
-      <WordsPanel className="side" board={board} found={found} fresh={game.fresh} onWord={setDefWord} />
+      <WordsPanel className="side" board={board} found={found} fresh={game.fresh}
+        reveals={game.reveals} hintsOpen={hintsOpen} onWord={setDefWord} />
       <WordsModal open={wordsOpen} onClose={() => setWordsOpen(false)} board={board}
-        found={found} fresh={game.fresh} onWord={setDefWord} />
+        found={found} fresh={game.fresh} reveals={game.reveals} hintsOpen={hintsOpen}
+        onWord={setDefWord} />
       <ArchiveModal open={archiveOpen} onClose={() => setArchiveOpen(false)} days={days.days}
         today={days.today} current={board.date}
         progress={archiveOpen ? progressStore.all() : {}} onPick={pickDay} />
       <DefinitionModal word={defWord} onClose={() => setDefWord(null)} onShow={showOnBoard} />
       <HelpModal open={helpOpen} onClose={closeHelp} />
+      <HintModal hint={helpOpen ? null : hintIntro} onClose={closeHintIntro} />
     </div>
   );
 }

@@ -1,0 +1,31 @@
+/* a short card: unlike the lists, it hugs its own text */
+.modal .sheet.hintcard { height: auto; max-height: min(86%, 760px); max-width: 30rem; }
+.hintbody { padding-bottom: 18px; }
+.hintbody p { margin: 0 0 10px; font-size: 1.05rem; line-height: 1.5; }
+
+.hinthead {
+  font-family: var(--display); font-weight: 800;
+  font-size: 1.5rem; line-height: 1.1;
+  margin: 14px 0 10px;
+}
+.hinthead.hint-sort { color: var(--hint-sort); }
+.hinthead.hint-reveal { color: var(--hint-reveal); }
+.hinthead.hint-starts { color: var(--hint-starts); }
+.hinthead.hint-uses { color: var(--hint-uses); }
+
+.hintbody b.hintstarts { color: var(--hint-starts); }
+.hintbody b.hintuses { color: var(--hint-uses); }
+
+/* the worked examples of what a part-spelled word looks like */
+.hintdemo { list-style: none; margin: 14px 0; padding: 0; }
+.hintdemo li {
+  display: flex; align-items: baseline; gap: 14px;
+  padding-block: 7px; border-top: 1px solid var(--line);
+}
+.hintdemo li:last-child { border-bottom: 1px solid var(--line); }
+.hintdemo .slot { font-size: 1.3rem; letter-spacing: .06em; min-width: 5.5em; }
+.hintdemo .slot .on { color: var(--hint-reveal); font-weight: 600; }
+.hintdemo .slot .off { color: var(--muted); opacity: .6; }
+.hintdemo li > span:last-child { color: var(--muted); font-size: .98rem; }
+
+.hintactions { display: flex; justify-content: center; padding-top: 6px; }
