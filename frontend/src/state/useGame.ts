@@ -184,8 +184,10 @@ export function useGame(date: string | null): { game: Game | null; error: string
     // keep the swiped word up until the answer comes, instead of the old message
     setToast(null);
     setPending(withFinal(key));
+    // answers can arrive out of order: the newest swipe owns the readout
+    const latest = () => submitSeq.current === seq;
     const say = (t: Toast) => {
-      if (submitSeq.current !== seq) return;
+      if (!latest()) return;
       setPending(null);
       setToast(t);
     };
@@ -208,7 +210,8 @@ export function useGame(date: string | null): { game: Game | null; error: string
       const unlocked = levelOf(found);
       const note = unlocked > levelOf(before) ? HINT_NOTES[unlocked as 1 | 2] : undefined;
       const done = r.status === "main" && found.filter(f => f.cat === "main").length === board.mainTotal;
-      setFresh(w);
+      // the word is scored either way, but a newer swipe keeps the underline
+      if (latest()) setFresh(w);
       if (done) say({ kind: "main", text: `${w}! סיימתם את כל המילים 🎉`, word: w });
       else if (r.status === "bonus") say({ kind: "bonus", text: `בונוס! ${w} · ${points} נק׳`, word: w });
       else if (theme) say({ kind: "main", text: `★ ${w} · מילת נושא · ${pointsText(points)}`, word: w, note });

@@ -2,17 +2,26 @@ import type { Toast } from "../state/useGame";
 import "./Readout.css";
 
 interface Props {
-  /** the word being swiped */
+  /** the word being swiped, or the one waiting for an answer */
   current: string;
+  /** the word is out with the server: show it as not yet final */
+  waiting?: boolean;
   toast: Toast | null;
   onWord: (word: string) => void;
 }
 
 /** Above the board: the word being swiped, else the last message. */
-export function Readout({ current, toast, onWord }: Props) {
+export function Readout({ current, waiting, toast, onWord }: Props) {
   return (
     <div className="readout">
-      <div className="current" aria-live="polite">{current}</div>
+      <div className={waiting ? "current waiting" : "current"} aria-live="polite" aria-busy={waiting || undefined}>
+        {waiting
+          ? [...current].map((letter, i) => (
+              // the dip travels along the word, from its first letter on the right
+              <span key={i} className="wl" style={{ animationDelay: `${450 + i * 70}ms` }}>{letter}</span>
+            ))
+          : current}
+      </div>
       {!current && toast && (
         <div className={`toast ${toast.kind}`} role="status">
           {toast.word ? <ToastWord toast={toast} word={toast.word} onWord={onWord} /> : toast.text}
