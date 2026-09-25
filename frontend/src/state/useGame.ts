@@ -138,7 +138,22 @@ export function useGame(date: string | null): { game: Game | null; error: string
       uses: uses && layout.base.map(b => uses[b]),
     };
   }, [layout, shownCounts]);
-  const reveals = shownCounts?.reveals ?? null;
+  // the slots must not blank out on every find while the new counts load: keep
+  // the ones we have and drop those the words found since then have filled
+  // (slots that spell the same are interchangeable, so one slot per word)
+  const reveals = useMemo((): Reveal[] | null => {
+    if (!counts?.reveals) return null;
+    if (counts.key === mainKey) return counts.reveals;
+    const had = new Set(counts.key ? counts.key.split(" ") : []);
+    const left = [...counts.reveals];
+    for (const w of mainKey ? mainKey.split(" ") : []) {
+      if (had.has(w)) continue;
+      const key = norm(w);
+      const i = left.findIndex(r => r.n === key.length && key.startsWith(r.pre) && key.endsWith(norm(r.post)));
+      if (i >= 0) left.splice(i, 1);
+    }
+    return left;
+  }, [counts, mainKey]);
 
   const update = useCallback((date: string, fn: (p: DayProgress) => DayProgress) => {
     const next = fn(progressRef.current);

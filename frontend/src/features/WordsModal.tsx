@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react";
+import { useCallback, useState, type CSSProperties } from "react";
 import { Modal, Sheet, SheetBody } from "../components";
 import type { FoundWord, PublicBoard, Reveal } from "../api/types";
 import { norm } from "../lib/hebrew";
@@ -13,6 +13,9 @@ interface ListProps {
   reveals: Reveal[] | null;
   /** the hints this player has opened on this board */
   hintsOpen: Set<HintId>;
+  /** sort the groups by alphabet; held above so panel and modal stay in step */
+  az: boolean;
+  onToggleSort: () => void;
   onWord: (word: string) => void;
 }
 
@@ -40,6 +43,17 @@ const SORT_KEY = "rivuon:words-az";
 const readSort = () => { try { return localStorage.getItem(SORT_KEY) === "1"; } catch { return false; } };
 const writeSort = (on: boolean) => { try { localStorage.setItem(SORT_KEY, on ? "1" : "0"); } catch { /* private mode */ } };
 
+/**
+ * The a-b sort, remembered across visits. The panel and the modal are both
+ * mounted at once, so this belongs to the screen that holds them: one state,
+ * or turning it on in one would leave the other unsorted.
+ */
+export function useWordSort() {
+  const [az, setAz] = useState(readSort);
+  const toggleSort = useCallback(() => setAz(on => { writeSort(!on); return !on; }), []);
+  return { az, toggleSort };
+}
+
 /** One line of a group: a word already found, or a slot for one still missing. */
 type Entry = { word: string } | { slot: Reveal };
 const sortKey = (e: Entry) => ("word" in e ? norm(e.word) : e.slot.pre);
@@ -49,10 +63,7 @@ const sortKey = (e: Entry) => ("word" in e ? norm(e.word) : e.slot.pre);
  * hints land here: sorting the groups by alphabet, and slots that part-spell
  * the main words still missing.
  */
-function WordsList({ board, found, fresh, reveals, hintsOpen, onWord }: ListProps) {
-  const [az, setAz] = useState(readSort);
-  const toggleSort = () => setAz(on => { writeSort(!on); return !on; });
-
+function WordsList({ board, found, fresh, reveals, hintsOpen, az, onToggleSort, onWord }: ListProps) {
   const main = found.filter(f => f.cat === "main").map(f => f.w);
   const bonus = found.filter(f => f.cat === "bonus").map(f => f.w);
   const canSort = hintsOpen.has("sort");
@@ -89,7 +100,7 @@ function WordsList({ board, found, fresh, reveals, hintsOpen, onWord }: ListProp
     <>
       {canSort && (
         <div className="wsort">
-          <button type="button" className={"sortbtn" + (az ? " on" : "")} aria-pressed={az} onClick={toggleSort}>
+          <button type="button" className={"sortbtn" + (az ? " on" : "")} aria-pressed={az} onClick={onToggleSort}>
             מיון לפי א-ב
           </button>
         </div>
@@ -127,8 +138,11 @@ function WordGroup({ title, entries, left, kind, index, fresh, onWord }:
 /** A word not found yet: its opening (and sometimes closing) letters, the rest blanked. */
 function Slot({ reveal: { n, pre, post } }: { reveal: Reveal }) {
   const blanks = n - pre.length - post.length;
+  // the dots are hidden from screen readers, so the whole hint rides on this
+  // name; a plain span has no role to carry one, hence role="img"
+  const label = `מילה בת ${n} אותיות שמתחילה ב־${pre}` + (post ? ` ומסתיימת ב־${post}` : "");
   return (
-    <span className="w slot" aria-label={`מילה בת ${n} אותיות שמתחילה ב־${pre}`}>
+    <span className="w slot" role="img" aria-label={label}>
       <span className="on">{pre}</span>
       {Array.from({ length: blanks }, (_, i) => <span key={i} className="off" aria-hidden="true">·</span>)}
       {post && <span className="on">{post}</span>}

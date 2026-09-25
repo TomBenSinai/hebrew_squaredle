@@ -17,14 +17,20 @@ from . import config
 
 MIN_LEN = 4
 MAX_GROUP = 8          # words of 8+ letters share one group
-# hints unlock with the share of main letters found; keep in step with
-# HINT_AT and SHOW_USES_HINT in frontend/src/lib/scoring.ts
+# hints unlock with the share of main letters found; each must match the `at`
+# of the hint with the same id in HINTS in frontend/src/lib/scoring.ts (which
+# also holds `sort`, a client-only hint, and SHOW_USES_HINT)
 HINT_STARTS_AT = 0.3
 HINT_REVEAL_AT = 0.6
 HINT_USES_AT = 0.75
 SHOW_USES_HINT = False
 
 REGULAR_TO_FINAL = str.maketrans("\u05db\u05de\u05e0\u05e4\u05e6", "\u05da\u05dd\u05df\u05e3\u05e5")
+
+
+def with_final(s: str) -> str:
+    """Spell the last letter of `s` in its final form: only that one folds."""
+    return s[:-1] + s[-1].translate(REGULAR_TO_FINAL) if s else s
 
 
 class BoardNotFound(Exception):
@@ -89,7 +95,7 @@ def reveal_mask(word: str) -> dict:
     n = len(key)
     front = max(1, -(-(n - 4) // 2))
     back = min(max(0, (n - 4) // 2), n - front - 1)   # never give the whole word away
-    post = key[n - back:].translate(REGULAR_TO_FINAL) if back else ""
+    post = with_final(key[n - back:]) if back else ""
     return {"n": n, "pre": key[:front], "post": post}
 
 
