@@ -1,9 +1,9 @@
 .score { display: grid; gap: 8px; }
-.count { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.count { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
 
 /* The count is the way into the word list on a phone. */
 .counter {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: baseline; gap: 10px;
   margin: -6px; padding: 6px; border: 0; border-radius: 12px;
   background: none; cursor: pointer; text-align: start;
   -webkit-tap-highlight-color: transparent;
@@ -21,7 +21,7 @@ button.counter:active { background: var(--cobalt-soft); transform: scale(.98); }
   letter-spacing: -.02em;
 }
 .count .num small { font-size: .5em; font-weight: 600; color: var(--muted); letter-spacing: 0; }
-/* Right of the count (first in RTL), like "1/63 +1". */
+/* Right of the count (first in RTL), like "1/63 +1", on the same baseline as "/63". */
 .count .bonus {
   font-family: var(--display); font-weight: 700; font-size: .95rem;
   font-variant-numeric: tabular-nums;
