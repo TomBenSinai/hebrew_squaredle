@@ -67,15 +67,8 @@ export const hintById = (id: HintId) => HINTS.find(h => h.id === id);
 export const openHints = (frac: number): Set<HintId> =>
   new Set(HINTS.filter(h => frac >= h.at).map(h => h.id));
 
-/** Same as word_points in wordgame.py: by letter count, bonus words double. */
-const POINTS_BY_LENGTH: Record<number, number> = { 4: 1, 5: 2, 6: 3, 7: 5 };
-export const wordPoints = (f: FoundWord) =>
-  (POINTS_BY_LENGTH[letterCount(f.w)] ?? 11) * (f.cat === "bonus" ? 2 : 1);
-export const totalPoints = (found: FoundWord[]) => found.reduce((n, f) => n + wordPoints(f), 0);
-
 export const MAX_GROUP = 8;
 export const groupOfLength = (n: number) => Math.min(n, MAX_GROUP);
 export const groupOf = (w: string) => groupOfLength(letterCount(w));
 export const groupTitle = (len: number) => (len >= MAX_GROUP ? `${MAX_GROUP}+ אותיות` : `${len} אותיות`);
 export const leftText = (n: number) => (n === 1 ? "נותרה עוד מילה אחת" : `נותרו עוד ${n} מילים`);
-export const pointsText = (pts: number) => (pts === 1 ? "נקודה" : `${pts} נק׳`);

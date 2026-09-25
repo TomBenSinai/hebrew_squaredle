@@ -1,5 +1,17 @@
 .score { display: grid; gap: 8px; }
 .count { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+
+/* The count is the way into the word list on a phone. */
+.counter {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px;
+  min-width: 0; margin: -6px; padding: 6px; border: 0; border-radius: 12px;
+  background: none; cursor: pointer; text-align: start;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color .15s, transform .15s var(--ease-out);
+}
+.counter.plain { cursor: auto; }
+button.counter:active { background: var(--cobalt-soft); transform: scale(.98); }
+@media (hover: hover) { button.counter:hover { background: var(--cobalt-soft); } }
 .count .num {
   font-family: var(--display);
   font-weight: 800;
@@ -9,17 +21,18 @@
   letter-spacing: -.02em;
 }
 .count .num small { font-size: .5em; font-weight: 600; color: var(--muted); letter-spacing: 0; }
-.count .label { font-family: var(--display); font-weight: 600; font-size: 1.15rem; white-space: nowrap; }
-.count .tally { margin-inline-start: auto; padding-inline-start: 12px; display: grid; justify-items: end; gap: 2px; }
-.count .points { font-family: var(--display); font-weight: 600; font-size: 1.15rem; white-space: nowrap; }
-.count .points b {
-  display: inline-block;
-  font-weight: 800;
-  font-size: 1.6rem;
+/* Right of the count (first in RTL), like "1/63 +1", on the same baseline as "/63". */
+.count .bonus {
+  font-family: var(--display); font-weight: 700; font-size: .95rem;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -.02em;
+  color: var(--amber); background: var(--amber-soft);
+  padding: 1px 8px; border-radius: 999px;
+  margin-inline-end: -4px;
 }
-.count .points abbr { text-decoration: none; }
-.count .points b.bump { animation: bump .35s ease-out; }
-@keyframes bump { 40% { transform: scale(1.25); } }
-.count .rank { color: var(--muted); font-weight: 600; font-size: .95rem; }
+.count .label {
+  display: inline-flex; align-items: center; gap: 2px;
+  font-family: var(--display); font-weight: 600; font-size: 1.15rem; white-space: nowrap;
+}
+.count .chev { color: var(--muted); transition: transform .15s var(--ease-out); }
+.counter:active .chev { transform: translateX(-3px); }
+.count .rank { margin-inline-start: auto; color: var(--muted); font-weight: 600; font-size: .95rem; }

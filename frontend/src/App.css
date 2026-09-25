@@ -12,10 +12,7 @@
   flex-direction: column;
   gap: 10px;
 }
-/* Centred, because the round button is a fixed 40px and the words button a little taller. */
 .tools { display: flex; align-items: center; gap: 8px; }
-.tools .btn { flex: 1; }
-.tools .btn b { font-variant-numeric: tabular-nums; }
 /* Every press turns the icon another quarter, the way the board goes, and it stays there.
    The wrapper turns rather than the <svg> itself: Chrome ignores a transform built with
    calc(var(...)) on an SVG element. The angle is inline because the count has no bound. */
@@ -45,20 +42,18 @@
 .status { grid-column: 1 / -1; align-self: center; justify-self: center; color: var(--muted); font-size: 1.1rem; }
 
 /* On a computer the word list sits beside the board (to its right) instead of in a
-   modal, and the game stays in the centre: two equal side columns, the left one empty. */
+   modal, and the game stays in the centre: two equal side columns, the left one empty.
+   The `wide` class comes from WIDE_QUERY in App.tsx, so the breakpoint lives in one place. */
 .side { display: none; }
-@media (min-width: 1100px) {
-  .app {
-    max-width: none;
-    grid-template-columns: minmax(260px, 1fr) minmax(0, 520px) minmax(260px, 1fr);
-    grid-template-areas: "side play .";       /* RTL: the first column is the right one */
-    column-gap: 32px;
-  }
-  .play { grid-area: play; }
-  .side {
-    display: block; grid-area: side; min-height: 0; padding-block: 4px;
-    width: 100%; max-width: 380px;
-    justify-self: end;                        /* RTL: hug the board, not the screen edge */
-  }
-  .tools .wordsbtn { display: none; }
+.app.wide {
+  max-width: none;
+  grid-template-columns: minmax(260px, 1fr) minmax(0, 520px) minmax(260px, 1fr);
+  grid-template-areas: "side play .";         /* RTL: the first column is the right one */
+  column-gap: 32px;
+}
+.app.wide .play { grid-area: play; }
+.app.wide .side {
+  display: block; grid-area: side; min-height: 0; padding-block: 4px;
+  width: 100%; max-width: 380px;
+  justify-self: end;                          /* RTL: hug the board, not the screen edge */
 }

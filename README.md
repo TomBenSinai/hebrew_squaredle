@@ -5,7 +5,7 @@ a heart, a diamond, a ring with a hole...). Players trace words through touching
 cells (horizontal, vertical, diagonal, any turns), never reusing a cell, 4+ letters;
 an empty spot in the shape blocks the path. A schedule picks each day's shape, and
 days can carry a **theme** (a title, words that must appear, highlighted theme words). Each board has a set range of **MAIN words** (common words)
-to find; **BONUS words** (rarer words and slang) earn double points but aren't
+to find; **BONUS words** (rarer words and slang) are counted separately and aren't
 needed to finish.
 
 Python 3.10+, standard library only (the game side runs offline as-is).
