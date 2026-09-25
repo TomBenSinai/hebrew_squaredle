@@ -27,7 +27,9 @@
   },
   "dates": {
     "2026-09-26": {
-      "theme": "sukkot"
+      "theme": "sukkot",
+      "min_main": 60,
+      "max_main": 75
     },
     "2026-09-19": {
       "theme": "yomkippur"
