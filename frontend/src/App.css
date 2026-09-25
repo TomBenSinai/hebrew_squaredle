@@ -12,10 +12,7 @@
   flex-direction: column;
   gap: 10px;
 }
-/* Centred, because the round button is a fixed 40px and the words button a little taller. */
 .tools { display: flex; align-items: center; gap: 8px; }
-.tools .btn { flex: 1; }
-.tools .btn b { font-variant-numeric: tabular-nums; }
 /* Every press turns the icon another quarter, the way the board goes, and it stays there.
    The wrapper turns rather than the <svg> itself: Chrome ignores a transform built with
    calc(var(...)) on an SVG element. The angle is inline because the count has no bound. */
@@ -60,5 +57,4 @@
     width: 100%; max-width: 380px;
     justify-self: end;                        /* RTL: hug the board, not the screen edge */
   }
-  .tools .wordsbtn { display: none; }
 }

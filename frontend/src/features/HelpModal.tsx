@@ -84,6 +84,7 @@ export function HelpModal({ open, onClose }: { open: boolean; onClose: () => voi
         <section className="helpsec" style={at(4)}>
           <h3>כפתורים</h3>
           <ul>
+            <li><b>לחיצה על מספר המילים</b> פותחת את רשימת המילים שמצאתם</li>
             <li><b>כפתור הסיבוב</b> מסובב את הלוח. עוזר אם צריכים רענון או זווית אחרת על האותיות</li>
             <li><b>לחיצה על מילה</b> תפתח את ההגדרה שלה במילוג</li>
             <li><b>ארכיון</b> פותח רשימה של ימי עבר</li>

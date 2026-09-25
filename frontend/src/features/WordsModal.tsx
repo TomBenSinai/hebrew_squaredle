@@ -11,7 +11,7 @@ interface ListProps {
   onWord: (word: string) => void;
 }
 
-/** On a phone: a modal opened from the "words" button. */
+/** On a phone: a modal opened by tapping the word count. */
 export function WordsModal({ open, onClose, ...list }: ListProps & { open: boolean; onClose: () => void }) {
   return (
     <Modal open={open} onClose={onClose} title="מילים">
