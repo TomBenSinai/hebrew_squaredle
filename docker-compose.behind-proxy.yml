@@ -3,22 +3,24 @@
 #
 #   docker compose -f docker-compose.behind-proxy.yml up -d --build
 #
-# Nothing here is published to the host: the existing proxy reaches `rivuon-web`
-# by name over the shared Docker network named in RIVUON_PROXY_NETWORK, and
+# Nothing here is published to the host: the existing proxy reaches `ribuon-web`
+# by name over the shared Docker network named in RIBUON_PROXY_NETWORK, and
 # terminates TLS itself. Inside, the layout is identical to the standalone
 # stack - Caddy serves the built site and proxies /api to uvicorn, one origin.
+name: ribuon                          # the volume and image names, whatever the folder is called
+
 services:
   api:
-    container_name: rivuon-api
+    container_name: ribuon-api
     build:
       context: ./backend
       dockerfile: Dockerfile.prod
     restart: unless-stopped
     volumes:
       - ./:/repo:ro                   # wordgame.py, boards/, shapes.json, backend code
-      - rivuon-db:/data               # rivuon.db, the players' progress
+      - ribuon-db:/data               # ribuon.db, the players' progress
     environment:
-      RIVUON_DB: /data/rivuon.db
+      RIBUON_DB: /data/ribuon.db
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
       interval: 30s
@@ -27,7 +29,7 @@ services:
       start_period: 10s
 
   web:
-    container_name: rivuon-web
+    container_name: ribuon-web
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
@@ -43,7 +45,7 @@ services:
 networks:
   proxy:
     external: true
-    name: ${RIVUON_PROXY_NETWORK:?set RIVUON_PROXY_NETWORK in .env to the front proxy's Docker network}
+    name: ${RIBUON_PROXY_NETWORK:?set RIBUON_PROXY_NETWORK in .env to the front proxy's Docker network}
 
 volumes:
-  rivuon-db:
+  ribuon-db:

@@ -40,7 +40,7 @@ export function WordsPanel({ className, ...list }: ListProps & { className?: str
   );
 }
 
-const SORT_KEY = "rivuon:words-az";
+const SORT_KEY = "ribuon:words-az";
 const readSort = () => { try { return localStorage.getItem(SORT_KEY) === "1"; } catch { return false; } };
 const writeSort = (on: boolean) => { try { localStorage.setItem(SORT_KEY, on ? "1" : "0"); } catch { /* private mode */ } };
 

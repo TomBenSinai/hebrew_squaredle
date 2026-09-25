@@ -8,7 +8,7 @@
  * can't even be read counts as seen, for the same reason.
  */
 const memory = new Set<string>();
-const key = (name: string) => `rivuon:seen:${name}`;
+const key = (name: string) => `ribuon:seen:${name}`;
 
 export function hasSeen(name: string): boolean {
   if (memory.has(name)) return true;
@@ -27,10 +27,10 @@ export function markSeen(name: string) {
 function legacy(name: string): boolean {
   if (name === "tutorial") {
     // the old flag also fell back to sessionStorage
-    return localStorage.getItem("rivuon:help-seen") === "1" || sessionStorage.getItem("rivuon:help-seen") === "1";
+    return localStorage.getItem("ribuon:help-seen") === "1" || sessionStorage.getItem("ribuon:help-seen") === "1";
   }
   if (name.startsWith("hint:")) {
-    const ids = JSON.parse(localStorage.getItem("rivuon:hints-seen") ?? "[]") as string[];
+    const ids = JSON.parse(localStorage.getItem("ribuon:hints-seen") ?? "[]") as string[];
     return ids.includes(name.slice("hint:".length));
   }
   return false;

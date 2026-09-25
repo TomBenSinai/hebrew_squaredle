@@ -23,7 +23,7 @@ from . import config, milog
 from .boards import Day, all_dates, load_day, playable_dates
 from .deps import current_player, day, repo
 
-app = FastAPI(title="Rivuon API")
+app = FastAPI(title="Ribuon API")
 if config.CORS_ORIGINS:
     app.add_middleware(CORSMiddleware, allow_origins=config.CORS_ORIGINS,
                        allow_methods=["*"], allow_headers=["*"])

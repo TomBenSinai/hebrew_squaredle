@@ -122,7 +122,7 @@ async def define(word: str) -> dict:
     result = {"word": word, "url": url_for(word), "entries": []}
     try:
         async with httpx.AsyncClient(timeout=8, follow_redirects=True,
-                                     headers={"User-Agent": "Mozilla/5.0 (rivuon word game)"}) as client:
+                                     headers={"User-Agent": "Mozilla/5.0 (ribuon word game)"}) as client:
             r = await client.get(result["url"])
             r.raise_for_status()
         result["entries"] = parse(r.text)
