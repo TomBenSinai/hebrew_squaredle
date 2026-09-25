@@ -39,7 +39,11 @@ export default function App() {
   }, []);
 
   const { game, error } = useGame(date);
+  // a first-time player learns on a practice board before the game opens
+  const [learned, setLearned] = useState(helpSeen);
+  const finishTutorial = () => { markHelpSeen(); setLearned(true); };
 
+  if (!learned) return <div className="app"><Tutorial onDone={finishTutorial} /></div>;
   if (loadError || error) return <div className="app"><p className="status">לא הצלחנו לטעון את המשחק. נסו לרענן.</p></div>;
   if (!days || !game) return <div className="app"><p className="status">טוען…</p></div>;
   return <Play days={days} game={game} setDate={setDate} />;
@@ -52,12 +56,7 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
   const { az, toggleSort } = useWordSort();
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [defWord, setDefWord] = useState<string | null>(null);
-  // a first-time player starts on the practice board, once; the rules stay behind "?"
-  const [tutorialOpen, setTutorialOpen] = useState(() => !helpSeen());
-  const closeTutorial = () => { setTutorialOpen(false); markHelpSeen(); };
   const [helpOpen, setHelpOpen] = useState(false);
-  const closeHelp = () => { setHelpOpen(false); markHelpSeen(); };
-  const intro = tutorialOpen || helpOpen;
 
   // on a computer the list is always beside the board, so the count opens nothing
   const wide = useMedia(WIDE_QUERY);
@@ -139,10 +138,9 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
         today={days.today} current={board.date}
         progress={archiveOpen ? progressStore.all() : {}} onPick={pickDay} />
       <DefinitionModal word={defWord} onClose={() => setDefWord(null)} onShow={showOnBoard} />
-      <HelpModal open={helpOpen} onClose={closeHelp} />
-      <Tutorial open={tutorialOpen} onClose={closeTutorial} />
-      <HintModal hint={intro ? null : hintIntro} onClose={closeHintIntro} />
-      <BonusModal word={intro || hintIntro ? null : bonusIntro} onClose={closeBonusIntro} />
+      <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <HintModal hint={helpOpen ? null : hintIntro} onClose={closeHintIntro} />
+      <BonusModal word={helpOpen || hintIntro ? null : bonusIntro} onClose={closeBonusIntro} />
     </div>
   );
 }

@@ -1,17 +1,9 @@
-.modal .sheet.tutcard { height: auto; max-height: min(92%, 760px); max-width: 30rem; }
-.tutbody { padding-bottom: 18px; }
 .tutstep {
-  margin: 14px 0 4px; min-height: 4.5em;
-  font-size: 1.05rem; line-height: 1.5;
+  margin: 4px 0 0; min-height: 4.5em;
+  font-size: 1.1rem; line-height: 1.5;
   animation: rise .4s var(--ease-out) both;
 }
 .tutstep b { color: var(--cobalt); font-weight: 700; }
-/* the board sizes itself from its container (Board.css): give it a fixed box */
-.boardwrap.tutboard { flex: none; height: 19rem; }
-.tutactions { display: flex; justify-content: center; min-height: 3rem; align-items: center; margin-top: 10px; }
-.tutactions .btn { width: 100%; padding-block: 11px; font-size: 1.05rem; }
-.tutskip {
-  border: 0; background: none; padding: 8px 12px; cursor: pointer;
-  font: inherit; font-size: .95rem; color: var(--muted);
-  text-decoration: underline; text-underline-offset: 4px;
-}
+/* holds the button's place, so the board doesn't jump when it appears */
+.tutactions { min-height: 3.2rem; padding-bottom: 12px; animation: rise .4s var(--ease-out) both; }
+.tutactions .btn { width: 100%; padding-block: 12px; font-size: 1.1rem; }

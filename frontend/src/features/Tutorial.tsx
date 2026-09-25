@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button, Modal, SheetBody } from "../components";
+import { Button } from "../components";
 import { useSwipe } from "../hooks/useSwipe";
 import { norm, withFinal } from "../lib/hebrew";
 import { findPath, makeLayout } from "../lib/layout";
@@ -21,8 +21,9 @@ const STEPS = [
   <>כל האותיות אפורות, כלומר מצאתם את כל המילים והלוח פתור. בלוח היומי מחכות לכם עשרות מילים של ארבע אותיות ומעלה.</>,
 ];
 
-/** A first visit starts here: a tiny board to learn the swipe and the grey letters. */
-export function Tutorial({ open, onClose }: { open: boolean; onClose: () => void }) {
+/** A first visit starts here, in place of the game: a tiny board to learn the swipe
+    and the grey letters. The game opens only once both words are found. */
+export function Tutorial({ onDone }: { onDone: () => void }) {
   const layout = useMemo(() => makeLayout(MASK, LETTERS, 0), []);
   const tileRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [found, setFound] = useState<string[]>([]);
@@ -62,21 +63,23 @@ export function Tutorial({ open, onClose }: { open: boolean; onClose: () => void
   const swiping = withFinal(path.map(i => layout.letters[i]).join(""));
   const done = !next;
   return (
-    <Modal open={open} onClose={onClose} title="איך משחקים" sheetClassName="tutcard">
-      <SheetBody className="tutbody">
-        <p key={found.length} className="tutstep" aria-live="polite">{STEPS[found.length]}</p>
-        <div className="boardwrap tutboard" style={boardVars(layout)}>
-          <Readout current={swiping} toast={toast} onWord={() => {}} />
-          <Board layout={layout} path={path} live={live} hints={null}
-            flash={flash && { cells: flash, bonus: false }} spin="idle"
-            tileRefs={tileRefs} handlers={handlers} />
+    <section className="play tutorial" aria-label="איך משחקים">
+      <header className="masthead">
+        <div className="brand">
+          <h1>ריבועון</h1>
+          <div className="when"><b>איך משחקים</b> · {done ? "סיימתם" : `${found.length + 1} מתוך ${WORDS.length}`}</div>
         </div>
-        <div className="tutactions">
-          {done
-            ? <Button variant="primary" onClick={onClose}>יאללה, מתחילים</Button>
-            : <button type="button" className="tutskip" onClick={onClose}>דלגו על ההדרכה</button>}
-        </div>
-      </SheetBody>
-    </Modal>
+      </header>
+      <p key={found.length} className="tutstep" aria-live="polite">{STEPS[found.length]}</p>
+      <div className="boardwrap" style={boardVars(layout)}>
+        <Readout current={swiping} toast={toast} onWord={() => {}} />
+        <Board layout={layout} path={path} live={live} hints={null}
+          flash={flash && { cells: flash, bonus: false }} spin="idle"
+          tileRefs={tileRefs} handlers={handlers} />
+      </div>
+      <div className="tutactions">
+        {done && <Button variant="primary" onClick={onDone}>יאללה, מתחילים</Button>}
+      </div>
+    </section>
   );
 }

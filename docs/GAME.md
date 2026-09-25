@@ -28,7 +28,7 @@ board on the same day (Israel time).
 | סיבוב | Rotates the board 90° (same board, new view; helps you see words) |
 | המילים | Found words, grouped by length; theme words first; bonus words in their own section. Unfound words are never revealed; it only says how many are left |
 | ארכיון | Every past day with your progress; tap to play it. Future days stay hidden |
-| Tutorial | Opens by itself on a first visit (`rivuon:help-seen` in `localStorage`): a practice board with gaps holding only שלום and מוצר. Swiping שלום greys ש and ל while ו and מ stay lit for מוצר; finding מוצר greys everything and ends it. Skippable |
+| Tutorial | A first visit (`rivuon:help-seen` in `localStorage`) starts on this page instead of the game, and the game opens only once it's done: a practice board with gaps holding only שלום and מוצר. Swiping שלום greys ש and ל while ו and מ stay lit for מוצר; finding מוצר greys everything and shows the button into the game. No skip |
 | ? | The rules, in the app's own words, from the header any time |
 | Bonus card | Opens the first time a player finds a bonus word (`rivuon:bonus-seen`): what bonus words are, with גינה / גינת |
 | Definition card | Tap any found word: a short definition (scraped from Milog by the backend), a link to the full Milog entry, and "show on board" |
