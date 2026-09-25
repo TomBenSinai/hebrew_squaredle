@@ -4,6 +4,8 @@
 # web: Caddy. Terminates TLS (automatic certificates), serves the built site
 #      and proxies /api to the api service, so everything is one origin.
 # api: uvicorn/FastAPI. Reads the repo read-only; progress lives in a volume.
+name: ribuon                          # the volume and image names, whatever the folder is called
+
 services:
   api:
     build:
@@ -12,9 +14,9 @@ services:
     restart: unless-stopped
     volumes:
       - ./:/repo:ro                   # wordgame.py, boards/, shapes.json, backend code
-      - rivuon-db:/data               # rivuon.db, the players' progress
+      - ribuon-db:/data               # ribuon.db, the players' progress
     environment:
-      RIVUON_DB: /data/rivuon.db
+      RIBUON_DB: /data/ribuon.db
     expose:
       - "8000"                        # reachable from web only, never from outside
     healthcheck:
@@ -32,7 +34,7 @@ services:
     depends_on:
       - api
     environment:
-      RIVUON_DOMAIN: ${RIVUON_DOMAIN:-ribuon.com}
+      RIBUON_DOMAIN: ${RIBUON_DOMAIN:-ribuon.com}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data              # certificates -- keep this volume, or you re-issue
@@ -43,6 +45,6 @@ services:
       - "443:443/udp"                 # HTTP/3
 
 volumes:
-  rivuon-db:
+  ribuon-db:
   caddy-data:
   caddy-config:

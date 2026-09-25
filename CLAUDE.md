@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ריבועון: a daily Hebrew Squaredle-style word grid. Python 3.10+, **standard library only**. Everything runs offline except `build_wordlists.py` (needs `pip install wordfreq`) and `analyze_hspell.py` (needs a compiled Hspell 1.4 with `--enable-linginfo`).
 
-Further docs: `README.md`, `docs/BOARDS.md` (how-to for boards/shapes/themes — read before changing boards), `docs/ALGORITHM.md`, `docs/GAME.md`, `skills/rivuon-boards/SKILL.md`.
+Further docs: `README.md`, `docs/BOARDS.md` (how-to for boards/shapes/themes — read before changing boards), `docs/ALGORITHM.md`, `docs/GAME.md`, `skills/ribuon-boards/SKILL.md`.
 
 ## Commands
 

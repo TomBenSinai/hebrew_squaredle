@@ -1,5 +1,5 @@
 ---
-name: rivuon-boards
+name: ribuon-boards
 description: Create, theme, and publish daily boards for ריבועון (the Hebrew Squaredle-style word game) — scheduling days, special shapes, and holiday themes. Use when asked to make boards, a themed/holiday day, a new shape, or to fix words in the game.
 ---
 

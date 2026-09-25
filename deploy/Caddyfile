@@ -1,5 +1,5 @@
 # Caddy config for ribuon.com. Mounted read-only into the `web` container by
-# docker-compose.prod.yml; RIVUON_DOMAIN comes from the .env in the repo root.
+# docker-compose.prod.yml; RIBUON_DOMAIN comes from the .env in the repo root.
 #
 # Certificates are issued and renewed automatically - nothing to do but point
 # the DNS at this machine and leave ports 80 and 443 open.
@@ -8,11 +8,11 @@
 	# email you@example.com
 }
 
-www.{$RIVUON_DOMAIN:ribuon.com} {
-	redir https://{$RIVUON_DOMAIN:ribuon.com}{uri} permanent
+www.{$RIBUON_DOMAIN:ribuon.com} {
+	redir https://{$RIBUON_DOMAIN:ribuon.com}{uri} permanent
 }
 
-{$RIVUON_DOMAIN:ribuon.com} {
+{$RIBUON_DOMAIN:ribuon.com} {
 	encode zstd gzip
 
 	header {

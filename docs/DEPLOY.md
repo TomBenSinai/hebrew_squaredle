@@ -5,7 +5,7 @@ The site runs as two containers on one VPS (`docker-compose.prod.yml`):
 | Container | What it does |
 |---|---|
 | `web` | Caddy. Gets and renews the TLS certificate, serves the built React app from `/srv`, and proxies `/api/*` to `api`. |
-| `api` | uvicorn + FastAPI. Reads the repo read-only (`wordgame.py`, `boards/daily/*.json`, `shapes.json`); player progress lives in the `rivuon-db` volume. |
+| `api` | uvicorn + FastAPI. Reads the repo read-only (`wordgame.py`, `boards/daily/*.json`, `shapes.json`); player progress lives in the `ribuon-db` volume. |
 
 Everything is one origin, so there is no CORS and no third-party-cookie problem.
 The API port is never published to the internet - only Caddy listens on 80/443.
@@ -51,18 +51,18 @@ sudo ufw allow OpenSSH && sudo ufw allow 80,443/tcp && sudo ufw enable
 Give the server read access to the GitHub repo (a deploy key is simplest):
 
 ```bash
-ssh-keygen -t ed25519 -f ~/.ssh/id_rivuon -N ""
-cat ~/.ssh/id_rivuon.pub    # add at github.com/TomBenSinai/hebrew_squaredle -> Settings -> Deploy keys
-printf 'Host github.com\n  IdentityFile ~/.ssh/id_rivuon\n' >> ~/.ssh/config
+ssh-keygen -t ed25519 -f ~/.ssh/id_ribuon -N ""
+cat ~/.ssh/id_ribuon.pub    # add at github.com/TomBenSinai/hebrew_squaredle -> Settings -> Deploy keys
+printf 'Host github.com\n  IdentityFile ~/.ssh/id_ribuon\n' >> ~/.ssh/config
 ```
 
 ## 3. First deploy
 
 ```bash
 sudo mkdir -p /srv && sudo chown "$USER" /srv
-git clone git@github.com:TomBenSinai/hebrew_squaredle.git /srv/rivuon
-cd /srv/rivuon
-cp deploy/env.example .env               # set RIVUON_DOMAIN if it is not ribuon.com
+git clone git@github.com:TomBenSinai/hebrew_squaredle.git /srv/ribuon
+cd /srv/ribuon
+cp deploy/env.example .env               # set RIBUON_DOMAIN if it is not ribuon.com
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
@@ -89,7 +89,7 @@ there (that is the API and the database round-trip, not just localStorage).
 Reach the server by its name, not its address: `ssh root@ribuon.com`.
 
 ```bash
-cd /srv/rivuon && git pull
+cd /srv/ribuon && git pull
 ```
 
 - **New boards only** (`boards/daily/*.json`): nothing else to do. The repo is
@@ -125,8 +125,8 @@ warn you before the well runs dry.
 the 14 newest copies:
 
 ```bash
-./deploy/backup.sh                       # -> ~/rivuon-backups/rivuon-<stamp>.db.gz
-(crontab -l 2>/dev/null; echo '17 4 * * * cd /srv/rivuon && ./deploy/backup.sh') | crontab -
+./deploy/backup.sh                       # -> ~/ribuon-backups/ribuon-<stamp>.db.gz
+(crontab -l 2>/dev/null; echo '17 4 * * * cd /srv/ribuon && ./deploy/backup.sh') | crontab -
 ```
 
 Copy them off the machine periodically (`rsync`, `rclone`, whatever you use).
@@ -134,10 +134,10 @@ Copy them off the machine periodically (`rsync`, `rclone`, whatever you use).
 To restore:
 
 ```bash
-cd /srv/rivuon
-gunzip -c ~/rivuon-backups/rivuon-<stamp>.db.gz > /tmp/restore.db
+cd /srv/ribuon
+gunzip -c ~/ribuon-backups/ribuon-<stamp>.db.gz > /tmp/restore.db
 docker compose -f docker-compose.prod.yml stop api
-docker compose -f docker-compose.prod.yml cp /tmp/restore.db api:/data/rivuon.db
+docker compose -f docker-compose.prod.yml cp /tmp/restore.db api:/data/ribuon.db
 docker compose -f docker-compose.prod.yml start api
 ```
 
@@ -155,9 +155,9 @@ container name over the shared Docker network.
 
 ```
 :443  nginx (the other site's)  ->  miri-regev-...   its own root
-                                ->  ribuon.com       rivuon-web:80
+                                ->  ribuon.com       ribuon-web:80
                                                        |- /srv        the site
-                                                       `- /api/*   -> rivuon-api:8000
+                                                       `- /api/*   -> ribuon-api:8000
 ```
 
 Use `docker-compose.behind-proxy.yml` instead of `docker-compose.prod.yml`.
@@ -169,14 +169,14 @@ front proxy's network joined from outside.
 Log in with `ssh root@ribuon.com`, then:
 
 ```bash
-git clone git@github.com:TomBenSinai/hebrew_squaredle.git /root/rivuon
-cd /root/rivuon
+git clone git@github.com:TomBenSinai/hebrew_squaredle.git /root/ribuon
+cd /root/ribuon
 cp deploy/env.example .env
-# set RIVUON_PROXY_NETWORK to the front proxy's network:
+# set RIBUON_PROXY_NETWORK to the front proxy's network:
 docker inspect <that-nginx-container> --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}'
 
 docker compose -f docker-compose.behind-proxy.yml up -d --build
-docker exec <that-nginx-container> wget -qO- http://rivuon-web/api/health   # proves the hop
+docker exec <that-nginx-container> wget -qO- http://ribuon-web/api/health   # proves the hop
 ```
 
 Free the build cache afterwards if the disk is tight: `docker builder prune -f`.
@@ -192,7 +192,7 @@ conf=/root/mbti-app/frontend/nginx.conf            # whatever that nginx mounts 
 cp "$conf" "$conf.bak-$(date +%F)"
 
 # pass 1: the listen-80 block only (up to the first `listen 443`)
-sed -n '1,/^server {$/p' /root/rivuon/deploy/nginx-ribuon.conf  # ...append that block
+sed -n '1,/^server {$/p' /root/ribuon/deploy/nginx-ribuon.conf  # ...append that block
 docker exec <nginx> nginx -t && docker exec <nginx> nginx -s reload
 
 # the certificate, through the webroot that nginx already serves
@@ -225,10 +225,28 @@ daily one costs nothing.
 
 ```bash
 ssh root@ribuon.com
-cd /root/rivuon && git pull --ff-only
+cd /root/ribuon && git pull --ff-only
 docker compose -f docker-compose.behind-proxy.yml up -d --build web   # or api, per section 5
 curl -s https://ribuon.com/api/health
 ```
+
+### Moving an existing server off the old name
+
+The app used to be called rivuon: the compose project, the `rivuon-db` volume,
+`rivuon.db`, the `rivuon-web`/`rivuon-api` containers and the `RIVUON_*` vars in
+`.env`. A server deployed before the rename needs one migration after
+`git pull`, or the new stack starts on an empty database:
+
+```bash
+./deploy/migrate-rivuon-to-ribuon.sh docker-compose.behind-proxy.yml \
+    <that-nginx-container> /root/mbti-app/frontend/nginx.conf
+```
+
+It copies the volumes (the old ones stay, for a rollback), renames the vars
+in `.env` and points the front nginx at `ribuon-web`. The clone can keep its
+old folder name: the compose files set the project name themselves. Players
+keep their progress: the browser copies its `rivuon:` keys to `ribuon:` ones
+on first load.
 
 ### To undo
 
@@ -248,5 +266,5 @@ Three rules survive any proxy: `/api` must be the **same origin** as the page,
 |---|---|
 | No certificate | `logs -f web`. Usually DNS not pointing here yet, or 80/443 blocked - the HTTP-01 challenge needs port 80. |
 | Site loads, game does not | `curl https://ribuon.com/api/health`; then `logs api`. |
-| "אין לוח להיום" / 404 on today | The board file for today is missing, or the server clock is wrong. The API uses Asia/Jerusalem regardless of the host timezone; make sure `RIVUON_TODAY` is **not** set in `.env`. |
+| "אין לוח להיום" / 404 on today | The board file for today is missing, or the server clock is wrong. The API uses Asia/Jerusalem regardless of the host timezone; make sure `RIBUON_TODAY` is **not** set in `.env`. |
 | Progress lost | Progress is keyed by the browser's `X-Player-Id`; a cleared browser is a new player. Until login exists, that is expected. |

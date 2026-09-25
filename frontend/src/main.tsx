@@ -1,3 +1,4 @@
+import "./lib/migrateStorage";   // first: the stores read their keys on import
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles/tokens.css";

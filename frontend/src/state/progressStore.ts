@@ -84,7 +84,7 @@ export class SyncedProgressStore implements ProgressStore {
 }
 
 export function playerId(): string {
-  const key = "rivuon:player";
+  const key = "ribuon:player";
   let id = storage.get<string>(key);
   if (!id) {
     // randomUUID needs a secure context; a phone on the LAN over plain http has none

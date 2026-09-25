@@ -9,7 +9,7 @@ WORKDIR /repo/backend
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-ENV PYTHONPATH=/repo RIVUON_ROOT=/repo RIVUON_DB=/data/rivuon.db
+ENV PYTHONPATH=/repo RIBUON_ROOT=/repo RIBUON_DB=/data/ribuon.db
 EXPOSE 8000
 # One worker on purpose: progress lives in a SQLite file guarded by a process lock.
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
