@@ -1,11 +1,20 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "../components";
+import { useMemo, useRef, useState } from "react";
+import { Button, CalendarIcon, Pill, RotateIcon } from "../components";
+import type { FoundWord, PublicBoard } from "../api/types";
+import { useFlash } from "../hooks/useFlash";
+import { useSpin } from "../hooks/useSpin";
 import { useSwipe } from "../hooks/useSwipe";
 import { norm, withFinal } from "../lib/hebrew";
 import { findPath, makeLayout } from "../lib/layout";
-import { MIN_LEN, type Toast } from "../state/useGame";
+import { letterFraction, rankFor } from "../lib/scoring";
+import { MIN_LEN, say, type Toast } from "../state/useGame";
 import { Board, boardVars } from "./Board";
+import { DefinitionModal } from "./DefinitionModal";
+import { HelpModal } from "./HelpModal";
 import { Readout } from "./Readout";
+import { Score } from "./Score";
+import { WordsModal } from "./WordsModal";
+import "./Masthead.css";
 import "./Tutorial.css";
 
 // A practice board with gaps, holding שלום and מוצר and no other word (main,
@@ -14,72 +23,117 @@ import "./Tutorial.css";
 const MASK = ["XX.", "..X", "XXX"];
 const LETTERS = "שלורצמ";
 const WORDS = ["שלום", "מוצר"];
+// the practice board as the real word list and score expect one
+const BOARD: PublicBoard = {
+  date: "", number: 0, shapeName: "", theme: null, letters: LETTERS, mask: MASK,
+  mainTotal: WORDS.length, mainLetters: LETTERS.length,
+  groups: [{ length: 4, total: WORDS.length }], bonusTotal: 0, themeTotal: 0,
+};
+const NO_HINTS = new Set<never>();
 
 const STEPS = [
-  <>החליקו את האצבע על <b>ש</b>, <b>ל</b>, <b>ו</b>, <b>ם</b> בלי להרים אותה, כדי ליצור את המילה <b>שלום</b>. אפשר לזוז לכל כיוון, גם באלכסון.</>,
+  <>החליקו את האצבע על <b>ש</b>, <b>ל</b>, <b>ו</b>, <b>מ</b> בלי להרים אותה, כדי ליצור את המילה <b>שלום</b>. אפשר לזוז לכל כיוון, גם באלכסון. בסוף מילה <b>מ</b> הופכת לבד ל-<b>ם</b>: בלוח אין אותיות סופיות.</>,
   <><b>ש</b> ו-<b>ל</b> האפירו: אף מילה שנותרה לא צריכה אותן. <b>ו</b> ו-<b>מ</b> נשארו, כי עוד מילה עוברת בהן. מצאו אותה.</>,
-  <>כל האותיות אפורות, כלומר מצאתם את כל המילים והלוח פתור. בלוח היומי מחכות לכם עשרות מילים של ארבע אותיות ומעלה.</>,
+  <>מצאתם את כל המילים, והלוח פתור. עכשיו לחצו על <b>מספר המילים</b> למעלה כדי לפתוח את הרשימה שלהן, ושם לחצו על מילה כדי לראות מה היא אומרת.</>,
+  <>לפני שמתחילים: כפתור <b>הסיבוב</b> מתחת ללוח מסובב אותו, כי לפעמים מזווית אחרת רואים מילים חדשות. <b>ארכיון</b> למעלה פותח את הלוחות של ימים קודמים. וכל הכללים, בפירוט, תמיד מחכים מאחורי כפתור ה-<b>?</b>.</>,
 ];
 
-/** A first visit starts here, in place of the game: a tiny board to learn the swipe
-    and the grey letters. The game opens only once both words are found. */
+/** A first visit starts here, in place of the game: a tiny board to learn the
+    swipe and the grey letters, then the word list, definitions and the buttons. */
 export function Tutorial({ onDone }: { onDone: () => void }) {
-  const layout = useMemo(() => makeLayout(MASK, LETTERS, 0), []);
+  const [rot, setRot] = useState(0);
+  const layout = useMemo(() => makeLayout(MASK, LETTERS, rot), [rot]);
   const tileRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [found, setFound] = useState<string[]>([]);
   const [toast, setToast] = useState<Toast | null>(null);
-  const [flash, setFlash] = useState<number[] | null>(null);
-  const flashTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(flashTimer.current), []);
+  const [flashWord, showWord] = useFlash<string>();
+  const [wordsOpen, setWordsOpen] = useState(false);
+  const [defWord, setDefWord] = useState<string | null>(null);
+  const [defined, setDefined] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const { phase, turns, spin } = useSpin(() => setRot(r => (r + 1) % 4));
 
   const next = WORDS[found.length];
+  const step = next ? found.length : defined ? 3 : 2;
+
   const submit = (path: number[]) => {
     const key = path.map(i => layout.letters[i]).join("");
     const word = WORDS.find(w => norm(w) === key);
-    if (key.length < MIN_LEN) {
-      if (key.length > 1) setToast({ kind: "info", text: "צריך לפחות 4 אותיות" });
-    } else if (!word) {
-      setToast({ kind: "bad", text: `${withFinal(key)} לא ברשימה` });
-    } else if (found.includes(word)) {
-      setToast({ kind: "info", text: `${word} כבר נמצאה` });
-    } else if (word !== next) {
-      setToast({ kind: "info", text: `נכון! אבל קודם ${next}` });
-    } else {
+    if (key.length < MIN_LEN) setToast(say.tooShort(key));
+    else if (!word) setToast(say.notInList(key));
+    else if (found.includes(word)) setToast(say.again(word));
+    else if (word !== next) setToast({ kind: "info", text: `נכון! אבל קודם ${next}` });
+    else {
       setFound([...found, word]);
-      setToast({ kind: "main", text: word });
-      clearTimeout(flashTimer.current);
-      setFlash(path);
-      flashTimer.current = setTimeout(() => setFlash(null), 1600);
+      setToast(say.found(word));
+      showWord(word);
     }
   };
   const tap = () => setToast({ kind: "info", text: "מחליקים את האצבע, לא מקישים" });
-  const { path, handlers } = useSwipe(layout, tileRefs, submit, !next, tap);
+  const { path, handlers } = useSwipe(layout, tileRefs, submit, phase !== "idle", tap);
 
   // letters no word still to find passes through
   const live = useMemo(() => new Set(
     WORDS.filter(w => !found.includes(w)).flatMap(w => findPath(layout, w) ?? []),
   ), [layout, found]);
 
+  const foundWords: FoundWord[] = found.map(w => ({ w, cat: "main" }));
+  const fraction = letterFraction(foundWords, BOARD.mainLetters);
+  const define = (w: string) => { setDefWord(w); setDefined(true); };
+  const showOnBoard = (w: string) => { setDefWord(null); setWordsOpen(false); showWord(w); };
   const swiping = withFinal(path.map(i => layout.letters[i]).join(""));
-  const done = !next;
+  const flash = flashWord ? { cells: findPath(layout, flashWord) ?? [], bonus: false } : null;
+
   return (
     <section className="play tutorial" aria-label="איך משחקים">
       <header className="masthead">
         <div className="brand">
           <h1>ריבועון</h1>
-          <div className="when"><b>איך משחקים</b> · {done ? "סיימתם" : `${found.length + 1} מתוך ${WORDS.length}`}</div>
+          <div className="when"><b>איך משחקים</b> · {step + 1} מתוך {STEPS.length}</div>
+        </div>
+        <div className="headbtns">
+          {step < 3
+            ? <Pill className="tutskip" onClick={onDone}>דילוג</Pill>
+            : <>
+                <Pill className="cal tutnew" icon={<CalendarIcon />} aria-label="ארכיון" title="ארכיון"
+                  onClick={() => setToast({ kind: "info", text: "הארכיון נפתח מתוך המשחק" })}>
+                  <span className="pilllabel">ארכיון</span>
+                </Pill>
+                <Pill className="round tutnew" aria-label="איך משחקים" title="איך משחקים"
+                  onClick={() => setHelpOpen(true)}>?</Pill>
+              </>}
         </div>
       </header>
-      <p key={found.length} className="tutstep" aria-live="polite">{STEPS[found.length]}</p>
+
+      <Score found={found.length} total={WORDS.length} bonus={0} rank={rankFor(fraction)}
+        fraction={fraction} onOpen={() => setWordsOpen(true)} />
+
+      {/* one live region whose text changes, so screen readers read every step */}
+      <p className="tutstep" aria-live="polite"><span key={step}>{STEPS[step]}</span></p>
+
       <div className="boardwrap" style={boardVars(layout)}>
-        <Readout current={swiping} toast={toast} onWord={() => {}} />
-        <Board layout={layout} path={path} live={live} hints={null}
-          flash={flash && { cells: flash, bonus: false }} spin="idle"
+        <Readout current={swiping} toast={toast} onWord={define} />
+        <Board layout={layout} path={path} live={live} hints={null} flash={flash} spin={phase}
           tileRefs={tileRefs} handlers={handlers} />
       </div>
+
       <div className="tutactions">
-        {done && <Button variant="primary" onClick={onDone}>יאללה, מתחילים</Button>}
+        {step === 3 && <>
+          <div className="tools tutnew">
+            <Pill className="round spinbtn" aria-label="סיבוב הלוח" onClick={spin}>
+              <span className="spinicon" style={{ transform: `rotate(${turns * -90}deg)` }}><RotateIcon /></span>
+              <span className="tip" aria-hidden="true">סיבוב</span>
+            </Pill>
+          </div>
+          <Button variant="primary" onClick={onDone}>יאללה, מתחילים</Button>
+        </>}
       </div>
+
+      <WordsModal open={wordsOpen} onClose={() => setWordsOpen(false)} board={BOARD} found={foundWords}
+        fresh={found.at(-1) ?? null} reveals={null} hintsOpen={NO_HINTS} az={false} onToggleSort={() => {}}
+        onWord={define} />
+      <DefinitionModal word={defWord} onClose={() => setDefWord(null)} onShow={showOnBoard} />
+      <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
     </section>
   );
 }

@@ -10,12 +10,12 @@ export function useSwipe(
   tiles: RefObject<(HTMLDivElement | null)[]>,
   onSwipe: (path: number[]) => void,
   disabled = false,
-  /** a press that never left its tile */
+  /** a press that never left its tile (a swipe that found no neighbor isn't one) */
   onTap?: () => void,
 ) {
   const [path, setPath] = useState<number[]>([]);
   const pathRef = useRef<number[]>([]);
-  const drag = useRef({ active: false, moved: false, rects: [] as DOMRect[] });
+  const drag = useRef({ active: false, moved: false, left: false, start: new DOMRect(), rects: [] as DOMRect[] });
 
   const set = (p: number[]) => { pathRef.current = p; setPath(p); };
 
@@ -49,10 +49,14 @@ export function useSwipe(
       e.currentTarget.setPointerCapture(e.pointerId);
       drag.current.active = true;
       drag.current.moved = false;
+      drag.current.left = false;
+      drag.current.start = drag.current.rects[i];
       set([i]);
     },
     onPointerMove(e: PointerEvent<HTMLElement>) {
       if (!drag.current.active) return;
+      const s = drag.current.start;
+      if (e.clientX < s.left || e.clientX > s.right || e.clientY < s.top || e.clientY > s.bottom) drag.current.left = true;
       const i = tileAt(e.clientX, e.clientY);
       const p = pathRef.current;
       if (i < 0) return;
@@ -67,7 +71,7 @@ export function useSwipe(
       const p = pathRef.current;
       set([]);
       if (drag.current.moved) onSwipe(p);
-      else onTap?.();
+      else if (!drag.current.left) onTap?.();
     },
     onPointerCancel: clear,
   };

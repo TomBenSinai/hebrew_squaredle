@@ -3,11 +3,10 @@ import { Pill, RotateIcon } from "./components";
 import { api } from "./api/client";
 import type { DaysResponse } from "./api/types";
 import { ArchiveModal } from "./features/ArchiveModal";
-import { BonusModal, bonusSeen, markBonusSeen } from "./features/BonusModal";
 import { Board, boardVars } from "./features/Board";
 import { DefinitionModal } from "./features/DefinitionModal";
-import { HelpModal, helpSeen, markHelpSeen } from "./features/HelpModal";
-import { HintModal, hintSeen, markHintSeen } from "./features/HintModal";
+import { HelpModal } from "./features/HelpModal";
+import { introName, IntroModal, type Intro } from "./features/IntroModal";
 import { Masthead } from "./features/Masthead";
 import { Readout } from "./features/Readout";
 import { Score } from "./features/Score";
@@ -17,7 +16,8 @@ import { useMedia } from "./hooks/useMedia";
 import { useSpin } from "./hooks/useSpin";
 import { useSwipe } from "./hooks/useSwipe";
 import { withFinal } from "./lib/hebrew";
-import { HINTS, letterFraction, openHints, rankFor, type HintId } from "./lib/scoring";
+import { HINTS, letterFraction, openHints, rankFor } from "./lib/scoring";
+import { hasSeen, markSeen } from "./lib/seen";
 import { progressStore } from "./state/progressStore";
 import { useGame, type Game } from "./state/useGame";
 import "./App.css";
@@ -40,8 +40,8 @@ export default function App() {
 
   const { game, error } = useGame(date);
   // a first-time player learns on a practice board before the game opens
-  const [learned, setLearned] = useState(helpSeen);
-  const finishTutorial = () => { markHelpSeen(); setLearned(true); };
+  const [learned, setLearned] = useState(() => hasSeen("tutorial"));
+  const finishTutorial = () => { markSeen("tutorial"); setLearned(true); };
 
   if (!learned) return <div className="app"><Tutorial onDone={finishTutorial} /></div>;
   if (loadError || error) return <div className="app"><p className="status">לא הצלחנו לטעון את המשחק. נסו לרענן.</p></div>;
@@ -71,29 +71,28 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
   const bonusFound = found.length - mainFound;
   const fraction = letterFraction(found, board.mainLetters);
 
-  // each hint is explained once, the first time this player ever gets it
   const hintsOpen = useMemo(() => openHints(fraction), [fraction]);
-  const [hintIntro, setHintIntro] = useState<HintId | null>(null);
-  const nextUnexplained = useCallback(
-    (open: Set<HintId>) => HINTS.find(h => open.has(h.id) && !hintSeen(h.id))?.id ?? null,
-    [],
-  );
-  useEffect(() => {
-    const next = nextUnexplained(hintsOpen);
-    if (next) setHintIntro(next);
-  }, [hintsOpen, nextUnexplained]);
-  const closeHintIntro = () => {
-    if (hintIntro) markHintSeen(hintIntro);
-    setHintIntro(nextUnexplained(hintsOpen));
-  };
 
-  // the first bonus word this player ever finds is explained
-  const [bonusIntro, setBonusIntro] = useState<string | null>(null);
-  const { fresh, isBonus } = game;
+  // Each hint, and the first bonus and theme word, is explained once, the first
+  // time this player ever meets it. One card at a time, in the order they came.
+  const [intros, setIntros] = useState<Intro[]>([]);
+  const queue = useCallback((add: Intro[]) => setIntros(q => [
+    ...q,
+    ...add.filter(i => !hasSeen(introName(i)) && !q.some(o => introName(o) === introName(i))),
+  ]), []);
   useEffect(() => {
-    if (fresh && isBonus(fresh) && !bonusSeen()) setBonusIntro(fresh);
-  }, [fresh, isBonus]);
-  const closeBonusIntro = () => { setBonusIntro(null); markBonusSeen(); };
+    queue(HINTS.filter(h => hintsOpen.has(h.id)).map(h => ({ kind: "hint", hint: h.id })));
+  }, [hintsOpen, queue]);
+  const { fresh } = game;
+  useEffect(() => {
+    const f = fresh ? found.find(x => x.w === fresh) : undefined;
+    if (f?.cat === "bonus") queue([{ kind: "bonus", word: f.w }]);
+    else if (f?.theme) queue([{ kind: "theme", word: f.w, theme: board.theme }]);
+  }, [fresh, found, board.theme, queue]);
+  const closeIntro = () => {
+    if (intros[0]) markSeen(introName(intros[0]));
+    setIntros(q => q.slice(1));
+  };
 
   const pickDay = (d: string) => { setArchiveOpen(false); if (d !== board.date) setDate(d); };
   const showOnBoard = useCallback((w: string) => {
@@ -139,8 +138,7 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
         progress={archiveOpen ? progressStore.all() : {}} onPick={pickDay} />
       <DefinitionModal word={defWord} onClose={() => setDefWord(null)} onShow={showOnBoard} />
       <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
-      <HintModal hint={helpOpen ? null : hintIntro} onClose={closeHintIntro} />
-      <BonusModal word={helpOpen || hintIntro ? null : bonusIntro} onClose={closeBonusIntro} />
+      <IntroModal intro={helpOpen ? null : intros[0] ?? null} onClose={closeIntro} />
     </div>
   );
 }

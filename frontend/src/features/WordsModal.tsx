@@ -88,7 +88,8 @@ function WordsList({ board, found, fresh, reveals, hintsOpen, az, onToggleSort, 
       left: total - got.length,
     });
   }
-  groups.push({
+  // (the tutorial's practice board has none)
+  if (board.bonusTotal) groups.push({
     title: "בונוס", entries: bonus.map(word => ({ word })),
     left: board.bonusTotal - bonus.length, kind: "bonus",
   });
