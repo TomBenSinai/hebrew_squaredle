@@ -20,6 +20,10 @@ import { progressStore } from "./state/progressStore";
 import { useGame, type Game } from "./state/useGame";
 import "./App.css";
 
+/** Where the word list moves out of the modal and beside the board. The only copy:
+    App.css styles the wide layout from the `wide` class this sets. */
+const WIDE_QUERY = "(min-width: 1100px)";
+
 export default function App() {
   const [days, setDays] = useState<DaysResponse | null>(null);
   const [date, setDate] = useState<string | null>(null);
@@ -51,7 +55,7 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
   const closeHelp = () => { setHelpOpen(false); markHelpSeen(); };
 
   // on a computer the list is always beside the board, so the count opens nothing
-  const wide = useMedia("(min-width: 1100px)");
+  const wide = useMedia(WIDE_QUERY);
 
   const tileRefs = useRef<(HTMLDivElement | null)[]>([]);
   const { phase, turns, spin } = useSpin(game.rotate);
@@ -87,7 +91,7 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
   }, [game]);
 
   return (
-    <div className="app">
+    <div className={wide ? "app wide" : "app"}>
       <section className="play" aria-label="הלוח">
         <Masthead day={board} isToday={isToday} canGoToday={days.days.some(d => d.date === days.today)}
           onToday={() => setDate(days.today)} onArchive={() => setArchiveOpen(true)}
@@ -115,7 +119,7 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
       <WordsPanel className="side" board={board} found={found} fresh={game.fresh}
         reveals={game.reveals} hintsOpen={hintsOpen} az={az} onToggleSort={toggleSort}
         onWord={setDefWord} />
-      <WordsModal open={wordsOpen} onClose={() => setWordsOpen(false)} board={board}
+      <WordsModal open={wordsOpen && !wide} onClose={() => setWordsOpen(false)} board={board}
         found={found} fresh={game.fresh} reveals={game.reveals} hintsOpen={hintsOpen}
         az={az} onToggleSort={toggleSort} onWord={setDefWord} />
       <ArchiveModal open={archiveOpen} onClose={() => setArchiveOpen(false)} days={days.days}

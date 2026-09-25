@@ -12,7 +12,8 @@ board on the same day (Israel time).
   swipe מ for ם; the game shows the proper spelling.
 - **Main words** are the common words of the day. Find all of them to finish the board.
 - **Bonus words** are rarer forms, construct and possessive forms (גינת, ספריו), and
-  slang. They score double but aren't needed to finish.
+  slang. They aren't needed to finish; once you find some, their count shows as +N
+  beside the main count. (The server still scores them double, but the screen shows no points.)
 - **Theme words (★)**, on themed days, belong to the day's topic (e.g. יום כיפור) and are
   highlighted in their own group.
 

@@ -42,19 +42,18 @@
 .status { grid-column: 1 / -1; align-self: center; justify-self: center; color: var(--muted); font-size: 1.1rem; }
 
 /* On a computer the word list sits beside the board (to its right) instead of in a
-   modal, and the game stays in the centre: two equal side columns, the left one empty. */
+   modal, and the game stays in the centre: two equal side columns, the left one empty.
+   The `wide` class comes from WIDE_QUERY in App.tsx, so the breakpoint lives in one place. */
 .side { display: none; }
-@media (min-width: 1100px) {
-  .app {
-    max-width: none;
-    grid-template-columns: minmax(260px, 1fr) minmax(0, 520px) minmax(260px, 1fr);
-    grid-template-areas: "side play .";       /* RTL: the first column is the right one */
-    column-gap: 32px;
-  }
-  .play { grid-area: play; }
-  .side {
-    display: block; grid-area: side; min-height: 0; padding-block: 4px;
-    width: 100%; max-width: 380px;
-    justify-self: end;                        /* RTL: hug the board, not the screen edge */
-  }
+.app.wide {
+  max-width: none;
+  grid-template-columns: minmax(260px, 1fr) minmax(0, 520px) minmax(260px, 1fr);
+  grid-template-areas: "side play .";         /* RTL: the first column is the right one */
+  column-gap: 32px;
+}
+.app.wide .play { grid-area: play; }
+.app.wide .side {
+  display: block; grid-area: side; min-height: 0; padding-block: 4px;
+  width: 100%; max-width: 380px;
+  justify-self: end;                          /* RTL: hug the board, not the screen edge */
 }

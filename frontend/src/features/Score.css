@@ -3,8 +3,8 @@
 
 /* The count is the way into the word list on a phone. */
 .counter {
-  display: flex; align-items: baseline; gap: 10px;
-  margin: -6px; padding: 6px; border: 0; border-radius: 12px;
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px;
+  min-width: 0; margin: -6px; padding: 6px; border: 0; border-radius: 12px;
   background: none; cursor: pointer; text-align: start;
   -webkit-tap-highlight-color: transparent;
   transition: background-color .15s, transform .15s var(--ease-out);

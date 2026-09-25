@@ -36,7 +36,7 @@ export function Score({ found, total, bonus, rank, fraction, onOpen }: Props) {
   );
 }
 
-/** Points to the start of reading (left in RTL): "open". */
+/** Points forward in RTL (left), the way the list opens. */
 function Chevron() {
   return (
     <svg className="chev" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
