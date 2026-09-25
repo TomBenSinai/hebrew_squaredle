@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { Button, CalendarIcon, Pill, RotateIcon } from "../components";
 import type { FoundWord, PublicBoard } from "../api/types";
 import { useFlash } from "../hooks/useFlash";
@@ -31,11 +31,27 @@ const BOARD: PublicBoard = {
 };
 const NO_HINTS = new Set<never>();
 
-const STEPS = [
-  <>החליקו את האצבע על <b>ש</b>, <b>ל</b>, <b>ו</b>, <b>מ</b> בלי להרים אותה, כדי ליצור את המילה <b>שלום</b>. אפשר לזוז לכל כיוון, גם באלכסון. בסוף מילה <b>מ</b> הופכת לבד ל-<b>ם</b>: בלוח אין אותיות סופיות.</>,
-  <><b>ש</b> ו-<b>ל</b> האפירו: אף מילה שנותרה לא צריכה אותן. <b>ו</b> ו-<b>מ</b> נשארו, כי עוד מילה עוברת בהן. מצאו אותה.</>,
-  <>מצאתם את כל המילים, והלוח פתור. עכשיו לחצו על <b>מספר המילים</b> למעלה כדי לפתוח את הרשימה שלהן, ושם לחצו על מילה כדי לראות מה היא אומרת.</>,
-  <>לפני שמתחילים: כפתור <b>הסיבוב</b> מתחת ללוח מסובב אותו, כי לפעמים מזווית אחרת רואים מילים חדשות. <b>ארכיון</b> למעלה פותח את הלוחות של ימים קודמים. וכל הכללים, בפירוט, תמיד מחכים מאחורי כפתור ה-<b>?</b>.</>,
+// Each step: a warm line, one plain instruction, and the fine print, quieter.
+const STEPS: { head: string; text: ReactNode; aside?: ReactNode }[] = [
+  {
+    head: "ברוכים הבאים לריבועון",
+    text: <>נתחיל ממילה אחת: החליקו על <b>ש</b>, <b>ל</b>, <b>ו</b>, <b>מ</b> בלי להרים את האצבע.</>,
+    aside: <>אפשר לזוז לכל כיוון, גם באלכסון. ובסוף מילה, <b>מ</b> הופכת לבד ל-<b>ם</b>.</>,
+  },
+  {
+    head: "שלום גם לכם!",
+    text: <><b>ש</b> ו-<b>ל</b> האפירו, כי אף מילה אחרת לא צריכה אותן. באותיות שנשארו מסתתרת עוד מילה.</>,
+    aside: <>אות אפורה אומרת שכבר אין בה מה לחפש.</>,
+  },
+  {
+    head: "פתרתם את הלוח",
+    text: <>לחצו על <b>מספר המילים</b> למעלה כדי לראות את הרשימה, ועל מילה ברשימה כדי לראות מה פירושה.</>,
+  },
+  {
+    head: "אתם מוכנים",
+    text: <>כפתור <b>הסיבוב</b> מסובב את הלוח, כשרוצים זווית חדשה. ב<b>ארכיון</b> מחכים הלוחות של ימים קודמים.</>,
+    aside: <>וכל הכללים, מתי שתרצו, מאחורי ה-<b>?</b>.</>,
+  },
 ];
 
 /** A first visit starts here, in place of the game: a tiny board to learn the
@@ -115,7 +131,13 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
       )}
 
       {/* one live region whose text changes, so screen readers read every step */}
-      <p className="tutstep" aria-live="polite"><span key={step}>{STEPS[step]}</span></p>
+      <p className="tutstep" aria-live="polite">
+        <span key={step}>
+          <span className="tuthead">{STEPS[step].head}</span>{" "}
+          <span className="tuttext">{STEPS[step].text}</span>{" "}
+          {STEPS[step].aside && <span className="tutaside">{STEPS[step].aside}</span>}
+        </span>
+      </p>
 
       <div className="boardwrap" style={boardVars(layout)}>
         <Readout current={swiping} toast={toast} onWord={define} />
