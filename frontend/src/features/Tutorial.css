@@ -1,13 +1,17 @@
-/* the step cards: the key letters and words stand out */
-.tutcard p { padding-top: 14px; }
-.tutcard b { color: var(--cobalt); font-weight: 700; }
+.tutstep {
+  margin: 4px 0 0; min-height: 4.5em;
+  font-size: 1.1rem; line-height: 1.5;
+}
+/* the span is swapped on every step, so each one rises in; the p stays put for screen readers */
+.tutstep > span { display: block; animation: rise .4s var(--ease-out) both; }
+.tutstep b { color: var(--cobalt); font-weight: 700; }
 
 /* holds the button's place, so the board doesn't jump when it appears */
 .tutactions { display: flex; align-items: center; gap: 10px; min-height: 3.2rem; padding-bottom: 12px; }
 .tutactions .btn { flex: 1; padding-block: 12px; font-size: 1.1rem; animation: rise .4s var(--ease-out) both; }
 
 /* small and quiet: there for whoever wants out, not an invitation */
-.pill.tutsmall { font-size: .85rem; padding-inline: 12px; color: var(--muted); }
+.pill.tutskip { font-size: .85rem; padding-inline: 12px; color: var(--muted); }
 /* the buttons the last step introduces */
 .tutnew { animation: rise .4s var(--ease-out) both; }
 

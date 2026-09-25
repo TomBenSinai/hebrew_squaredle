@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Button, CalendarIcon, Modal, Pill, RotateIcon, SheetBody } from "../components";
+import { useMemo, useRef, useState } from "react";
+import { Button, CalendarIcon, Pill, RotateIcon } from "../components";
 import type { FoundWord, PublicBoard } from "../api/types";
 import { useFlash } from "../hooks/useFlash";
 import { useSpin } from "../hooks/useSpin";
@@ -14,7 +14,6 @@ import { HelpModal } from "./HelpModal";
 import { Readout } from "./Readout";
 import { Score } from "./Score";
 import { WordsModal } from "./WordsModal";
-import "./IntroModal.css";
 import "./Masthead.css";
 import "./Tutorial.css";
 
@@ -33,13 +32,11 @@ const BOARD: PublicBoard = {
 const NO_HINTS = new Set<never>();
 
 const STEPS = [
-  { title: "מחליקים", text: <>החליקו את האצבע על <b>ש</b>, <b>ל</b>, <b>ו</b>, <b>מ</b> בלי להרים אותה, כדי ליצור את המילה <b>שלום</b>. אפשר לזוז לכל כיוון, גם באלכסון. בסוף מילה <b>מ</b> הופכת לבד ל-<b>ם</b>: בלוח אין אותיות סופיות.</> },
-  { title: "אותיות אפורות", text: <><b>ש</b> ו-<b>ל</b> האפירו: אף מילה שנותרה לא צריכה אותן. <b>ו</b> ו-<b>מ</b> נשארו, כי עוד מילה עוברת בהן. מצאו אותה.</> },
-  { title: "רשימת המילים", text: <>מצאתם את כל המילים, והלוח פתור. עכשיו לחצו על <b>מספר המילים</b> למעלה כדי לפתוח את הרשימה שלהן, ושם לחצו על מילה כדי לראות מה היא אומרת.</> },
-  { title: "לפני שמתחילים", text: <>לפני שמתחילים: כפתור <b>הסיבוב</b> מתחת ללוח מסובב אותו, כי לפעמים מזווית אחרת רואים מילים חדשות. <b>ארכיון</b> למעלה פותח את הלוחות של ימים קודמים. וכל הכללים, בפירוט, תמיד מחכים מאחורי כפתור ה-<b>?</b>.</> },
+  <>החליקו את האצבע על <b>ש</b>, <b>ל</b>, <b>ו</b>, <b>מ</b> בלי להרים אותה, כדי ליצור את המילה <b>שלום</b>. אפשר לזוז לכל כיוון, גם באלכסון. בסוף מילה <b>מ</b> הופכת לבד ל-<b>ם</b>: בלוח אין אותיות סופיות.</>,
+  <><b>ש</b> ו-<b>ל</b> האפירו: אף מילה שנותרה לא צריכה אותן. <b>ו</b> ו-<b>מ</b> נשארו, כי עוד מילה עוברת בהן. מצאו אותה.</>,
+  <>מצאתם את כל המילים, והלוח פתור. עכשיו לחצו על <b>מספר המילים</b> למעלה כדי לפתוח את הרשימה שלהן, ושם לחצו על מילה כדי לראות מה היא אומרת.</>,
+  <>לפני שמתחילים: כפתור <b>הסיבוב</b> מתחת ללוח מסובב אותו, כי לפעמים מזווית אחרת רואים מילים חדשות. <b>ארכיון</b> למעלה פותח את הלוחות של ימים קודמים. וכל הכללים, בפירוט, תמיד מחכים מאחורי כפתור ה-<b>?</b>.</>,
 ];
-/** After a find, the next step's card waits a beat, so the player sees what the swipe did first. */
-const CARD_DELAY = 900;
 
 /** A first visit starts here, in place of the game: a tiny board to learn the
     swipe and the grey letters, then the word list, definitions and the buttons. */
@@ -58,15 +55,6 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
 
   const next = WORDS[found.length];
   const step = next ? found.length : defined ? 3 : 2;
-
-  // each step's text is a card: the first greets the player, the rest follow a find
-  const [card, setCard] = useState(0);
-  const [cardOpen, setCardOpen] = useState(true);
-  useEffect(() => {
-    if (step === 0) return;
-    const t = setTimeout(() => { setCard(step); setCardOpen(true); }, CARD_DELAY);
-    return () => clearTimeout(t);
-  }, [step]);
 
   const submit = (path: number[]) => {
     const key = path.map(i => layout.letters[i]).join("");
@@ -104,9 +92,8 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
           <div className="when"><b>איך משחקים</b> · {step + 1} מתוך {STEPS.length}</div>
         </div>
         <div className="headbtns">
-          <Pill className="tutsmall" onClick={() => setCardOpen(true)}>הסבר</Pill>
           {step < 3
-            ? <Pill className="tutsmall" onClick={onDone}>דילוג</Pill>
+            ? <Pill className="tutskip" onClick={onDone}>דילוג</Pill>
             : <>
                 <Pill className="cal tutnew" icon={<CalendarIcon />} aria-label="ארכיון" title="ארכיון"
                   onClick={() => setToast({ kind: "info", text: "הארכיון נפתח מתוך המשחק" })}>
@@ -126,6 +113,9 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
             fraction={fraction} onOpen={() => setWordsOpen(true)} />
         </div>
       )}
+
+      {/* one live region whose text changes, so screen readers read every step */}
+      <p className="tutstep" aria-live="polite"><span key={step}>{STEPS[step]}</span></p>
 
       <div className="boardwrap" style={boardVars(layout)}>
         <Readout current={swiping} toast={toast} onWord={define} />
@@ -151,16 +141,6 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
         onWord={define} />
       <DefinitionModal word={defWord} onClose={() => setDefWord(null)} onShow={showOnBoard} />
       <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
-      {/* above the word list; step 4's waits for the definition card to close */}
-      <Modal open={cardOpen && !defWord} onClose={() => setCardOpen(false)} title={STEPS[card].title}
-        sheetClassName="introcard tutcard" layer={40}>
-        <SheetBody className="introbody">
-          <p>{STEPS[card].text}</p>
-          <div className="introactions">
-            <Button variant="primary" onClick={() => setCardOpen(false)}>הבנתי</Button>
-          </div>
-        </SheetBody>
-      </Modal>
     </section>
   );
 }
