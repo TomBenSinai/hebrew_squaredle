@@ -10,6 +10,8 @@ export function useSwipe(
   tiles: RefObject<(HTMLDivElement | null)[]>,
   onSwipe: (path: number[]) => void,
   disabled = false,
+  /** a press that never left its tile */
+  onTap?: () => void,
 ) {
   const [path, setPath] = useState<number[]>([]);
   const pathRef = useRef<number[]>([]);
@@ -65,6 +67,7 @@ export function useSwipe(
       const p = pathRef.current;
       set([]);
       if (drag.current.moved) onSwipe(p);
+      else onTap?.();
     },
     onPointerCancel: clear,
   };

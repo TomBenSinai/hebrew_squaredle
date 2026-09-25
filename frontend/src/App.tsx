@@ -3,6 +3,7 @@ import { Pill, RotateIcon } from "./components";
 import { api } from "./api/client";
 import type { DaysResponse } from "./api/types";
 import { ArchiveModal } from "./features/ArchiveModal";
+import { BonusModal, bonusSeen, markBonusSeen } from "./features/BonusModal";
 import { Board, boardVars } from "./features/Board";
 import { DefinitionModal } from "./features/DefinitionModal";
 import { HelpModal, helpSeen, markHelpSeen } from "./features/HelpModal";
@@ -10,6 +11,7 @@ import { HintModal, hintSeen, markHintSeen } from "./features/HintModal";
 import { Masthead } from "./features/Masthead";
 import { Readout } from "./features/Readout";
 import { Score } from "./features/Score";
+import { Tutorial } from "./features/Tutorial";
 import { useWordSort, WordsModal, WordsPanel } from "./features/WordsModal";
 import { useMedia } from "./hooks/useMedia";
 import { useSpin } from "./hooks/useSpin";
@@ -50,9 +52,12 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
   const { az, toggleSort } = useWordSort();
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [defWord, setDefWord] = useState<string | null>(null);
-  // the rules greet a first-time player, once
-  const [helpOpen, setHelpOpen] = useState(() => !helpSeen());
+  // a first-time player starts on the practice board, once; the rules stay behind "?"
+  const [tutorialOpen, setTutorialOpen] = useState(() => !helpSeen());
+  const closeTutorial = () => { setTutorialOpen(false); markHelpSeen(); };
+  const [helpOpen, setHelpOpen] = useState(false);
   const closeHelp = () => { setHelpOpen(false); markHelpSeen(); };
+  const intro = tutorialOpen || helpOpen;
 
   // on a computer the list is always beside the board, so the count opens nothing
   const wide = useMedia(WIDE_QUERY);
@@ -82,6 +87,14 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
     if (hintIntro) markHintSeen(hintIntro);
     setHintIntro(nextUnexplained(hintsOpen));
   };
+
+  // the first bonus word this player ever finds is explained
+  const [bonusIntro, setBonusIntro] = useState<string | null>(null);
+  const { fresh, isBonus } = game;
+  useEffect(() => {
+    if (fresh && isBonus(fresh) && !bonusSeen()) setBonusIntro(fresh);
+  }, [fresh, isBonus]);
+  const closeBonusIntro = () => { setBonusIntro(null); markBonusSeen(); };
 
   const pickDay = (d: string) => { setArchiveOpen(false); if (d !== board.date) setDate(d); };
   const showOnBoard = useCallback((w: string) => {
@@ -127,7 +140,9 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
         progress={archiveOpen ? progressStore.all() : {}} onPick={pickDay} />
       <DefinitionModal word={defWord} onClose={() => setDefWord(null)} onShow={showOnBoard} />
       <HelpModal open={helpOpen} onClose={closeHelp} />
-      <HintModal hint={helpOpen ? null : hintIntro} onClose={closeHintIntro} />
+      <Tutorial open={tutorialOpen} onClose={closeTutorial} />
+      <HintModal hint={intro ? null : hintIntro} onClose={closeHintIntro} />
+      <BonusModal word={intro || hintIntro ? null : bonusIntro} onClose={closeBonusIntro} />
     </div>
   );
 }

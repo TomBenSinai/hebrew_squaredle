@@ -29,3 +29,7 @@
 .hintdemo li > span:last-child { color: var(--muted); font-size: .98rem; }
 
 .hintactions { display: flex; justify-content: center; padding-top: 6px; }
+
+/* the same card explains bonus words, the first time one is found */
+.hinthead.hint-bonus { color: var(--amber); }
+.hintbody b.bonusword { color: var(--amber); }
