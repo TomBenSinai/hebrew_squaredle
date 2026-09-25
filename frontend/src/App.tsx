@@ -14,7 +14,7 @@ import { useMedia } from "./hooks/useMedia";
 import { useSpin } from "./hooks/useSpin";
 import { useSwipe } from "./hooks/useSwipe";
 import { withFinal } from "./lib/hebrew";
-import { letterFraction, rankFor, totalPoints } from "./lib/scoring";
+import { letterFraction, rankFor } from "./lib/scoring";
 import { progressStore } from "./state/progressStore";
 import { useGame, type Game } from "./state/useGame";
 import "./App.css";
@@ -74,8 +74,8 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
           onToday={() => setDate(days.today)} onArchive={() => setArchiveOpen(true)}
           onHelp={() => setHelpOpen(true)} />
 
-        <Score found={mainFound} total={board.mainTotal} bonus={bonusFound} points={totalPoints(found)}
-          rank={rankFor(fraction)} fraction={fraction} fresh={game.fresh}
+        <Score found={mainFound} total={board.mainTotal} bonus={bonusFound}
+          rank={rankFor(fraction)} fraction={fraction}
           onOpen={wide ? undefined : () => setWordsOpen(true)} />
 
         <div className="boardwrap" style={boardVars(layout)}>

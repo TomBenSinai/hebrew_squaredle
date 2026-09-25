@@ -7,13 +7,9 @@ interface Props {
   total: number;
   /** bonus words found: extra, not part of the goal */
   bonus: number;
-  /** all found words, bonus included */
-  points: number;
   rank: string;
   /** 0..1, by letters */
   fraction: number;
-  /** the word just found: bumps the points */
-  fresh: string | null;
   /** tap the count to see the words; without it the count is plain text */
   onOpen?: () => void;
 }
@@ -26,7 +22,7 @@ const HINT_MARKS: Mark[] = SHOW_USES_HINT
     ]
   : [{ at: 100 * HINT_STARTS_AT, color: "var(--hint-starts)", label: "רמז - כמה מילים שמתחילות באות נותרו" }];
 
-export function Score({ found, total, bonus, points, rank, fraction, fresh, onOpen }: Props) {
+export function Score({ found, total, bonus, rank, fraction, onOpen }: Props) {
   const counter = (chev: boolean) => <>
     <span className="num"><span dir="ltr">{found}<small>/{total}</small></span></span>
     {bonus > 0 && <span className="bonus" dir="ltr" title="מילות בונוס">+{bonus}</span>}
@@ -38,12 +34,7 @@ export function Score({ found, total, bonus, points, rank, fraction, fresh, onOp
         {onOpen
           ? <button type="button" className="counter" onClick={onOpen} aria-haspopup="dialog">{counter(true)}</button>
           : <span className="counter plain">{counter(false)}</span>}
-        <span className="tally">
-          <span className="points">
-            <b key={fresh ?? ""} className={fresh ? "bump" : undefined}>{points}</b> <abbr title="נקודות">נק׳</abbr>
-          </span>
-          <span className="rank">{rank}</span>
-        </span>
+        <span className="rank">{rank}</span>
       </div>
       <ProgressBar value={100 * fraction} label="התקדמות" marks={HINT_MARKS} />
     </div>

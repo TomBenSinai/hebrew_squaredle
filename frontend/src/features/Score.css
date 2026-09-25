@@ -35,16 +35,4 @@ button.counter:active { background: var(--cobalt-soft); transform: scale(.98); }
 }
 .count .chev { color: var(--muted); transition: transform .15s var(--ease-out); }
 .counter:active .chev { transform: translateX(-3px); }
-.count .tally { margin-inline-start: auto; padding-inline-start: 12px; display: grid; justify-items: end; gap: 2px; }
-.count .points { font-family: var(--display); font-weight: 600; font-size: 1.15rem; white-space: nowrap; }
-.count .points b {
-  display: inline-block;
-  font-weight: 800;
-  font-size: 1.6rem;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -.02em;
-}
-.count .points abbr { text-decoration: none; }
-.count .points b.bump { animation: bump .35s ease-out; }
-@keyframes bump { 40% { transform: scale(1.25); } }
-.count .rank { color: var(--muted); font-weight: 600; font-size: .95rem; }
+.count .rank { margin-inline-start: auto; color: var(--muted); font-weight: 600; font-size: .95rem; }

@@ -3,7 +3,7 @@ import { api } from "../api/client";
 import type { CellCounts, DayProgress, FoundWord, PublicBoard } from "../api/types";
 import { norm, withFinal } from "../lib/hebrew";
 import { findPath, makeLayout, type Layout } from "../lib/layout";
-import { hintLevel, letterFraction, pointsText, type HintLevel } from "../lib/scoring";
+import { hintLevel, letterFraction, type HintLevel } from "../lib/scoring";
 import { progressStore } from "./progressStore";
 
 export const MIN_LEN = 4;
@@ -197,7 +197,7 @@ export function useGame(date: string | null): { game: Game | null; error: string
         say({ kind: "bad", text: `${withFinal(key)} לא ברשימה` });
         return;
       }
-      const { word: w, points, theme } = r;
+      const { word: w, theme } = r;
       if (progressRef.current.found.some(f => f.w === w)) {
         say({ kind: "info", text: `${w} כבר נמצאה`, word: w });
         return;
@@ -212,10 +212,10 @@ export function useGame(date: string | null): { game: Game | null; error: string
       const done = r.status === "main" && found.filter(f => f.cat === "main").length === board.mainTotal;
       // the word is scored either way, but a newer swipe keeps the underline
       if (latest()) setFresh(w);
-      if (done) say({ kind: "main", text: `${w}! סיימתם את כל המילים 🎉`, word: w });
-      else if (r.status === "bonus") say({ kind: "bonus", text: `בונוס! ${w} · ${points} נק׳`, word: w });
-      else if (theme) say({ kind: "main", text: `★ ${w} · מילת נושא · ${pointsText(points)}`, word: w, note });
-      else say({ kind: "main", text: `${w} · ${pointsText(points)}`, word: w, note });
+      if (done) say({ kind: "main", text: `${w}! סיימתם את כל המילים`, word: w });
+      else if (r.status === "bonus") say({ kind: "bonus", text: `בונוס! ${w}`, word: w });
+      else if (theme) say({ kind: "main", text: `★ ${w} · מילת נושא`, word: w, note });
+      else say({ kind: "main", text: w, word: w, note });
     }).catch(() => say({ kind: "bad", text: "אין חיבור לשרת, נסו שוב" }));
   }, [board, layout, update]);
 
