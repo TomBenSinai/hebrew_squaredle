@@ -3,7 +3,7 @@ import { api } from "../api/client";
 import type { CellCounts, DayProgress, FoundWord, PublicBoard, Reveal } from "../api/types";
 import { norm, withFinal } from "../lib/hebrew";
 import { useFlash } from "../hooks/useFlash";
-import { findPath, makeLayout, type Layout } from "../lib/layout";
+import { findPath, makeLayout, pathCells, type Layout } from "../lib/layout";
 import { hintById, letterFraction, openHints, type HintId } from "../lib/scoring";
 import { progressStore } from "./progressStore";
 
@@ -134,18 +134,27 @@ export function useGame(date: string | null): { game: Game | null; error: string
     return new Set(layout.base.flatMap((b, i) => (set.has(b) ? [i] : [])));
   }, [layout, counts]);
 
-  // the server only sends what the player has unlocked, but numbers counted
-  // before the latest find would still include it: show none until the new
-  // counts arrive (the greying above can lag, it only errs safe)
-  const shownCounts = counts && counts.key === mainKey ? counts : null;
+  // numbers counted before the latest finds still include them: until the new
+  // counts arrive, hide the ones those words can change (the cells on any of
+  // their paths) and keep the rest, so the untouched numbers don't blink
   const hints = useMemo((): Hints | null => {
-    if (!layout || !shownCounts) return null;
-    const { starts, uses } = shownCounts;
+    if (!layout || !counts) return null;
+    const { starts, uses } = counts;
+    const stale = { cells: new Set<number>(), starts: new Set<number>() };
+    if (counts.key !== mainKey) {
+      const had = new Set(counts.key ? counts.key.split(" ") : []);
+      for (const w of mainKey.split(" ")) {
+        if (had.has(w)) continue;
+        const p = pathCells(layout, w);
+        p.cells.forEach(c => stale.cells.add(c));
+        p.starts.forEach(c => stale.starts.add(c));
+      }
+    }
     return {
-      starts: starts && layout.base.map(b => starts[b]),
-      uses: uses && layout.base.map(b => uses[b]),
+      starts: starts && layout.base.map((b, i) => (stale.starts.has(i) ? 0 : starts[b])),
+      uses: uses && layout.base.map((b, i) => (stale.cells.has(i) ? 0 : uses[b])),
     };
-  }, [layout, shownCounts]);
+  }, [layout, counts, mainKey]);
   // the slots must not blank out on every find while the new counts load: keep
   // the ones we have and drop those the words found since then have filled
   // (slots that spell the same are interchangeable, so one slot per word)

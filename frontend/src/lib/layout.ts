@@ -58,6 +58,22 @@ export function makeLayout(mask: string[], letters: string, times: number): Layo
   };
 }
 
+/** Every shown cell on some path that spells the word, and the cells those paths start from. */
+export function pathCells(layout: Layout, word: string): { cells: Set<number>; starts: Set<number> } {
+  const w = norm(word), L = layout.letters;
+  const cells = new Set<number>(), starts = new Set<number>();
+  const go = (k: number, cell: number, used: number[]) => {
+    if (k === w.length) {
+      used.forEach(c => cells.add(c));
+      starts.add(used[0]);
+      return;
+    }
+    for (const n of layout.neighbors[cell]) if (L[n] === w[k] && !used.includes(n)) go(k + 1, n, [...used, n]);
+  };
+  for (let s = 0; s < L.length; s++) if (L[s] === w[0]) go(1, s, [s]);
+  return { cells, starts };
+}
+
 /** One path (shown cells) that spells the word, or null. */
 export function findPath(layout: Layout, word: string): number[] | null {
   const w = norm(word), L = layout.letters;
