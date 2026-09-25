@@ -38,19 +38,19 @@ export interface HintDef {
 /** Help that opens up as the player gets further in, weakest first. */
 export const HINTS: HintDef[] = [
   {
-    id: "sort", at: 0.3, color: "var(--hint-sort)",
+    id: "starts", at: 0.3, color: "var(--hint-starts)",
+    label: "רמז: כמה מילים שמתחילות באות נותרו",
+    note: "נפתח רמז חדש! המספר האדום - כמה מילים שמתחילות באות הזו נותרו",
+  },
+  {
+    id: "sort", at: 0.5, color: "var(--hint-sort)",
     label: "רמז: מיון רשימת המילים לפי א-ב",
     note: "נפתח רמז חדש! אפשר למיין את רשימת המילים לפי א-ב",
   },
   {
-    id: "reveal", at: 0.5, color: "var(--hint-reveal)",
+    id: "reveal", at: 0.6, color: "var(--hint-reveal)",
     label: "רמז: אותיות מהמילים שנותרו",
     note: "נפתח רמז חדש! ברשימת המילים נחשפות אותיות מהמילים שעוד לא מצאתם",
-  },
-  {
-    id: "starts", at: 0.6, color: "var(--hint-starts)",
-    label: "רמז: כמה מילים שמתחילות באות נותרו",
-    note: "נפתח רמז חדש! המספר האדום - כמה מילים שמתחילות באות הזו נותרו",
   },
   ...(SHOW_USES_HINT
     ? [{

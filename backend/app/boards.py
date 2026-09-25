@@ -19,8 +19,8 @@ MIN_LEN = 4
 MAX_GROUP = 8          # words of 8+ letters share one group
 # hints unlock with the share of main letters found; keep in step with
 # HINT_AT and SHOW_USES_HINT in frontend/src/lib/scoring.ts
-HINT_REVEAL_AT = 0.5
-HINT_STARTS_AT = 0.6
+HINT_STARTS_AT = 0.3
+HINT_REVEAL_AT = 0.6
 HINT_USES_AT = 0.75
 SHOW_USES_HINT = False
 
@@ -210,11 +210,11 @@ class Day:
         frac = sum(len(normalize(w)) for w in words) / total if total else 0
         counts = self.cell_counts(words)
         out: dict = {"cells": [c for c, n in enumerate(counts["uses"]) if n]}
+        if frac >= HINT_STARTS_AT:
+            out["starts"] = counts["starts"]
         if frac >= HINT_REVEAL_AT:
             got = set(words)
             out["reveals"] = [reveal_mask(w) for w in self.board.main if w not in got]
-        if frac >= HINT_STARTS_AT:
-            out["starts"] = counts["starts"]
         if SHOW_USES_HINT and frac >= HINT_USES_AT:
             out["uses"] = counts["uses"]
         return out
