@@ -14,3 +14,18 @@
 .pill.tutskip { font-size: .85rem; padding-inline: 12px; color: var(--muted); }
 /* the buttons the last step introduces */
 .tutnew { animation: rise .4s var(--ease-out) both; }
+
+/* Step 3's cue on what to tap: a ring swells out and fades while the fill
+   breathes, once every beat, quiet enough to read the step text over it. */
+@keyframes tutcue {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ink) 40%, transparent); background-color: transparent; }
+  35% { background-color: var(--cobalt-soft); }
+  75%, 100% { box-shadow: 0 0 0 12px transparent; background-color: transparent; }
+}
+.tutcue .counter { animation: tutcue 1.8s var(--ease-out) infinite; }
+/* the words get room for the ring, without moving */
+.tutcue .w { border-radius: 8px; padding-inline: 8px; margin-inline: -8px; animation: tutcue 1.8s var(--ease-out) infinite; }
+.tutcue .w:nth-child(2) { animation-delay: .35s; }
+@media (prefers-reduced-motion: reduce) {
+  .tutcue .counter, .tutcue .w { animation: none; box-shadow: 0 0 0 2px var(--ink); }
+}

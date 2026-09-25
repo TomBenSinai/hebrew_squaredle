@@ -20,9 +20,10 @@ interface ListProps {
 }
 
 /** On a phone: a modal opened by tapping the word count. */
-export function WordsModal({ open, onClose, ...list }: ListProps & { open: boolean; onClose: () => void }) {
+export function WordsModal({ open, onClose, sheetClassName, ...list }:
+  ListProps & { open: boolean; onClose: () => void; sheetClassName?: string }) {
   return (
-    <Modal open={open} onClose={onClose} title="מילים">
+    <Modal open={open} onClose={onClose} title="מילים" sheetClassName={sheetClassName}>
       <SheetBody><WordsList {...list} /></SheetBody>
     </Modal>
   );

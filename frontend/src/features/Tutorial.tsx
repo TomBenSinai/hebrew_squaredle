@@ -105,8 +105,11 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
         </div>
       </header>
 
-      <Score found={found.length} total={WORDS.length} bonus={0} rank={rankFor(fraction)}
-        fraction={fraction} onOpen={() => setWordsOpen(true)} />
+      {/* step 3 points at what to tap: the count, then the words in the list */}
+      <div className={step === 2 && !wordsOpen ? "tutcue" : undefined}>
+        <Score found={found.length} total={WORDS.length} bonus={0} rank={rankFor(fraction)}
+          fraction={fraction} onOpen={() => setWordsOpen(true)} />
+      </div>
 
       {/* one live region whose text changes, so screen readers read every step */}
       <p className="tutstep" aria-live="polite"><span key={step}>{STEPS[step]}</span></p>
@@ -129,7 +132,8 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
         </>}
       </div>
 
-      <WordsModal open={wordsOpen} onClose={() => setWordsOpen(false)} board={BOARD} found={foundWords}
+      <WordsModal open={wordsOpen} onClose={() => setWordsOpen(false)} sheetClassName={defined ? undefined : "tutcue"}
+        board={BOARD} found={foundWords}
         fresh={found.at(-1) ?? null} reveals={null} hintsOpen={NO_HINTS} az={false} onToggleSort={() => {}}
         onWord={define} />
       <DefinitionModal word={defWord} onClose={() => setDefWord(null)} onShow={showOnBoard} />
