@@ -105,11 +105,14 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
         </div>
       </header>
 
-      {/* step 3 points at what to tap: the count, then the words in the list */}
-      <div className={step === 2 && !wordsOpen ? "tutcue" : undefined}>
-        <Score found={found.length} total={WORDS.length} bonus={0} rank={rankFor(fraction)}
-          fraction={fraction} onOpen={() => setWordsOpen(true)} />
-      </div>
+      {/* the first step is only the swipe: the score comes in with the first word.
+          Step 3 points at what to tap: the count, then the words in the list. */}
+      {step > 0 && (
+        <div className={step === 2 && !wordsOpen ? "tutnew tutcue" : "tutnew"}>
+          <Score found={found.length} total={WORDS.length} bonus={0} rank={rankFor(fraction)}
+            fraction={fraction} onOpen={() => setWordsOpen(true)} />
+        </div>
+      )}
 
       {/* one live region whose text changes, so screen readers read every step */}
       <p className="tutstep" aria-live="polite"><span key={step}>{STEPS[step]}</span></p>
