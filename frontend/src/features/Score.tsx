@@ -24,8 +24,8 @@ const HINT_MARKS: Mark[] = SHOW_USES_HINT
 
 export function Score({ found, total, bonus, rank, fraction, onOpen }: Props) {
   const counter = (chev: boolean) => <>
-    <span className="num"><span dir="ltr">{found}<small>/{total}</small></span></span>
     {bonus > 0 && <span className="bonus" dir="ltr" title="מילות בונוס">+{bonus}</span>}
+    <span className="num"><span dir="ltr">{found}<small>/{total}</small></span></span>
     <span className="label">מילים שמצאת{chev && <Chevron />}</span>
   </>;
   return (
