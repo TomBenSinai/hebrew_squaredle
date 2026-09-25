@@ -5,7 +5,8 @@
   POST /api/boards/{date}/check         {path: [cells]} -> main / bonus / not_a_word ...
   POST /api/boards/{date}/live-cells    {found: [words]} -> cells some unfound main word still uses,
                                         and, once unlocked by progress, per cell how many
-                                        unfound main words start at / use it
+                                        unfound main words start at / use it, plus the
+                                        part-spelled words still missing
   GET  /api/progress                    this player's progress on every day
   GET  /api/progress/{date}
   PUT  /api/progress/{date}             {found, rot}; merged with what's stored, words re-checked

@@ -28,7 +28,17 @@ export type CheckResult =
   | { status: Category; word: string; points: number; theme: boolean }
   | { status: "not_a_word" | "too_short" | "bad_path" };
 
-/** Per stored cell, over the main words not found yet. */
+/** A main word not found yet, spelled out only at its ends. */
+export interface Reveal {
+  /** how many letters it has */
+  n: number;
+  /** the letters shown at its start */
+  pre: string;
+  /** the letters shown at its end, the last one in final form ("" when none) */
+  post: string;
+}
+
+/** What the server tells the player about the main words not found yet. */
 export interface CellCounts {
   /** cells some of them still use */
   cells: number[];
@@ -36,6 +46,8 @@ export interface CellCounts {
   starts?: number[];
   /** how many pass through each cell; only sent once that hint is unlocked */
   uses?: number[];
+  /** each of them part-spelled; only sent once that hint is unlocked */
+  reveals?: Reveal[];
 }
 
 export interface FoundWord {
