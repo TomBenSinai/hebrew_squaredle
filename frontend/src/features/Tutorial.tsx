@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, type ReactNode } from "react";
-import { Button, CalendarIcon, Pill, RotateIcon } from "../components";
+import { Button, Pill } from "../components";
 import type { FoundWord, PublicBoard } from "../api/types";
 import { useFlash } from "../hooks/useFlash";
 import { useSpin } from "../hooks/useSpin";
@@ -11,10 +11,11 @@ import { MIN_LEN, say, type Toast } from "../state/useGame";
 import { Board, boardVars } from "./Board";
 import { DefinitionModal } from "./DefinitionModal";
 import { HelpModal } from "./HelpModal";
+import { ArchivePill, HelpPill, MastheadFrame } from "./Masthead";
 import { Readout } from "./Readout";
 import { Score } from "./Score";
+import { SpinButton } from "./SpinButton";
 import { WordsModal } from "./WordsModal";
-import "./Masthead.css";
 import "./Tutorial.css";
 
 // A practice board with gaps, holding שלום and מוצר and no other word (main,
@@ -95,31 +96,23 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
 
   const foundWords: FoundWord[] = found.map(w => ({ w, cat: "main" }));
   const fraction = letterFraction(foundWords, BOARD.mainLetters);
-  const define = (w: string) => { setDefWord(w); setDefined(true); };
+  // only a definition opened at step 3 finishes it, or an early tap would skip the list
+  const define = (w: string) => { setDefWord(w); if (step === 2) setDefined(true); };
   const showOnBoard = (w: string) => { setDefWord(null); setWordsOpen(false); showWord(w); };
   const swiping = withFinal(path.map(i => layout.letters[i]).join(""));
   const flash = flashWord ? { cells: findPath(layout, flashWord) ?? [], bonus: false } : null;
 
   return (
     <section className="play tutorial" aria-label="איך משחקים">
-      <header className="masthead">
-        <div className="brand">
-          <h1>ריבועון</h1>
-          <div className="when"><b>איך משחקים</b> · {step + 1} מתוך {STEPS.length}</div>
-        </div>
-        <div className="headbtns">
-          {step < 3
-            ? <Pill className="tutskip" onClick={onDone}>דילוג</Pill>
-            : <>
-                <Pill className="cal tutnew" icon={<CalendarIcon />} aria-label="ארכיון" title="ארכיון"
-                  onClick={() => setToast({ kind: "info", text: "הארכיון נפתח מתוך המשחק" })}>
-                  <span className="pilllabel">ארכיון</span>
-                </Pill>
-                <Pill className="round tutnew" aria-label="איך משחקים" title="איך משחקים"
-                  onClick={() => setHelpOpen(true)}>?</Pill>
-              </>}
-        </div>
-      </header>
+      <MastheadFrame when={<><b>איך משחקים</b> · {step + 1} מתוך {STEPS.length}</>}>
+        {step < 3
+          ? <Pill className="tutskip" onClick={onDone}>דילוג</Pill>
+          : <>
+              <ArchivePill className="tutnew"
+                onClick={() => setToast({ kind: "info", text: "הארכיון נפתח מתוך המשחק" })} />
+              <HelpPill className="tutnew" onClick={() => setHelpOpen(true)} />
+            </>}
+      </MastheadFrame>
 
       {/* the first step is only the swipe: the score comes in with the first word.
           Step 3 points at what to tap: the count, then the words in the list. */}
@@ -148,16 +141,13 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
       <div className="tutactions">
         {step === 3 && <>
           <div className="tools tutnew">
-            <Pill className="round spinbtn" aria-label="סיבוב הלוח" onClick={spin}>
-              <span className="spinicon" style={{ transform: `rotate(${turns * -90}deg)` }}><RotateIcon /></span>
-              <span className="tip" aria-hidden="true">סיבוב</span>
-            </Pill>
+            <SpinButton turns={turns} onClick={spin} />
           </div>
           <Button variant="primary" onClick={onDone}>יאללה, מתחילים</Button>
         </>}
       </div>
 
-      <WordsModal open={wordsOpen} onClose={() => setWordsOpen(false)} sheetClassName={defined ? undefined : "tutcue"}
+      <WordsModal open={wordsOpen} onClose={() => setWordsOpen(false)} sheetClassName={step === 2 ? "tutcue" : undefined}
         board={BOARD} found={foundWords}
         fresh={found.at(-1) ?? null} reveals={null} hintsOpen={NO_HINTS} az={false} onToggleSort={() => {}}
         onWord={define} />

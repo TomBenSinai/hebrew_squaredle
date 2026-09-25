@@ -89,10 +89,10 @@ function WordsList({ board, found, fresh, reveals, hintsOpen, az, onToggleSort, 
       left: total - got.length,
     });
   }
-  // (the tutorial's practice board has none)
-  if (board.bonusTotal) groups.push({
+  // (the tutorial's practice board has none; bonus words found still show)
+  if (board.bonusTotal || bonus.length) groups.push({
     title: "בונוס", entries: bonus.map(word => ({ word })),
-    left: board.bonusTotal - bonus.length, kind: "bonus",
+    left: Math.max(board.bonusTotal - bonus.length, 0), kind: "bonus",
   });
 
   if (canSort && az) {

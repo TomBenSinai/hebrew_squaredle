@@ -23,7 +23,7 @@ function SlotDemo({ pre, blanks, post }: { pre: string; blanks: number; post?: s
   );
 }
 
-const HINTS: Record<HintId, { head: string; body: ReactNode }> = {
+const HINT_CARDS: Record<HintId, { head: string; body: ReactNode }> = {
   sort: {
     head: "מיון לפי א-ב",
     body: (
@@ -69,7 +69,7 @@ const HINTS: Record<HintId, { head: string; body: ReactNode }> = {
 function content(i: Intro): { title: string; head: string; className: string; body: ReactNode } {
   switch (i.kind) {
     case "hint":
-      return { title: "נפתח רמז חדש", className: `hint-${i.hint}`, ...HINTS[i.hint] };
+      return { title: "נפתח רמז חדש", className: `hint-${i.hint}`, ...HINT_CARDS[i.hint] };
     case "bonus":
       return {
         title: "מילת בונוס", head: i.word, className: "hint-bonus",

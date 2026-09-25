@@ -69,7 +69,7 @@ export function useGame(date: string | null): { game: Game | null; error: string
   const submitSeq = useRef(0);
   const [fresh, setFresh] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [flashWord, showWord] = useFlash<string>();
+  const [flashWord, showWord, clearFlash] = useFlash<string>();
   const dateRef = useRef(date);
   dateRef.current = date;
   // the latest progress, readable at once (swipes can come faster than renders)
@@ -88,10 +88,11 @@ export function useGame(date: string | null): { game: Game | null; error: string
       setPending(null);
       submitSeq.current++;
       setFresh(null);
+      clearFlash();
       setCounts(null);
     }).catch(() => { if (!stale) setError("לא הצלחנו לטעון את הלוח"); });
     return () => { stale = true; };
-  }, [date]);
+  }, [date, clearFlash]);
 
   const layout = useMemo(
     () => (board ? makeLayout(board.mask, board.letters, progress.rot) : null),

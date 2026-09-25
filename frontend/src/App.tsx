@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pill, RotateIcon } from "./components";
 import { api } from "./api/client";
 import type { DaysResponse } from "./api/types";
 import { ArchiveModal } from "./features/ArchiveModal";
@@ -10,6 +9,7 @@ import { introName, IntroModal, type Intro } from "./features/IntroModal";
 import { Masthead } from "./features/Masthead";
 import { Readout } from "./features/Readout";
 import { Score } from "./features/Score";
+import { SpinButton } from "./features/SpinButton";
 import { Tutorial } from "./features/Tutorial";
 import { useWordSort, WordsModal, WordsPanel } from "./features/WordsModal";
 import { useMedia } from "./hooks/useMedia";
@@ -80,19 +80,23 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
     ...q,
     ...add.filter(i => !hasSeen(introName(i)) && !q.some(o => introName(o) === introName(i))),
   ]), []);
+  // a new day drops the cards still waiting (their words and theme belong to the
+  // old board); the hints open on the new one queue again just below
+  useEffect(() => setIntros([]), [board.date]);
   useEffect(() => {
     queue(HINTS.filter(h => hintsOpen.has(h.id)).map(h => ({ kind: "hint", hint: h.id })));
-  }, [hintsOpen, queue]);
+  }, [hintsOpen, board.date, queue]);
   const { fresh } = game;
   useEffect(() => {
     const f = fresh ? found.find(x => x.w === fresh) : undefined;
     if (f?.cat === "bonus") queue([{ kind: "bonus", word: f.w }]);
     else if (f?.theme) queue([{ kind: "theme", word: f.w, theme: board.theme }]);
   }, [fresh, found, board.theme, queue]);
-  const closeIntro = () => {
-    if (intros[0]) markSeen(introName(intros[0]));
-    setIntros(q => q.slice(1));
-  };
+  // mark and drop in one step, so a double tap can't drop the next card unseen
+  const closeIntro = () => setIntros(q => {
+    if (q[0]) markSeen(introName(q[0]));
+    return q.slice(1);
+  });
 
   const pickDay = (d: string) => { setArchiveOpen(false); if (d !== board.date) setDate(d); };
   const showOnBoard = useCallback((w: string) => {
@@ -120,10 +124,7 @@ function Play({ days, game, setDate }: { days: DaysResponse; game: Game; setDate
         </div>
 
         <div className="tools">
-          <Pill className="round spinbtn" aria-label="סיבוב הלוח" onClick={spin}>
-            <span className="spinicon" style={{ transform: `rotate(${turns * -90}deg)` }}><RotateIcon /></span>
-            <span className="tip" aria-hidden="true">סיבוב</span>
-          </Pill>
+          <SpinButton turns={turns} onClick={spin} />
         </div>
       </section>
 

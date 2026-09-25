@@ -25,7 +25,10 @@ export function markSeen(name: string) {
 
 /** The keys older versions wrote: the rules modal, and a list of explained hints. */
 function legacy(name: string): boolean {
-  if (name === "tutorial") return localStorage.getItem("rivuon:help-seen") === "1";
+  if (name === "tutorial") {
+    // the old flag also fell back to sessionStorage
+    return localStorage.getItem("rivuon:help-seen") === "1" || sessionStorage.getItem("rivuon:help-seen") === "1";
+  }
   if (name.startsWith("hint:")) {
     const ids = JSON.parse(localStorage.getItem("rivuon:hints-seen") ?? "[]") as string[];
     return ids.includes(name.slice("hint:".length));
