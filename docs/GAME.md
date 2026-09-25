@@ -28,7 +28,9 @@ board on the same day (Israel time).
 | סיבוב | Rotates the board 90° (same board, new view; helps you see words) |
 | המילים | Found words, grouped by length; theme words first; bonus words in their own section. Unfound words are never revealed; it only says how many are left |
 | ארכיון | Every past day with your progress; tap to play it. Future days stay hidden |
-| ? | The rules, in the app's own words. It opens by itself on a first visit (`rivuon:help-seen` in `localStorage`) and from the header any time after |
+| Tutorial | A first visit starts on this page instead of the game, in four steps on a practice board with gaps holding only שלום and מוצר: swipe שלום (and see מ turn into ם at the end); find מוצר after ש and ל grey out; open the word list from the counter and tap a word for its definition; then meet the rotate, archive and ? buttons (? holds all the rules) and go into the game. A small דילוג in the header skips it. Remembered as `rivuon:seen:tutorial` (older players' `rivuon:help-seen` counts too) |
+| ? | The rules, in the app's own words, from the header any time |
+| First-time cards | One card at a time, the first time a player meets each: a hint opening, a bonus word (what bonus words are, with גינה / גינת), a ★ theme word (what theme words are and where they show in the list). Remembered as `rivuon:seen:<name>` (`hint:<id>`, `bonus`, `theme`), falling back to `sessionStorage` and memory where `localStorage` can't be written |
 | Definition card | Tap any found word: a short definition (scraped from Milog by the backend), a link to the full Milog entry, and "show on board" |
 
 Progress is saved per day in the browser (`localStorage`, key `otiot:<date>`), so a

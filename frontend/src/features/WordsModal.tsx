@@ -20,9 +20,10 @@ interface ListProps {
 }
 
 /** On a phone: a modal opened by tapping the word count. */
-export function WordsModal({ open, onClose, ...list }: ListProps & { open: boolean; onClose: () => void }) {
+export function WordsModal({ open, onClose, sheetClassName, ...list }:
+  ListProps & { open: boolean; onClose: () => void; sheetClassName?: string }) {
   return (
-    <Modal open={open} onClose={onClose} title="מילים">
+    <Modal open={open} onClose={onClose} title="מילים" sheetClassName={sheetClassName}>
       <SheetBody><WordsList {...list} /></SheetBody>
     </Modal>
   );
@@ -88,9 +89,10 @@ function WordsList({ board, found, fresh, reveals, hintsOpen, az, onToggleSort, 
       left: total - got.length,
     });
   }
-  groups.push({
+  // (the tutorial's practice board has none; bonus words found still show)
+  if (board.bonusTotal || bonus.length) groups.push({
     title: "בונוס", entries: bonus.map(word => ({ word })),
-    left: board.bonusTotal - bonus.length, kind: "bonus",
+    left: Math.max(board.bonusTotal - bonus.length, 0), kind: "bonus",
   });
 
   if (canSort && az) {

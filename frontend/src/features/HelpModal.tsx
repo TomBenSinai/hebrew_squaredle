@@ -2,26 +2,6 @@ import type { CSSProperties } from "react";
 import { Button, Modal, SheetBody } from "../components";
 import "./HelpModal.css";
 
-const SEEN_KEY = "rivuon:help-seen";
-
-// Some browsers (Safari in private mode) read storage fine but throw on write,
-// which would reopen the rules on every load. Fall back to sessionStorage, which
-// survives a refresh, and then to memory.
-let seenInMemory = false;
-
-/** Has the player already been shown the rules? (true when storage is unreadable.) */
-export function helpSeen(): boolean {
-  if (seenInMemory) return true;
-  try { return localStorage.getItem(SEEN_KEY) === "1" || sessionStorage.getItem(SEEN_KEY) === "1"; }
-  catch { return true; }
-}
-
-export function markHelpSeen() {
-  seenInMemory = true;
-  try { localStorage.setItem(SEEN_KEY, "1"); } catch { /* private mode etc. */ }
-  try { sessionStorage.setItem(SEEN_KEY, "1"); } catch { /* ditto */ }
-}
-
 /** Stagger: the nth block drifts in a beat after the one before it. */
 const at = (i: number) => ({ "--i": i } as CSSProperties);
 
@@ -47,7 +27,7 @@ function SwipeDemo() {
   );
 }
 
-/** The rules of the game. Opens by itself the first time someone plays. */
+/** All the rules, behind the ? button. New players meet the basics in the Tutorial first. */
 export function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Modal open={open} onClose={onClose} title="איך משחקים" sheetClassName="helpcard">

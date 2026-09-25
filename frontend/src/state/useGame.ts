@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { CellCounts, DayProgress, FoundWord, PublicBoard, Reveal } from "../api/types";
 import { norm, withFinal } from "../lib/hebrew";
+import { useFlash } from "../hooks/useFlash";
 import { findPath, makeLayout, type Layout } from "../lib/layout";
 import { hintById, letterFraction, openHints, type HintId } from "../lib/scoring";
 import { progressStore } from "./progressStore";
@@ -17,6 +18,15 @@ export interface Toast {
   /** a second line: the find opened a new hint */
   note?: { hint: HintId; text: string };
 }
+
+/** The messages a swipe can get, shared with the tutorial so it teaches the real thing. */
+export const say = {
+  /** null: a lone tile is no attempt at a word, so it gets no message */
+  tooShort: (key: string): Toast | null => (key.length > 1 ? { kind: "info", text: `צריך לפחות ${MIN_LEN} אותיות` } : null),
+  notInList: (key: string): Toast => ({ kind: "bad", text: `${withFinal(key)} לא ברשימה` }),
+  again: (w: string): Toast => ({ kind: "info", text: `${w} כבר נמצאה`, word: w }),
+  found: (w: string): Toast => ({ kind: "main", text: w, word: w }),
+};
 
 export interface Game {
   board: PublicBoard;
@@ -38,7 +48,6 @@ export interface Game {
   showWord: (word: string) => void;
   submit: (path: number[]) => void;
   rotate: () => void;
-  isBonus: (word: string) => boolean;
 }
 
 export interface Hints {
@@ -60,8 +69,7 @@ export function useGame(date: string | null): { game: Game | null; error: string
   const submitSeq = useRef(0);
   const [fresh, setFresh] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [flashWord, setFlashWord] = useState<string | null>(null);
-  const flashTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [flashWord, showWord, clearFlash] = useFlash<string>();
   const dateRef = useRef(date);
   dateRef.current = date;
   // the latest progress, readable at once (swipes can come faster than renders)
@@ -80,11 +88,11 @@ export function useGame(date: string | null): { game: Game | null; error: string
       setPending(null);
       submitSeq.current++;
       setFresh(null);
+      clearFlash();
       setCounts(null);
-      setFlashWord(null);
     }).catch(() => { if (!stale) setError("לא הצלחנו לטעון את הלוח"); });
     return () => { stale = true; };
-  }, [date]);
+  }, [date, clearFlash]);
 
   const layout = useMemo(
     () => (board ? makeLayout(board.mask, board.letters, progress.rot) : null),
@@ -163,13 +171,6 @@ export function useGame(date: string | null): { game: Game | null; error: string
     return next;
   }, []);
 
-  const showWord = useCallback((w: string) => {
-    clearTimeout(flashTimer.current);
-    setFlashWord(w);
-    flashTimer.current = setTimeout(() => setFlashWord(null), 1600);
-  }, []);
-  useEffect(() => () => clearTimeout(flashTimer.current), []);
-
   const flash = useMemo(() => {
     if (!layout || !flashWord) return null;
     const bonus = progress.found.some(f => f.w === flashWord && f.cat === "bonus");
@@ -182,14 +183,14 @@ export function useGame(date: string | null): { game: Game | null; error: string
     const seq = ++submitSeq.current;
     setPending(null);
     if (key.length < MIN_LEN) {
-      if (key.length > 1) setToast({ kind: "info", text: "צריך לפחות 4 אותיות" });
+      setToast(say.tooShort(key));
       return;
     }
     const prev = progressRef.current.found.find(f => norm(f.w) === key);
     if (prev) {
       setToast(prev.cat === "bonus"
         ? { kind: "bonus", text: `בונוס · ${prev.w} כבר נמצאה`, word: prev.w }
-        : { kind: "info", text: `${prev.w} כבר נמצאה`, word: prev.w });
+        : say.again(prev.w));
       return;
     }
     const date = board.date;
@@ -198,7 +199,7 @@ export function useGame(date: string | null): { game: Game | null; error: string
     setPending(withFinal(key));
     // answers can arrive out of order: the newest swipe owns the readout
     const latest = () => submitSeq.current === seq;
-    const say = (t: Toast) => {
+    const answer = (t: Toast) => {
       if (!latest()) return;
       setPending(null);
       setToast(t);
@@ -206,12 +207,12 @@ export function useGame(date: string | null): { game: Game | null; error: string
     api.check(date, path.map(i => layout.base[i])).then(r => {
       if (dateRef.current !== date) return;
       if (r.status !== "main" && r.status !== "bonus") {
-        say({ kind: "bad", text: `${withFinal(key)} לא ברשימה` });
+        answer(say.notInList(key));
         return;
       }
       const { word: w, theme } = r;
       if (progressRef.current.found.some(f => f.w === w)) {
-        say({ kind: "info", text: `${w} כבר נמצאה`, word: w });
+        answer(say.again(w));
         return;
       }
       const before = progressRef.current.found;
@@ -226,25 +227,20 @@ export function useGame(date: string | null): { game: Game | null; error: string
       const done = r.status === "main" && found.filter(f => f.cat === "main").length === board.mainTotal;
       // the word is scored either way, but a newer swipe keeps the underline
       if (latest()) setFresh(w);
-      if (done) say({ kind: "main", text: `${w}! סיימתם את כל המילים`, word: w });
-      else if (r.status === "bonus") say({ kind: "bonus", text: `בונוס! ${w}`, word: w });
-      else if (theme) say({ kind: "main", text: `★ ${w} · מילת נושא`, word: w, note });
-      else say({ kind: "main", text: w, word: w, note });
-    }).catch(() => say({ kind: "bad", text: "אין חיבור לשרת, נסו שוב" }));
+      if (done) answer({ kind: "main", text: `${w}! סיימתם את כל המילים`, word: w });
+      else if (r.status === "bonus") answer({ kind: "bonus", text: `בונוס! ${w}`, word: w });
+      else if (theme) answer({ kind: "main", text: `★ ${w} · מילת נושא`, word: w, note });
+      else answer({ ...say.found(w), note });
+    }).catch(() => answer({ kind: "bad", text: "אין חיבור לשרת, נסו שוב" }));
   }, [board, layout, update]);
 
   const rotate = useCallback(() => {
     if (board) update(board.date, p => ({ ...p, rot: (p.rot + 1) % 4 }));
   }, [board, update]);
 
-  const isBonus = useCallback(
-    (w: string) => progress.found.some(f => f.w === w && f.cat === "bonus"),
-    [progress.found],
-  );
-
   if (!board || !layout || board.date !== date) return { game: null, error };
   return {
-    game: { board, layout, found: progress.found, fresh, live, hints, reveals, toast, pending, flash, showWord, submit, rotate, isBonus },
+    game: { board, layout, found: progress.found, fresh, live, hints, reveals, toast, pending, flash, showWord, submit, rotate },
     error,
   };
 }
