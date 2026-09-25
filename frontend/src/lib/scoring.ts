@@ -18,16 +18,57 @@ export function letterFraction(found: FoundWord[], mainLetters: number): number 
   return mainLetters ? got / mainLetters : 0;
 }
 
-/** Tile numbers unlock with progress: first how many words start at a letter, then how many use it. */
-export const HINT_STARTS_AT = 0.6;
-export const HINT_USES_AT = 0.75;
-/** The second hint (words using a letter) is switched off for now: it never unlocks. */
+/** The second tile number (words using a letter) is switched off for now: it never unlocks. */
 export const SHOW_USES_HINT = false;
-export type HintLevel = 0 | 1 | 2;
-export const hintLevel = (frac: number): HintLevel =>
-  SHOW_USES_HINT && frac >= HINT_USES_AT ? 2 : frac >= HINT_STARTS_AT ? 1 : 0;
+
+export type HintId = "sort" | "reveal" | "starts" | "uses";
+
+export interface HintDef {
+  id: HintId;
+  /** share of main letters that opens it; keep in step with backend/app/boards.py */
+  at: number;
+  /** its own color, on the progress bar and in the message that opens it */
+  color: string;
+  /** one line: the mark on the progress bar */
+  label: string;
+  /** the line under the find that opened it */
+  note: string;
+}
+
+/** Help that opens up as the player gets further in, weakest first. */
+export const HINTS: HintDef[] = [
+  {
+    id: "starts", at: 0.3, color: "var(--hint-starts)",
+    label: "רמז: כמה מילים שמתחילות באות נותרו",
+    note: "נפתח רמז חדש! המספר האדום - כמה מילים שמתחילות באות הזו נותרו",
+  },
+  {
+    id: "sort", at: 0.5, color: "var(--hint-sort)",
+    label: "רמז: מיון רשימת המילים לפי א-ב",
+    note: "נפתח רמז חדש! אפשר למיין את רשימת המילים לפי א-ב",
+  },
+  {
+    id: "reveal", at: 0.6, color: "var(--hint-reveal)",
+    label: "רמז: אותיות מהמילים שנותרו",
+    note: "נפתח רמז חדש! ברשימת המילים נחשפות אותיות מהמילים שעוד לא מצאתם",
+  },
+  ...(SHOW_USES_HINT
+    ? [{
+        id: "uses" as const, at: 0.75, color: "var(--hint-uses)",
+        label: "רמז: כמה מילים שעוברות באות נותרו",
+        note: "נפתח רמז חדש! המספר הכחול - כמה מילים שעוברות באות הזו נותרו",
+      }]
+    : []),
+];
+
+export const hintById = (id: HintId) => HINTS.find(h => h.id === id);
+
+/** Which hints this much progress has opened. */
+export const openHints = (frac: number): Set<HintId> =>
+  new Set(HINTS.filter(h => frac >= h.at).map(h => h.id));
 
 export const MAX_GROUP = 8;
-export const groupOf = (w: string) => Math.min(letterCount(w), MAX_GROUP);
+export const groupOfLength = (n: number) => Math.min(n, MAX_GROUP);
+export const groupOf = (w: string) => groupOfLength(letterCount(w));
 export const groupTitle = (len: number) => (len >= MAX_GROUP ? `${MAX_GROUP}+ אותיות` : `${len} אותיות`);
 export const leftText = (n: number) => (n === 1 ? "נותרה עוד מילה אחת" : `נותרו עוד ${n} מילים`);
