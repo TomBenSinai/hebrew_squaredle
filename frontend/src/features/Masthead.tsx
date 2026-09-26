@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import { CalendarIcon, Chip, Pill, ShapeIcon } from "../components";
+import { CalendarIcon, Chip, MoonIcon, Pill, ShapeIcon, SunIcon } from "../components";
 import type { DaySummary } from "../api/types";
 import { shortDate, weekday } from "../lib/dates";
+import { useTheme } from "../lib/theme";
 import "./Masthead.css";
 
 interface Props {
@@ -24,6 +25,7 @@ export function Masthead({ day, isToday, canGoToday, onToday, onArchive, onHelp 
       {!isToday && canGoToday && <Pill strong onClick={onToday}>חזרה להיום</Pill>}
       <ArchivePill onClick={onArchive} />
       <HelpPill onClick={onHelp} />
+      <ThemePill />
     </MastheadFrame>
   );
 }
@@ -54,5 +56,16 @@ export function HelpPill({ className, onClick }: { className?: string; onClick: 
   return (
     <Pill className={["round", className].filter(Boolean).join(" ")} aria-label="איך משחקים" title="איך משחקים"
       onClick={onClick}>?</Pill>
+  );
+}
+
+/** Light/dark switch; the icon shows the mode it switches to. */
+export function ThemePill() {
+  const [theme, toggle] = useTheme();
+  const label = theme === "dark" ? "מצב בהיר" : "מצב כהה";
+  return (
+    <Pill className="round theme" aria-label={label} title={label} onClick={toggle}>
+      {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+    </Pill>
   );
 }
