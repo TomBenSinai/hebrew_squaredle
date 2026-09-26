@@ -117,7 +117,8 @@ function SignIn({ providers }: { providers: AuthInfo["providers"] }) {
       </div>
 
       <p className="acctfine" style={{ "--i": 3 } as CSSProperties}>
-        בלי סיסמאות. שומרים רק את כתובת המייל ואת המשחקים שלכם, ואפשר למחוק את החשבון בכל רגע.
+        בלי סיסמאות. שומרים רק את כתובת המייל (ומ-Google גם את השם) ואת המשחקים שלכם, ואפשר
+        למחוק את החשבון בכל רגע. <a href="/privacy.html" target="_blank" rel="noopener">מדיניות הפרטיות</a>
       </p>
     </>
   );
