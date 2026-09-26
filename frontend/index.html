@@ -6,6 +6,13 @@
     <title>ריבועון</title>
     <meta name="description" content="ריבועון: משחק מילים יומי. מחליקים בין אותיות ומוצאים מילים." />
     <meta name="theme-color" content="#111111" />
+    <!-- The player's light/dark pick (src/lib/theme.ts), set before first paint so the page doesn't flash. -->
+    <script>
+      try {
+        var t = localStorage.getItem("ribuon:theme");
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />

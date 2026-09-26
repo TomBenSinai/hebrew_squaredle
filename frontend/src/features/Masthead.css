@@ -21,7 +21,7 @@
 .when { color: var(--muted); font-size: .82rem; line-height: 1.2; }
 .when b, .when .shape { color: var(--ink); font-weight: 600; }
 /* Never shrinks: even half a pixel of shrink would wrap a pill onto a second row
-   and grow the header. With the compact calendar below, three pills fit one line
+   and grow the header. With the compact calendar below, the pills fit one line
    from 320px up. flex-wrap only guards against a future label wider than the row. */
 .headbtns { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; flex-shrink: 0; }
 
@@ -30,6 +30,11 @@
 @media (max-width: 420px) {
   .pill.cal { width: 40px; height: 40px; padding: 0; justify-content: center; }
   .pill.cal .pilllabel { display: none; }
+}
+/* An archive day adds "back to today"; on a narrow phone four pills and the name
+   don't fit one line, so the theme switch steps aside until the player is back on today. */
+@media (max-width: 420px) {
+  .headbtns:has(.pill.strong) .pill.theme { display: none; }
 }
 /* Sits before the shape name (also in the archive list), so "סופגנייה" reads as the board's shape, not the theme. */
 .shape { white-space: nowrap; }
