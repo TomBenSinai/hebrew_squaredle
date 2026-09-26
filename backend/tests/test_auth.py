@@ -118,6 +118,29 @@ class Base(unittest.TestCase):
         return c.get("/api/auth/me").json()["user"]
 
 
+class TestLoginIsOptional(Base):
+    """A player who never logs in plays and keeps progress exactly as before login existed."""
+
+    def test_whole_game_without_a_session(self):
+        c = self.client()
+        self.assertEqual(c.get("/api/days").status_code, 200)
+        self.assertEqual(c.get(f"/api/boards/{DATE}").status_code, 200)
+        self.assertEqual(c.post(f"/api/boards/{DATE}/check", json={"path": [0, 1, 2]}).status_code, 200)
+        self.assertEqual(c.post(f"/api/boards/{DATE}/live-cells", json={"found": []}).status_code, 200)
+        self.play(c, ANON_A, DATE, words(DATE, 2))
+        self.assertEqual(len(c.get(f"/api/progress/{DATE}", headers={"X-Player-Id": ANON_A}).json()["found"]), 2)
+        self.assertEqual(set(self.progress(c, ANON_A)), {DATE})
+        self.assertNotIn("ribuon_session", c.cookies)
+
+    def test_nothing_is_offered_when_login_is_off(self):
+        with mock.patch.object(config, "GOOGLE_CLIENT_ID", ""), mock.patch.object(config, "EMAIL_LOGIN", False):
+            c = self.client()
+            self.assertEqual(c.get("/api/auth/me").json(),
+                             {"providers": {"google": False, "email": False}, "user": None})
+            self.play(c, ANON_A, DATE, words(DATE, 1))
+            self.assertIn(DATE, self.progress(c, ANON_A))
+
+
 class TestSession(Base):
     def test_anonymous_by_default(self):
         c = self.client()
