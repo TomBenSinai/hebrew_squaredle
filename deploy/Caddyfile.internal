@@ -8,6 +8,9 @@
 	auto_https off
 	servers {
 		trusted_proxies static private_ranges
+		# the front proxy appends to whatever X-Forwarded-For the client sent, so
+		# only the rightmost address that isn't a proxy of ours can be believed
+		trusted_proxies_strict
 	}
 }
 
@@ -21,7 +24,10 @@
 	}
 
 	handle /api/* {
-		reverse_proxy api:8000
+		reverse_proxy api:8000 {
+			# the player's address, for the API's rate limits
+			header_up X-Forwarded-For {client_ip}
+		}
 	}
 
 	handle {

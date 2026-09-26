@@ -144,6 +144,79 @@ docker compose -f docker-compose.prod.yml start api
 The certificates live in the `caddy-data` volume. Keep it; deleting it makes
 Caddy re-issue, and Let's Encrypt rate-limits repeats of the same name.
 
+With login on, the database also holds players' email addresses (and hashed
+session tokens), so the backups are personal data: keep the copies somewhere
+only you can read, and don't keep them longer than you need.
+
+## 8. Login (optional)
+
+Players can log in so their progress follows them to every device: with Google,
+or with a link sent by email. Each way turns on when its settings are in `.env`
+(see `deploy/env.example`); with none, there is no login button and the game
+works exactly as before. `chmod 600 .env` once it holds secrets.
+
+How it works, briefly: logging in sets an HttpOnly, Secure, SameSite=Lax session
+cookie (180 days, renewed while used; only its hash is stored). The progress a
+browser saved anonymously is moved into the account, and from then on every
+device logged in to the same account shares it. One account per verified email,
+so Google and an email link with the same address are the same account. Logout
+leaves the progress in the account and starts that device afresh. Players can
+delete their account (and its progress) from the account card.
+
+### Google
+
+1. [console.cloud.google.com](https://console.cloud.google.com) -> a project ->
+   **APIs & Services -> OAuth consent screen**: External, app name ריבועון, your
+   support email, the domain `ribuon.com`. The scopes are the basic `openid`,
+   `email` and `profile`, which need no review. Publish it ("In production"), or
+   only listed test users can log in.
+2. **Credentials -> Create credentials -> OAuth client ID**, type *Web application*,
+   with the authorized redirect URI `https://ribuon.com/api/auth/google/callback`
+   (no JavaScript origins needed: the server does the whole exchange).
+3. Put the client ID and secret in `.env`:
+   ```
+   RIBUON_GOOGLE_CLIENT_ID=...apps.googleusercontent.com
+   RIBUON_GOOGLE_CLIENT_SECRET=GOCSPX-...
+   ```
+
+The redirect URI is built from `RIBUON_DOMAIN`, so it must match what is
+registered with Google character for character.
+
+### Email links
+
+Any SMTP relay will do (Resend, Brevo, Amazon SES, Postmark...). With the relay:
+
+1. Verify the domain you send from (`ribuon.com`) and add the SPF and DKIM DNS
+   records it gives you, plus a DMARC record (`_dmarc.ribuon.com  TXT
+   "v=DMARC1; p=none"` is a fine start). Without them the links land in spam.
+2. Put the SMTP settings in `.env`:
+   ```
+   RIBUON_SMTP_HOST=smtp.resend.com
+   RIBUON_SMTP_PORT=587
+   RIBUON_SMTP_USER=resend
+   RIBUON_SMTP_PASSWORD=re_...
+   RIBUON_MAIL_FROM="ריבועון <login@ribuon.com>"
+   ```
+
+A link works once, for 15 minutes. An address gets at most 3 links per 15
+minutes, and an IP 10 an hour. These limits are held in the API process's
+memory, which is why the API runs as a single worker.
+
+### Turning it on
+
+```bash
+docker compose -f <your compose file> up -d --build   # both: new settings, Caddyfile and API command
+curl -s https://ribuon.com/api/auth/me                 # {"providers":{"google":true,"email":true},"user":null}
+```
+
+Then log in on a phone, play a word, log in on a computer and check it's there.
+
+The rate limit per IP needs the player's real address. Caddy passes on the one
+it trusts (`{client_ip}`; behind another proxy, `trusted_proxies_strict` takes
+the rightmost address that isn't a private one), and uvicorn reads it with
+`--proxy-headers`. If every request in `logs api` shows the same Docker address,
+that chain is broken, and after 10 links in an hour nobody else can get one.
+
 ## Sharing a server with another site
 
 This is the case on the VPS the game actually runs on: a `nginx:alpine`
@@ -267,4 +340,9 @@ Three rules survive any proxy: `/api` must be the **same origin** as the page,
 | No certificate | `logs -f web`. Usually DNS not pointing here yet, or 80/443 blocked - the HTTP-01 challenge needs port 80. |
 | Site loads, game does not | `curl https://ribuon.com/api/health`; then `logs api`. |
 | "אין לוח להיום" / 404 on today | The board file for today is missing, or the server clock is wrong. The API uses Asia/Jerusalem regardless of the host timezone; make sure `RIBUON_TODAY` is **not** set in `.env`. |
-| Progress lost | Progress is keyed by the browser's `X-Player-Id`; a cleared browser is a new player. Until login exists, that is expected. |
+| Progress lost | Logged out, progress is keyed by the browser's `X-Player-Id`, so a cleared browser is a new player; logging in is how to keep it. Logged in, it's in the account: check `GET /api/auth/me` shows the user. |
+| No login button | `curl https://ribuon.com/api/auth/me`: both providers `false` means the settings didn't reach the API. They go in `.env`, then `up -d` again (a `restart` doesn't re-read `.env`). |
+| Google: `redirect_uri_mismatch` | The redirect URI registered with Google must be exactly `https://<RIBUON_DOMAIN>/api/auth/google/callback`. |
+| Google login returns to `?login=failed` | `logs api` says why ("wrong audience" = client ID mismatch; "token endpoint said 401" = wrong secret). |
+| Login emails don't arrive | `logs api` for "could not send login email"; otherwise check the relay's dashboard and the spam folder (SPF/DKIM). |
+| "Too many links" for everyone | The API sees one IP for all players: see "Turning it on" in section 8. |
