@@ -34,7 +34,20 @@ board on the same day (Israel time).
 | Definition card | Tap any found word: a short definition (scraped from Milog by the backend), a link to the full Milog entry, and "show on board" |
 
 Progress is saved per day in the browser (`localStorage`, key `otiot:<date>`), so a
-refresh or a later visit continues where you stopped.
+refresh or a later visit continues where you stopped. It is also sent to the server,
+under an anonymous id the browser makes up (`ribuon:player`).
+
+## Account (optional)
+
+The person button in the header (shown only when the server offers a way to log in)
+opens התחברות: continue with Google, or get a login link by email. Logging in moves
+what this browser played so far into the account, and every device logged in to it
+shares the same progress, merged word by word (a word found anywhere stays found).
+Logged in, the button shows the player's initial; it opens the account card:
+days saved, התנתקות (the progress stays in the account, this device starts afresh)
+and מחיקת החשבון (deletes the account and its progress, after a confirmation).
+On a narrow phone viewing an archive day the button makes room for חזרה להיום and
+waits on today's page.
 
 ## Days
 

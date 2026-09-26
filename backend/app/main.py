@@ -12,15 +12,20 @@
   GET  /api/progress/{date}
   PUT  /api/progress/{date}             {found, rot}; merged with what's stored, words re-checked
   GET  /api/define/{word}               short definition from Milog
+  /api/auth/...                         optional login (auth.py)
+
+Progress is the logged-in user's when the request carries a session cookie,
+else the anonymous X-Player-Id's.
 """
 
 from __future__ import annotations
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from . import config, milog
+from . import auth, config, milog
 from .boards import Day, all_dates, load_day, playable_dates
 from .deps import current_player, day, repo
 
@@ -28,6 +33,20 @@ app = FastAPI(title="Ribuon API")
 if config.CORS_ORIGINS:
     app.add_middleware(CORSMiddleware, allow_origins=config.CORS_ORIGINS,
                        allow_methods=["*"], allow_headers=["*"])
+app.include_router(auth.router)
+
+UNSAFE = {"POST", "PUT", "PATCH", "DELETE"}
+
+
+@app.middleware("http")
+async def json_writes_only(request: Request, call_next):
+    """Every write must be JSON. A page on another site can only send JSON after a
+    CORS preflight, which it won't pass, so it can't use a player's session cookie
+    to change their progress or account (on top of SameSite=Lax)."""
+    ctype = request.headers.get("content-type", "").split(";")[0].strip().lower()
+    if request.method in UNSAFE and ctype != "application/json":
+        return JSONResponse({"detail": "Send JSON"}, status_code=415)
+    return await call_next(request)
 
 
 class CheckIn(BaseModel):

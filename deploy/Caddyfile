@@ -23,7 +23,10 @@ www.{$RIBUON_DOMAIN:ribuon.com} {
 
 	# The API. Same origin as the site, so no CORS and no third-party cookies.
 	handle /api/* {
-		reverse_proxy api:8000
+		reverse_proxy api:8000 {
+			# the player's address, for the API's rate limits
+			header_up X-Forwarded-For {client_ip}
+		}
 	}
 
 	handle {
