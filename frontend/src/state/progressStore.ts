@@ -57,6 +57,8 @@ export class SyncedProgressStore implements ProgressStore {
   private local = new LocalProgressStore();
   // days whose last save didn't reach the server
   private unsent = new Set<string>();
+  // how many saves each day has sent, to tell the newest one's answer apart
+  private sent = new Map<string, number>();
 
   constructor(private player: string) {
     // back online, or back to the tab (the "online" event can miss a flaky
@@ -76,9 +78,14 @@ export class SyncedProgressStore implements ProgressStore {
   }
 
   private push(date: string, progress: DayProgress) {
+    // each save holds the whole day, so only the newest one's outcome counts:
+    // a slow older save must not clear or set the mark for a newer one
+    const n = (this.sent.get(date) ?? 0) + 1;
+    this.sent.set(date, n);
+    const latest = () => this.sent.get(date) === n;
     api.progress.put(this.player, date, progress.found, progress.rot)
-      .then(() => this.unsent.delete(date))
-      .catch(() => this.unsent.add(date));   // offline or no backend: flush() retries
+      .then(() => { if (latest()) this.unsent.delete(date); })
+      .catch(() => { if (latest()) this.unsent.add(date); });   // offline or no backend: flush() retries
   }
 
   /** Resend the days that didn't go up, as they stand now. */
