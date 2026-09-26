@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { CalendarIcon, Chip, Pill } from "../components";
-import type { DaySummary } from "../api/types";
+import { CalendarIcon, Chip, PersonIcon, Pill } from "../components";
+import type { DaySummary, User } from "../api/types";
 import { shortDate, weekday } from "../lib/dates";
 import "./Masthead.css";
 
@@ -11,9 +11,11 @@ interface Props {
   onToday: () => void;
   onArchive: () => void;
   onHelp: () => void;
+  /** undefined: login is off, so no account button */
+  account?: { user: User | null; onOpen: () => void };
 }
 
-export function Masthead({ day, isToday, canGoToday, onToday, onArchive, onHelp }: Props) {
+export function Masthead({ day, isToday, canGoToday, onToday, onArchive, onHelp, account }: Props) {
   return (
     <MastheadFrame live when={<>
       {isToday ? <b>היום</b> : <><b>ארכיון</b> · {weekday(day.date)}</>}
@@ -23,6 +25,7 @@ export function Masthead({ day, isToday, canGoToday, onToday, onArchive, onHelp 
     </>}>
       {!isToday && canGoToday && <Pill strong onClick={onToday}>חזרה להיום</Pill>}
       <ArchivePill onClick={onArchive} />
+      {account && <AccountPill user={account.user} onClick={account.onOpen} />}
       <HelpPill onClick={onHelp} />
     </MastheadFrame>
   );
@@ -46,6 +49,17 @@ export function ArchivePill({ className, onClick }: { className?: string; onClic
     <Pill className={["cal", className].filter(Boolean).join(" ")} icon={<CalendarIcon />}
       aria-label="ארכיון" title="ארכיון" onClick={onClick}>
       <span className="pilllabel">ארכיון</span>
+    </Pill>
+  );
+}
+
+/** Logged out, a person to log in; logged in, their initial on a lit tile. */
+function AccountPill({ user, onClick }: { user: User | null; onClick: () => void }) {
+  const label = user ? "החשבון" : "התחברות";
+  const initial = user && [...(user.name || user.email || "").trim()][0]?.toUpperCase();
+  return (
+    <Pill className={"round acct" + (user ? " in" : "")} aria-label={label} title={label} onClick={onClick}>
+      {user ? initial || <PersonIcon /> : <PersonIcon />}
     </Pill>
   );
 }

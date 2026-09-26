@@ -9,6 +9,12 @@ services:
     environment:
       RIBUON_DB: /data/ribuon.db
       # RIBUON_TODAY: "2026-09-25"    # pretend it's another day
+      # Login: email links are only printed to this container's log (no SMTP here).
+      # For Google, add a client (see docs/DEPLOY.md) and set RIBUON_GOOGLE_CLIENT_ID/_SECRET.
+      RIBUON_PUBLIC_URL: http://localhost:${RIBUON_WEB_PORT:-5174}
+      RIBUON_MAIL_TO_LOG: "1"
+      RIBUON_GOOGLE_CLIENT_ID: ${RIBUON_GOOGLE_CLIENT_ID:-}
+      RIBUON_GOOGLE_CLIENT_SECRET: ${RIBUON_GOOGLE_CLIENT_SECRET:-}
     ports:
       - "127.0.0.1:${RIBUON_API_PORT:-8001}:8000"
 

@@ -1,0 +1,176 @@
+/* a short card that hugs its content, like the intro cards */
+.modal .sheet.acctcard { height: auto; max-height: min(88%, 740px); max-width: 30rem; }
+.acctbody { padding-bottom: 22px; }
+
+.acctlead { margin: 6px 0 0; font-size: 1.1rem; line-height: 1.5; }
+.acctfine { margin: 14px 0 0; color: var(--muted); font-size: .9rem; line-height: 1.45; }
+.accthead {
+  font-family: var(--display); font-weight: 800;
+  font-size: 1.5rem; line-height: 1.1;
+  margin: 12px 0 8px;
+}
+.accterr { margin: 10px 0 0; color: var(--bad); font-weight: 600; font-size: .95rem; }
+
+/* what the page load has to say: just logged in, a stale link... */
+.acctnote {
+  margin: 14px 0 4px; padding: 10px 14px;
+  border-inline-start: 4px solid var(--ink);
+  background: var(--cobalt-soft);
+  font-weight: 600; line-height: 1.4;
+}
+.acctnote.bad { border-color: var(--bad); color: var(--bad); background: none; box-shadow: inset 0 0 0 1px var(--line); }
+
+/* a text button, e.g. "send again" */
+.linkish {
+  padding: 0; border: 0; background: none;
+  color: var(--ink); font-weight: 600;
+  text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1.5px;
+  cursor: pointer;
+}
+.linkish.muted { color: var(--muted); font-weight: 400; }
+.linkish:disabled { opacity: .45; cursor: default; }
+
+/* --- logged out ------------------------------------------------------------ */
+
+/* The picture: phone on the right, laptop on the left, a word travelling between. */
+.acctpic { display: block; width: 100%; max-width: 300px; margin: 10px auto 4px; overflow: visible; }
+.acctpic .frame { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-linejoin: round; }
+.acctpic .notch { stroke-width: 3; stroke-linecap: round; }
+.acctpic .mini rect { fill: var(--paper); stroke: var(--line); stroke-width: 1.2; }
+.acctpic .mini text { font-family: var(--display); font-weight: 600; font-size: 12px; fill: var(--cobalt); }
+.acctpic .mini .on rect { fill: var(--cobalt); stroke: var(--cobalt); }
+.acctpic .mini .on text { fill: var(--cobalt-ink); }
+.acctpic .mini polyline { fill: none; stroke: var(--cobalt); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.acctpic .arc { fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: .1 4.5; }
+.acctpic .spark {
+  fill: var(--amber-fill);
+  offset-path: path("M204 46C186 8 128 0 112 16");
+  offset-rotate: 0deg;
+  opacity: 0;                          /* the resting picture has no spark */
+}
+
+/* On open: the word lights up on the phone and its path draws, a spark carries
+   it along the arc, and the laptop's board lights up the same way. Every
+   animation rests on the finished picture, so without motion it's just there. */
+.modal.open .acctpic .mini .on rect { animation: litrect .18s ease both; animation-delay: calc(.3s + var(--k) * .13s); }
+.modal.open .acctpic .mini .on text { animation: littext .18s ease both; animation-delay: calc(.3s + var(--k) * .13s); }
+.modal.open .acctpic .mini polyline { stroke-dasharray: 100; animation: acctdraw .5s var(--ease-out) .35s both; }
+.modal.open .acctpic .arc { animation: fadein .3s ease .85s both; }
+.modal.open .acctpic .spark { animation: travel .7s cubic-bezier(.45, 0, .3, 1) 1s both; }
+.modal.open .acctpic .late .on rect { animation-delay: calc(1.62s + var(--k) * .07s); }
+.modal.open .acctpic .late .on text { animation-delay: calc(1.62s + var(--k) * .07s); }
+.modal.open .acctpic .late polyline { animation-delay: 1.62s; animation-duration: .35s; }
+
+@keyframes litrect { from { fill: var(--paper); stroke: var(--line); } }
+@keyframes littext { from { fill: var(--cobalt); } }
+@keyframes acctdraw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+@keyframes fadein { from { opacity: 0; } }
+@keyframes travel {
+  0% { offset-distance: 0%; opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+.acctways { margin-top: 18px; }
+.btn.gbtn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%;
+  padding-block: 11px;
+  border-color: var(--ink);
+  font-size: 1.05rem;
+}
+.btn.gbtn:hover { background: var(--cobalt-soft); }
+
+/* "or with an email link", on a rule */
+.acctor {
+  display: flex; align-items: center; gap: 12px;
+  margin: 16px 0 12px;
+  color: var(--muted); font-size: .88rem;
+}
+.acctor::before, .acctor::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+
+.acctform { display: flex; flex-wrap: wrap; gap: 8px; }
+.acctinput {
+  flex: 1 1 12rem; min-width: 0;
+  padding: 10px 12px;
+  border: 1.5px solid var(--line); border-radius: 10px;
+  background: var(--paper); color: var(--ink);
+  font: inherit; font-size: 16px;      /* 16px: iOS doesn't zoom in on focus */
+  text-align: left;
+}
+.acctinput::placeholder { color: var(--muted); opacity: .7; }
+.acctinput:focus { border-color: var(--ink); outline: none; }
+.acctinput:focus-visible { outline: 3px solid var(--cobalt); outline-offset: 2px; }
+.acctinput[aria-invalid] { border-color: var(--bad); }
+.acctform .btn { flex: 1 0 auto; padding-block: 10px; }
+
+/* after sending: an envelope that seals itself */
+.acctsent { padding-top: 10px; text-align: center; }
+.acctsent p { margin: 0 0 8px; font-size: 1.05rem; line-height: 1.55; }
+.acctsent b { font-weight: 700; word-break: break-all; }
+.acctsent .acctfine { font-size: .92rem; }
+.acctenv { display: block; width: 64px; margin: 8px auto 0; }
+.acctenv rect, .acctenv path { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+.acctenv path { stroke-dasharray: 80; animation: seal .5s var(--ease-out) .15s both; }
+@keyframes seal { from { stroke-dashoffset: 80; } }
+
+/* --- logged in --------------------------------------------------------------- */
+
+.acctid { display: flex; align-items: center; gap: 14px; padding-top: 16px; }
+/* the initial on a lit tile */
+.acctavatar {
+  flex: none;
+  display: grid; place-items: center;
+  width: 58px; height: 58px;
+  border-radius: 10%;
+  background: var(--cobalt); color: var(--cobalt-ink);
+  box-shadow: var(--shadow);
+  font-family: var(--display); font-weight: 700; font-size: 1.9rem; line-height: 1;
+}
+.acctwho { display: grid; min-width: 0; }
+.acctwho b {
+  font-family: var(--display); font-weight: 700; font-size: 1.3rem; line-height: 1.2;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.acctwho span { color: var(--muted); font-size: .92rem; overflow: hidden; text-overflow: ellipsis; text-align: end; }
+
+.acctsaved {
+  display: flex; align-items: center; gap: 14px;
+  margin-top: 18px; padding-block: 14px;
+  border-block: 1px solid var(--line);
+  line-height: 1.4;
+}
+.acctcount {
+  flex: none;
+  font-family: var(--display); font-weight: 800; font-size: 2.6rem; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.acctactions { margin-top: 18px; }
+.acctactions .btn { width: 100%; padding-block: 11px; font-size: 1.05rem; border-color: var(--ink); }
+.acctactions .acctfine { margin-top: 8px; text-align: center; }
+
+.acctdanger { margin-top: 20px; text-align: center; }
+.acctconfirm {
+  padding: 12px 14px;
+  border: 1.5px solid var(--bad); border-radius: 8px;
+  text-align: start;
+}
+.acctconfirm p { margin: 0 0 10px; line-height: 1.45; }
+.acctrow { display: flex; gap: 8px; }
+.acctrow .btn { flex: 1; }
+.btn.danger { background: var(--bad); border-color: var(--bad); color: var(--paper); }
+
+/* the blocks drift in as the card opens, like the rules */
+.modal.open .acctlead,
+.modal.open .acctways,
+.modal.open .acctbody > .acctfine,
+.modal.open .acctid,
+.modal.open .acctsaved,
+.modal.open .acctactions,
+.modal.open .acctdanger,
+.modal.open .acctsent {
+  animation: rise .4s var(--ease-out) both;
+  animation-delay: calc(110ms + var(--i, 0) * 60ms);
+}
