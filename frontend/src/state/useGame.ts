@@ -181,8 +181,8 @@ export function useGame(date: string | null): { game: Game | null; error: string
     return next;
   }, []);
 
-  // swipes are checked here against the hashed words when the browser can,
-  // otherwise on the server
+  // swipes are checked here against the hashed words; an API from before
+  // them leaves it to the server
   const lookup = useMemo(() => (board ? answerLookup(board.salt, board.answers) : null), [board]);
 
   const flash = useMemo(() => {
@@ -208,12 +208,6 @@ export function useGame(date: string | null): { game: Game | null; error: string
       return;
     }
     const date = board.date;
-    // keep the swiped word up until the server answers, instead of the old message
-    // (a local check answers before the next frame, so it needs none)
-    if (!lookup) {
-      setToast(null);
-      setPending(withFinal(key));
-    }
     // answers can arrive out of order: the newest swipe owns the readout
     const latest = () => submitSeq.current === seq;
     const answer = (t: Toast) => {
@@ -221,11 +215,7 @@ export function useGame(date: string | null): { game: Game | null; error: string
       setPending(null);
       setToast(t);
     };
-    const check: Promise<Hit | null> = lookup
-      ? lookup(key)
-      : api.check(date, path.map(i => layout.base[i])).then(r =>
-        r.status === "main" || r.status === "bonus" ? { word: r.word, cat: r.status, theme: r.theme } : null);
-    check.then(r => {
+    const settle = (r: Hit | null) => {
       if (dateRef.current !== date) return;
       if (!r) {
         answer(say.notInList(key));
@@ -252,7 +242,19 @@ export function useGame(date: string | null): { game: Game | null; error: string
       else if (r.cat === "bonus") answer({ kind: "bonus", text: `בונוס! ${w}`, word: w });
       else if (theme) answer({ kind: "main", text: `★ ${w} · מילת נושא`, word: w, note });
       else answer({ ...say.found(w), note });
-    }).catch(() => answer({ kind: "bad", text: "אין חיבור לשרת, נסו שוב" }));
+    };
+    // checked here, the answer lands with the swipe's end, in the same render
+    if (lookup) {
+      settle(lookup(key));
+      return;
+    }
+    // keep the swiped word up until the server answers, instead of the old message
+    setToast(null);
+    setPending(withFinal(key));
+    api.check(date, path.map(i => layout.base[i]))
+      .then(r => settle(r.status === "main" || r.status === "bonus"
+        ? { word: r.word, cat: r.status, theme: r.theme } : null))
+      .catch(() => answer({ kind: "bad", text: "אין חיבור לשרת, נסו שוב" }));
   }, [board, layout, lookup, update]);
 
   const rotate = useCallback(() => {
