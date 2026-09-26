@@ -55,16 +55,35 @@ export class LocalProgressStore implements ProgressStore {
 /** localStorage first (instant, works offline), the server in the background. */
 export class SyncedProgressStore implements ProgressStore {
   private local = new LocalProgressStore();
-  constructor(private player: string) {}
+  // days whose last save didn't reach the server
+  private unsent = new Set<string>();
+
+  constructor(private player: string) {
+    // back online, or back to the tab (the "online" event can miss a flaky
+    // network): send what's waiting. A closed tab is caught by sync() at start.
+    window.addEventListener("online", () => this.flush());
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") this.flush();
+    });
+  }
 
   load(date: string) { return this.local.load(date); }
   all() { return this.local.all(); }
 
   save(date: string, progress: DayProgress) {
     this.local.save(date, progress);
-    api.progress.put(this.player, date, progress.found, progress.rot).catch(() => {
-      /* offline or no backend: it goes up with the next save or sync */
-    });
+    this.push(date, progress);
+  }
+
+  private push(date: string, progress: DayProgress) {
+    api.progress.put(this.player, date, progress.found, progress.rot)
+      .then(() => this.unsent.delete(date))
+      .catch(() => this.unsent.add(date));   // offline or no backend: flush() retries
+  }
+
+  /** Resend the days that didn't go up, as they stand now. */
+  private flush() {
+    for (const date of this.unsent) this.push(date, this.local.load(date));
   }
 
   async sync() {
