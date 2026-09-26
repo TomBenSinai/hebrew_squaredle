@@ -28,3 +28,13 @@ export function ExternalLinkIcon() {
     </svg>
   );
 }
+
+/** A 3x3 board with a tile missing: marks the day's board shape, so it doesn't read as the theme. */
+export function ShapeIcon() {
+  return (
+    <svg className="shape-icon" viewBox="0 0 12 12" width="11" height="11" aria-hidden="true">
+      {[0, 1, 2].flatMap(r => [0, 1, 2].map(c => r === 0 && c === 2 ? null :
+        <rect key={`${r}${c}`} x={c * 4 + .5} y={r * 4 + .5} width="3" height="3" rx=".7" fill="currentColor" />))}
+    </svg>
+  );
+}
