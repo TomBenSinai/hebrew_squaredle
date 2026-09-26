@@ -91,7 +91,7 @@ function SignIn({ providers }: { providers: AuthInfo["providers"] }) {
     <>
       <SyncPicture />
       <p className="acctlead" style={{ "--i": 1 } as CSSProperties}>
-        התחברו, וההתקדמות שלכם תחכה לכם בכל מכשיר. מה ששיחקתם עד עכשיו כאן יישמר בחשבון.
+        התחברו לחשבון ותוכלו לשמור את ההתקדמות שלכם במשחק.
       </p>
 
       <div className="acctways" style={{ "--i": 2 } as CSSProperties}>
@@ -117,8 +117,8 @@ function SignIn({ providers }: { providers: AuthInfo["providers"] }) {
       </div>
 
       <p className="acctfine" style={{ "--i": 3 } as CSSProperties}>
-        בלי סיסמאות. שומרים רק את כתובת המייל (ומ-Google גם את השם) ואת המשחקים שלכם, ואפשר
-        למחוק את החשבון בכל רגע. <a href="/privacy.html" target="_blank" rel="noopener">מדיניות הפרטיות</a>
+        המידע היחיד שאנחנו שומרים הוא המייל (והשם שלכם אם אתם מתחברים דרך ג'ימייל). אפשר למחוק את
+        החשבון אם תרצו. <a href="/privacy.html" target="_blank" rel="noopener">מדיניות הפרטיות</a>.
       </p>
     </>
   );
