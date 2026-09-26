@@ -55,16 +55,42 @@ export class LocalProgressStore implements ProgressStore {
 /** localStorage first (instant, works offline), the server in the background. */
 export class SyncedProgressStore implements ProgressStore {
   private local = new LocalProgressStore();
-  constructor(private player: string) {}
+  // days whose last save didn't reach the server
+  private unsent = new Set<string>();
+  // how many saves each day has sent, to tell the newest one's answer apart
+  private sent = new Map<string, number>();
+
+  constructor(private player: string) {
+    // back online, or back to the tab (the "online" event can miss a flaky
+    // network): send what's waiting. A closed tab is caught by sync() at start.
+    window.addEventListener("online", () => this.flush());
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") this.flush();
+    });
+  }
 
   load(date: string) { return this.local.load(date); }
   all() { return this.local.all(); }
 
   save(date: string, progress: DayProgress) {
     this.local.save(date, progress);
-    api.progress.put(this.player, date, progress.found, progress.rot).catch(() => {
-      /* offline or no backend: it goes up with the next save or sync */
-    });
+    this.push(date, progress);
+  }
+
+  private push(date: string, progress: DayProgress) {
+    // each save holds the whole day, so only the newest one's outcome counts:
+    // a slow older save must not clear or set the mark for a newer one
+    const n = (this.sent.get(date) ?? 0) + 1;
+    this.sent.set(date, n);
+    const latest = () => this.sent.get(date) === n;
+    api.progress.put(this.player, date, progress.found, progress.rot)
+      .then(() => { if (latest()) this.unsent.delete(date); })
+      .catch(() => { if (latest()) this.unsent.add(date); });   // offline or no backend: flush() retries
+  }
+
+  /** Resend the days that didn't go up, as they stand now. */
+  private flush() {
+    for (const date of this.unsent) this.push(date, this.local.load(date));
   }
 
   async sync() {

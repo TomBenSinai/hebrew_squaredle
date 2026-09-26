@@ -1,11 +1,14 @@
 """Stored boards, and what of them the player may see.
 
-The public view never includes the word lists: words are checked on the
-server (`check_path`), and the client only learns a word once it finds it.
+The public view never includes the word lists in the clear. It carries them
+hashed (`answers`), so the client can check a swipe without a round trip and
+only learns a word once it finds it; `check_path` does the same on the server.
 """
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
 from datetime import date as Date
 from functools import lru_cache
@@ -31,6 +34,20 @@ REGULAR_TO_FINAL = str.maketrans("\u05db\u05de\u05e0\u05e4\u05e6", "\u05da\u05dd
 def with_final(s: str) -> str:
     """Spell the last letter of `s` in its final form: only that one folds."""
     return s[:-1] + s[-1].translate(REGULAR_TO_FINAL) if s else s
+
+
+def _answer_hash(salt: str, key: str) -> str:
+    return hashlib.sha256(f"{salt}:h:{key}".encode()).hexdigest()[:32]
+
+
+def _keystream(salt: str, key: str, n: int) -> bytes:
+    blocks = (hashlib.sha256(f"{salt}:d{i}:{key}".encode()).digest() for i in range(-(-n // 32)))
+    return b"".join(blocks)[:n]
+
+
+def _seal(salt: str, key: str, data: bytes) -> str:
+    """XOR with a keystream of the word: the same call opens it again."""
+    return base64.b64encode(bytes(a ^ b for a, b in zip(data, _keystream(salt, key, len(data))))).decode()
 
 
 class BoardNotFound(Exception):
@@ -148,7 +165,25 @@ class Day:
             "groups": [{"length": n, "total": groups[n]} for n in sorted(groups)],
             "bonusTotal": len(self.board.bonus),
             "themeTotal": len(self.theme_words),
+            **self.answers(),
         }
+
+    def answers(self) -> dict:
+        """The board's words, hashed: `answerLookup` in frontend/src/lib/answers.ts
+        reads them, so the two must stay in step.
+
+        Each word is keyed by its normalized form. `h` finds the entry, and `d`,
+        its details, is sealed with a keystream from the same key, so it opens
+        only for someone who swiped the word. The salt changes daily and can't be
+        known before the day, so no one table works for every board.
+        """
+        salt = hashlib.sha256(f"answers:{self.board.seed}".encode()).hexdigest()[:16]
+        out = []
+        for key, (category, word) in self.index.items():
+            detail = f"{category[0]}{int(word in self.theme_words)}{word}".encode()
+            out.append({"h": _answer_hash(salt, key), "d": _seal(salt, key, detail)})
+        out.sort(key=lambda a: a["h"])   # the order says nothing about the words
+        return {"salt": salt, "answers": out}
 
     def check_path(self, path: list[int]) -> dict:
         """The player swiped over these cells (in the board's own cell order)."""

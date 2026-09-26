@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { CellCounts, DayProgress, FoundWord, PublicBoard, Reveal } from "../api/types";
+import { answerLookup, type Hit } from "../lib/answers";
 import { norm, withFinal } from "../lib/hebrew";
 import { useFlash } from "../hooks/useFlash";
 import { findPath, makeLayout, pathCells, type Layout } from "../lib/layout";
@@ -180,6 +181,10 @@ export function useGame(date: string | null): { game: Game | null; error: string
     return next;
   }, []);
 
+  // swipes are checked here against the hashed words; an API from before
+  // them leaves it to the server
+  const lookup = useMemo(() => (board ? answerLookup(board.salt, board.answers) : null), [board]);
+
   const flash = useMemo(() => {
     if (!layout || !flashWord) return null;
     const bonus = progress.found.some(f => f.w === flashWord && f.cat === "bonus");
@@ -203,9 +208,6 @@ export function useGame(date: string | null): { game: Game | null; error: string
       return;
     }
     const date = board.date;
-    // keep the swiped word up until the answer comes, instead of the old message
-    setToast(null);
-    setPending(withFinal(key));
     // answers can arrive out of order: the newest swipe owns the readout
     const latest = () => submitSeq.current === seq;
     const answer = (t: Toast) => {
@@ -213,9 +215,9 @@ export function useGame(date: string | null): { game: Game | null; error: string
       setPending(null);
       setToast(t);
     };
-    api.check(date, path.map(i => layout.base[i])).then(r => {
+    const settle = (r: Hit | null) => {
       if (dateRef.current !== date) return;
-      if (r.status !== "main" && r.status !== "bonus") {
+      if (!r) {
         answer(say.notInList(key));
         return;
       }
@@ -225,7 +227,7 @@ export function useGame(date: string | null): { game: Game | null; error: string
         return;
       }
       const before = progressRef.current.found;
-      const found: FoundWord[] = [...before, { w, cat: r.status, ...(theme ? { theme } : {}) }];
+      const found: FoundWord[] = [...before, { w, cat: r.cat, ...(theme ? { theme } : {}) }];
       update(date, p => ({ ...p, found }));
       // this find opened a new hint: say so under its own message
       const openFor = (f: FoundWord[]) => openHints(letterFraction(f, board.mainLetters));
@@ -233,15 +235,27 @@ export function useGame(date: string | null): { game: Game | null; error: string
       const opened = [...openFor(found)].find(id => !was.has(id));
       const hint = opened && hintById(opened);
       const note = hint ? { hint: hint.id, text: hint.note } : undefined;
-      const done = r.status === "main" && found.filter(f => f.cat === "main").length === board.mainTotal;
+      const done = r.cat === "main" && found.filter(f => f.cat === "main").length === board.mainTotal;
       // the word is scored either way, but a newer swipe keeps the underline
       if (latest()) setFresh(w);
       if (done) answer({ kind: "main", text: `${w}! סיימתם את כל המילים`, word: w });
-      else if (r.status === "bonus") answer({ kind: "bonus", text: `בונוס! ${w}`, word: w });
+      else if (r.cat === "bonus") answer({ kind: "bonus", text: `בונוס! ${w}`, word: w });
       else if (theme) answer({ kind: "main", text: `★ ${w} · מילת נושא`, word: w, note });
       else answer({ ...say.found(w), note });
-    }).catch(() => answer({ kind: "bad", text: "אין חיבור לשרת, נסו שוב" }));
-  }, [board, layout, update]);
+    };
+    // checked here, the answer lands with the swipe's end, in the same render
+    if (lookup) {
+      settle(lookup(key));
+      return;
+    }
+    // keep the swiped word up until the server answers, instead of the old message
+    setToast(null);
+    setPending(withFinal(key));
+    api.check(date, path.map(i => layout.base[i]))
+      .then(r => settle(r.status === "main" || r.status === "bonus"
+        ? { word: r.word, cat: r.status, theme: r.theme } : null))
+      .catch(() => answer({ kind: "bad", text: "אין חיבור לשרת, נסו שוב" }));
+  }, [board, layout, lookup, update]);
 
   const rotate = useCallback(() => {
     if (board) update(board.date, p => ({ ...p, rot: (p.rot + 1) % 4 }));

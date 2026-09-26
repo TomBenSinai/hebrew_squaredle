@@ -1,8 +1,9 @@
 """ריבועון API.
 
   GET  /api/days                        playable days (newest last) with totals
-  GET  /api/boards/{date}               letters, shape, counts (never the words)
-  POST /api/boards/{date}/check         {path: [cells]} -> main / bonus / not_a_word ...
+  GET  /api/boards/{date}               letters, shape, counts, and the words hashed (never in the clear)
+  POST /api/boards/{date}/check         {path: [cells]} -> main / bonus / not_a_word ... (for clients
+                                        that can't check locally)
   POST /api/boards/{date}/live-cells    {found: [words]} -> cells some unfound main word still uses,
                                         and, once unlocked by progress, per cell how many
                                         unfound main words start at / use it, plus the
