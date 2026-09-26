@@ -1,6 +1,6 @@
 import { api, ApiError } from "../api/client";
 import type { AuthInfo } from "../api/types";
-import { forgetDevice, playerId, progressStore } from "./progressStore";
+import { forgetDevice, forgetProgress, playerId, progressStore } from "./progressStore";
 
 /**
  * Optional login. The server keeps the session in an HttpOnly cookie and files
@@ -11,7 +11,8 @@ import { forgetDevice, playerId, progressStore } from "./progressStore";
 
 /** What the page load has to tell the player about logging in, if anything. */
 export type AuthNotice =
-  | "welcome"          // just logged in
+  | "welcome"          // just made the account, with this device's progress in it
+  | "welcome-back"     // just logged in to an account that already existed
   | "link-expired"     // an email link that was used or too old
   | "google-failed"
   | "offline";
@@ -21,7 +22,7 @@ export interface AuthState {
   notice: AuthNotice | null;
 }
 
-const OFF: AuthInfo = { providers: { google: false, email: false }, user: null };
+const OFF: AuthInfo = { providers: { google: false, email: false }, user: null, newAccount: false };
 
 /**
  * At page load, before the first sync: finish a login the page came back from
@@ -53,9 +54,13 @@ export async function bootAuth(): Promise<AuthState> {
 
   let info: AuthInfo;
   try { info = await api.auth.me(); } catch { return { info: OFF, notice: null }; }
-  if (info.user) {
+  if (info.user && info.newAccount) {
     // every load, not just after login: a claim that didn't get through is retried
     await api.auth.claim(playerId()).catch(() => {});
+  } else if (info.user && notice === "welcome") {
+    // back in an account made elsewhere: it brings its own progress, this device's stays out
+    forgetProgress();
+    notice = "welcome-back";
   }
   return { info, notice: info.user || notice !== "welcome" ? notice : null };
 }

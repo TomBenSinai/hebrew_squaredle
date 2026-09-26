@@ -156,9 +156,10 @@ or with a link sent by email. Each way turns on when its settings are in `.env`
 works exactly as before. `chmod 600 .env` once it holds secrets.
 
 How it works, briefly: logging in sets an HttpOnly, Secure, SameSite=Lax session
-cookie (180 days, renewed while used; only its hash is stored). The progress a
-browser saved anonymously is moved into the account, and from then on every
-device logged in to the same account shares it. One account per verified email,
+cookie (180 days, renewed while used; only its hash is stored). When a login makes
+a new account, the progress that browser saved anonymously is moved into it
+(logging in to an existing account doesn't bring a device's anonymous progress in),
+and from then on every device logged in to the same account shares it. One account per verified email,
 so Google and an email link with the same address are the same account. Logout
 leaves the progress in the account and starts that device afresh. Players can
 delete their account (and its progress) from the account card.

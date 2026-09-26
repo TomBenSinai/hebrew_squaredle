@@ -43,7 +43,8 @@ CREATE TABLE IF NOT EXISTS sessions (
     token_hash  TEXT PRIMARY KEY,
     user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at  INTEGER NOT NULL,
-    expires_at  INTEGER NOT NULL
+    expires_at  INTEGER NOT NULL,
+    made_user   INTEGER NOT NULL DEFAULT 0   -- the login that made the account: may claim
 );
 CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
 CREATE TABLE IF NOT EXISTS login_states (    -- a Google login between redirect and callback
@@ -80,6 +81,8 @@ class AccountRepo:
         self._clock = clock
         with self._tx() as db:
             db.executescript(SCHEMA)
+            if "made_user" not in {r["name"] for r in db.execute("PRAGMA table_info(sessions)")}:
+                db.execute("ALTER TABLE sessions ADD COLUMN made_user INTEGER NOT NULL DEFAULT 0")
 
     def now(self) -> int:
         return int(self._clock())
@@ -98,14 +101,16 @@ class AccountRepo:
     def login(self, provider: str, subject: str, email: str | None, name: str = "") -> dict:
         """The user behind this identity, made on first login. A verified `email`
         (pass None when the provider didn't verify it) joins an existing user
-        with that address, whichever way they logged in before."""
+        with that address, whichever way they logged in before. "new" says
+        whether this login made the user."""
         email = email.lower() if email else None
         with self._tx() as db:
             row = db.execute("SELECT u.* FROM identities i JOIN users u ON u.id = i.user_id "
                              "WHERE i.provider = ? AND i.subject = ?", (provider, subject)).fetchone()
             if row is None and email:
                 row = db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
-            if row is None:
+            new = row is None
+            if new:
                 uid = db.execute("INSERT INTO users (email, name, created_at) VALUES (?, ?, ?)",
                                  (email, name, self.now())).lastrowid
                 row = db.execute("SELECT * FROM users WHERE id = ?", (uid,)).fetchone()
@@ -113,7 +118,7 @@ class AccountRepo:
                        (provider, subject, row["id"]))
             if name and not row["name"]:
                 db.execute("UPDATE users SET name = ? WHERE id = ?", (name, row["id"]))
-            return self._fresh_user(db, row["id"])
+            return {**self._fresh_user(db, row["id"]), "new": new}
 
     @staticmethod
     def _fresh_user(db: sqlite3.Connection, user_id: int) -> dict:
@@ -126,13 +131,14 @@ class AccountRepo:
 
     # --- sessions ------------------------------------------------------------
 
-    def create_session(self, user_id: int) -> str:
+    def create_session(self, user_id: int, made_user: bool = False) -> str:
+        """`made_user`: this login made the account, so this device may claim into it."""
         token = secrets.token_urlsafe(32)
         now = self.now()
         with self._tx() as db:
             db.execute("DELETE FROM sessions WHERE expires_at < ?", (now,))
-            db.execute("INSERT INTO sessions VALUES (?, ?, ?, ?)",
-                       (_hash(token), user_id, now, now + SESSION_DAYS * 86400))
+            db.execute("INSERT INTO sessions VALUES (?, ?, ?, ?, ?)",
+                       (_hash(token), user_id, now, now + SESSION_DAYS * 86400, int(made_user)))
         return token
 
     def session_user(self, token: str) -> dict | None:
@@ -141,14 +147,14 @@ class AccountRepo:
         now = self.now()
         h = _hash(token)
         with self._tx() as db:
-            row = db.execute("SELECT u.*, s.expires_at FROM sessions s JOIN users u ON u.id = s.user_id "
+            row = db.execute("SELECT u.*, s.expires_at, s.made_user FROM sessions s JOIN users u ON u.id = s.user_id "
                              "WHERE s.token_hash = ?", (h,)).fetchone()
             if row is None or row["expires_at"] <= now:
                 return None
             new_expiry = now + SESSION_DAYS * 86400
             if new_expiry - row["expires_at"] >= SESSION_REFRESH:
                 db.execute("UPDATE sessions SET expires_at = ? WHERE token_hash = ?", (new_expiry, h))
-            return _user(row)
+            return {**_user(row), "made_here": bool(row["made_user"])}
 
     def delete_session(self, token: str) -> None:
         with self._tx() as db:

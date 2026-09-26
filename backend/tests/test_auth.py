@@ -136,7 +136,7 @@ class TestLoginIsOptional(Base):
         with mock.patch.object(config, "GOOGLE_CLIENT_ID", ""), mock.patch.object(config, "EMAIL_LOGIN", False):
             c = self.client()
             self.assertEqual(c.get("/api/auth/me").json(),
-                             {"providers": {"google": False, "email": False}, "user": None})
+                             {"providers": {"google": False, "email": False}, "user": None, "newAccount": False})
             self.play(c, ANON_A, DATE, words(DATE, 1))
             self.assertIn(DATE, self.progress(c, ANON_A))
 
@@ -219,6 +219,14 @@ class TestSessionExpiry(unittest.TestCase):
         token = self.repo.create_session(self.user["id"])
         self.repo.delete_user(self.user["id"])
         self.assertIsNone(self.repo.session_user(token))
+
+    def test_sessions_from_before_new_accounts_were_marked_still_work(self):
+        path = Path(self.repo._db.execute("PRAGMA database_list").fetchone()["file"])
+        old = self.repo.create_session(self.user["id"])
+        self.repo._db.execute("ALTER TABLE sessions DROP COLUMN made_user")
+        reopened = AccountRepo(path, clock=lambda: self.now)
+        self.assertEqual(reopened.session_user(old)["made_here"], False)
+        self.assertTrue(reopened.session_user(reopened.create_session(self.user["id"], True))["made_here"])
 
 
 class TestEmailLogin(Base):
@@ -346,18 +354,38 @@ class TestProgressFollowsTheAccount(Base):
         # the anonymous id's own rows are gone: logging out doesn't leave a copy behind
         self.assertEqual(self.progress(self.client(), ANON_A), {})
 
-    def test_two_devices_merge(self):
+    def test_only_the_device_that_made_the_account_brings_its_progress(self):
         phone, laptop = self.client(), self.client()
         self.play(phone, ANON_A, DATE, words(DATE, 2))
-        self.play(laptop, ANON_B, DATE, words(DATE, 2, skip=1))     # one word in common
+        self.play(laptop, ANON_B, DATE, words(DATE, 2, skip=1))
         self.play(laptop, ANON_B, OTHER, words(OTHER, 1))
         for c, anon in ((phone, ANON_A), (laptop, ANON_B)):
             self.email_login(c, "a@example.com")
             self.claim(c, anon)
         for c in (phone, laptop):
             p = self.progress(c, "ignored-id")
-            self.assertEqual([f["w"] for f in p[DATE]["found"]], words(DATE, 3))
-            self.assertEqual(len(p[OTHER]["found"]), 1)
+            self.assertEqual([f["w"] for f in p[DATE]["found"]], words(DATE, 2))
+            self.assertNotIn(OTHER, p)
+        # the laptop's anonymous progress stays where it was
+        self.assertEqual(set(self.progress(self.client(), ANON_B)), {DATE, OTHER})
+
+    def test_new_account_is_told_to_the_session_that_made_it(self):
+        phone, laptop = self.client(), self.client()
+        self.email_login(phone, "a@example.com")
+        self.assertTrue(phone.get("/api/auth/me").json()["newAccount"])
+        self.email_login(laptop, "a@example.com")
+        self.assertFalse(laptop.get("/api/auth/me").json()["newAccount"])
+        phone.post("/api/auth/logout", json={})
+        self.email_login(phone, "a@example.com")              # back on the phone: not new anymore
+        self.assertFalse(phone.get("/api/auth/me").json()["newAccount"])
+
+    def test_google_login_to_an_email_account_is_not_new(self):
+        c = self.client()
+        self.email_login(self.client(), "tom@example.com")
+        self.play(c, ANON_A, DATE, words(DATE, 1))
+        self.google_login(c, email="tom@example.com")
+        self.assertFalse(c.get("/api/auth/me").json()["newAccount"])
+        self.assertEqual(self.claim(c, ANON_A).json()["moved"], [])
 
     def test_claim_drops_junk(self):
         c = self.client()

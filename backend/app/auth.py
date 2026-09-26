@@ -2,12 +2,12 @@
 is kept under their account instead of the browser's anonymous id, so it follows
 them to every device.
 
-  GET    /api/auth/me                   {providers: {google, email}, user: {name, email} | null}
+  GET    /api/auth/me                   {providers: {google, email}, user: {name, email} | null, newAccount}
   GET    /api/auth/google/start         redirect to Google
   GET    /api/auth/google/callback      back from Google: session cookie, redirect to /?login=...
   POST   /api/auth/email/start          {email} -> sends a login link (to /#login=<token>)
   POST   /api/auth/email/verify         {token} -> session cookie, the user
-  POST   /api/auth/claim                moves the X-Player-Id's progress into the account
+  POST   /api/auth/claim                moves the X-Player-Id's progress into a new account
   POST   /api/auth/logout
   DELETE /api/auth/me                   deletes the account and its progress
 
@@ -72,8 +72,8 @@ class RateLimit:
 ip_limit = RateLimit(LINKS_PER_IP, 3600)
 
 
-def _set_session(res: Response, user_id: int) -> None:
-    res.set_cookie(SESSION_COOKIE, accounts().create_session(user_id), max_age=SESSION_DAYS * 86400,
+def _set_session(res: Response, user: dict) -> None:
+    res.set_cookie(SESSION_COOKIE, accounts().create_session(user["id"], user["new"]), max_age=SESSION_DAYS * 86400,
                    path="/api", httponly=True, secure=config.COOKIE_SECURE, samesite="lax")
 
 
@@ -88,7 +88,9 @@ def _public(user: dict | None) -> dict | None:
 @router.get("/me")
 def me(response: Response, user: dict | None = Depends(current_user)):
     response.headers["Cache-Control"] = "no-store"
-    return {"providers": {"google": google.enabled(), "email": config.EMAIL_LOGIN}, "user": _public(user)}
+    return {"providers": {"google": google.enabled(), "email": config.EMAIL_LOGIN}, "user": _public(user),
+            # this session made the account, so this device's progress goes into it
+            "newAccount": bool(user and user["made_here"])}
 
 
 # --- Google ------------------------------------------------------------------
@@ -132,7 +134,7 @@ async def google_callback(state: str = "", code: str = "", error: str = "",
     user = accounts().login("google", str(claims["sub"]), claims.get("email") if verified else None,
                             str(claims.get("name") or "")[:80])
     res = back("google")
-    _set_session(res, user["id"])
+    _set_session(res, user)
     return res
 
 
@@ -175,7 +177,7 @@ def email_verify(body: TokenIn, response: Response):
     if email is None:
         raise HTTPException(400, "expired")
     user = accounts().login("email", email, email)
-    _set_session(response, user["id"])
+    _set_session(response, user)
     return {"user": _public(user)}
 
 
@@ -184,7 +186,11 @@ def email_verify(body: TokenIn, response: Response):
 @router.post("/claim")
 def claim(user: dict = Depends(require_user), anon: str = Depends(anon_player)):
     """Moves what this browser played before logging in into the account: per day
-    the union of both, re-checked against the board. Repeating it is harmless."""
+    the union of both, re-checked against the board. Repeating it is harmless.
+    Only the login that made the account does this: logging in to an account that
+    already exists leaves the device's anonymous progress out of it."""
+    if not user["made_here"]:
+        return {"moved": []}
     def merge(date: str, src: dict, dst: dict | None) -> dict:
         words = [f["w"] for f in (dst or {"found": []})["found"]] + [f["w"] for f in src["found"]]
         try:

@@ -139,8 +139,21 @@ export function playerId(): string {
  */
 export function forgetDevice() {
   // the pre-rename id too, or migrateStorage would copy it back on the next load
+  forget(k => k.startsWith(KEY_PREFIX) || k === PLAYER_KEY || k === "rivuon:player");
+}
+
+/**
+ * Just logged in to an account that already existed: drop what this device
+ * played anonymously, so the first sync fills it from the account instead of
+ * pushing it in. (It stays on the server under the anonymous id.)
+ */
+export function forgetProgress() {
+  forget(k => k.startsWith(KEY_PREFIX));
+}
+
+function forget(match: (key: string) => boolean) {
   for (const k of storage.keys()) {
-    if (k.startsWith(KEY_PREFIX) || k === PLAYER_KEY || k === "rivuon:player") {
+    if (match(k)) {
       try { localStorage.removeItem(k); } catch { /* private mode etc. */ }
     }
   }

@@ -15,7 +15,8 @@ interface Props {
 }
 
 const NOTICES: Record<AuthNotice, { text: string; bad?: boolean }> = {
-  "welcome": { text: "התחברתם. מה ששיחקתם במכשיר הזה עבר לחשבון." },
+  "welcome": { text: "החשבון מוכן. מה ששיחקתם במכשיר הזה נשמר בו." },
+  "welcome-back": { text: "התחברתם. ההתקדמות מהחשבון שלכם כאן." },
   "link-expired": { text: "הקישור כבר לא בתוקף: הוא עובד פעם אחת ורק 15 דקות. בקשו קישור חדש.", bad: true },
   "google-failed": { text: "ההתחברות עם Google לא הצליחה. נסו שוב.", bad: true },
   "offline": { text: "אין חיבור לשרת. נסו שוב בעוד רגע.", bad: true },
@@ -91,7 +92,8 @@ function SignIn({ providers }: { providers: AuthInfo["providers"] }) {
     <>
       <SyncPicture />
       <p className="acctlead" style={{ "--i": 1 } as CSSProperties}>
-        התחברו לחשבון ותוכלו לשמור את ההתקדמות שלכם במשחק.
+        התחברו לחשבון ותוכלו לשמור את ההתקדמות שלכם במשחק ולהמשיך אותה בכל מכשיר. בפתיחת חשבון
+        חדש, מה ששיחקתם עד עכשיו במכשיר הזה יישמר בו.
       </p>
 
       <div className="acctways" style={{ "--i": 2 } as CSSProperties}>
