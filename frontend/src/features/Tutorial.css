@@ -37,6 +37,7 @@
 .tutcue .counter .num small, .tutcue .counter .chev { color: inherit; }
 .tutcue .counter .chev { animation: tutnudge .8s ease-in-out infinite; }
 @media (hover: hover) { .tutcue button.counter:hover { background: var(--cobalt); } }
+.tutcue button.counter:active { background: var(--cobalt); }
 @media (prefers-reduced-motion: reduce) {
   .tutcue .counter, .tutcue .counter .chev { animation: none; }
 }
