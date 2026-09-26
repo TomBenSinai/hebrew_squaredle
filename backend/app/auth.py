@@ -6,8 +6,8 @@ them to every device.
   GET    /api/auth/google/start         redirect to Google
   GET    /api/auth/google/callback      back from Google: session cookie, redirect to /?login=...
   POST   /api/auth/email/start          {email} -> sends a login link (to /#login=<token>)
-  POST   /api/auth/email/verify         {token} -> session cookie, the user
-  POST   /api/auth/claim                moves the X-Player-Id's progress into a new account
+  POST   /api/auth/email/verify         {token} -> session cookie, the user, newAccount
+  POST   /api/auth/claim                moves the X-Player-Id's progress into a new account, once
   POST   /api/auth/logout
   DELETE /api/auth/me                   deletes the account and its progress
 
@@ -24,7 +24,7 @@ import secrets
 import smtplib
 import threading
 import time
-from collections import defaultdict, deque
+from collections import deque
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
@@ -39,7 +39,9 @@ log = logging.getLogger("ribuon.auth")
 router = APIRouter(prefix="/api/auth")
 
 LOGIN_COOKIE = "ribuon_login"               # the Google login's state, between redirect and callback
-EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+# plain addresses only: nothing a mail header reads as a separator (, ; < > " etc.),
+# so one address can't turn into several recipients
+EMAIL = re.compile(r"^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9-]+(\.[a-z0-9-]+)+$")
 LINKS_PER_ADDRESS = 3                       # per EMAIL_TOKEN_TTL
 LINKS_PER_IP = 10                           # per hour
 
@@ -50,13 +52,17 @@ class RateLimit:
 
     def __init__(self, limit: int, window: int):
         self.limit, self.window = limit, window
-        self._hits: dict[str, deque[float]] = defaultdict(deque)
+        self._hits: dict[str, deque[float]] = {}
         self._lock = threading.Lock()
+        self._next_sweep = 0.0
 
     def hit(self, key: str) -> bool:
         now = time.monotonic()
         with self._lock:
-            q = self._hits[key]
+            if now >= self._next_sweep:         # drop keys gone quiet, so the map stays small
+                self._hits = {k: q for k, q in self._hits.items() if q and q[-1] > now - self.window}
+                self._next_sweep = now + self.window
+            q = self._hits.setdefault(key, deque())
             while q and q[0] <= now - self.window:
                 q.popleft()
             if len(q) >= self.limit:
@@ -86,8 +92,11 @@ def _public(user: dict | None) -> dict | None:
 
 
 @router.get("/me")
-def me(response: Response, user: dict | None = Depends(current_user)):
+def me(response: Response, user: dict | None = Depends(current_user),
+       ribuon_session: str | None = Cookie(default=None)):
     response.headers["Cache-Control"] = "no-store"
+    if ribuon_session and user is None:         # expired, or the account was deleted elsewhere
+        _clear_session(response)
     return {"providers": {"google": google.enabled(), "email": config.EMAIL_LOGIN}, "user": _public(user),
             # this session made the account, so this device's progress goes into it
             "newAccount": bool(user and user["made_here"])}
@@ -163,10 +172,12 @@ def email_start(body: EmailIn, request: Request):
         raise HTTPException(429, "too_many")
     if not ip_limit.hit(request.client.host if request.client else "?"):
         raise HTTPException(429, "too_many")
+    token = accs.create_email_token(email)
     try:
-        mailer.send_login_link(email, accs.create_email_token(email))
+        mailer.send_login_link(email, token)
     except (smtplib.SMTPException, OSError) as e:
         log.error("could not send login email: %s", e)
+        accs.drop_email_token(token)            # a link that never went out doesn't count
         raise HTTPException(502, "send_failed")
     return {"ok": True}
 
@@ -178,17 +189,18 @@ def email_verify(body: TokenIn, response: Response):
         raise HTTPException(400, "expired")
     user = accounts().login("email", email, email)
     _set_session(response, user)
-    return {"user": _public(user)}
+    return {"user": _public(user), "newAccount": user["new"]}
 
 
 # --- the account -------------------------------------------------------------
 
 @router.post("/claim")
-def claim(user: dict = Depends(require_user), anon: str = Depends(anon_player)):
+def claim(user: dict = Depends(require_user), anon: str = Depends(anon_player),
+          ribuon_session: str | None = Cookie(default=None)):
     """Moves what this browser played before logging in into the account: per day
-    the union of both, re-checked against the board. Repeating it is harmless.
-    Only the login that made the account does this: logging in to an account that
-    already exists leaves the device's anonymous progress out of it."""
+    the union of both, re-checked against the board. Only the login that made the
+    account does this, and only once: logging in to an account that already exists
+    leaves the device's anonymous progress out of it."""
     if not user["made_here"]:
         return {"moved": []}
     def merge(date: str, src: dict, dst: dict | None) -> dict:
@@ -199,7 +211,10 @@ def claim(user: dict = Depends(require_user), anon: str = Depends(anon_player)):
             found = list({f["w"]: f for f in [*(dst or {"found": []})["found"], *src["found"]]}.values())
         return {"found": found, "rot": dst["rot"] if dst else src["rot"]}
 
-    return {"moved": repo().move(anon, player_key(user), merge)}
+    moved = repo().move(anon, player_key(user), merge)
+    if ribuon_session:
+        accounts().end_claim(ribuon_session)
+    return {"moved": moved}
 
 
 @router.post("/logout")

@@ -55,7 +55,15 @@ def player_key(user: dict) -> str:
 
 
 def current_player(user: dict | None = Depends(current_user),
-                   x_player_id: str | None = Header(default=None)) -> str:
+                   x_player_id: str | None = Header(default=None),
+                   ribuon_session: str | None = Cookie(default=None)) -> str:
     """Whose progress the request is about: the logged-in user's, else the browser's
-    anonymous id."""
-    return player_key(user) if user else anon_player(x_player_id)
+    anonymous id. A session cookie that no longer works (expired, or the account
+    was deleted on another device) is refused rather than read as anonymous: the
+    device still holds the account's progress and would file it under its
+    anonymous id. /api/auth/me clears such a cookie."""
+    if user:
+        return player_key(user)
+    if ribuon_session:
+        raise HTTPException(401, "session_ended")
+    return anon_player(x_player_id)

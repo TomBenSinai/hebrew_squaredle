@@ -75,7 +75,11 @@ async def exchange(code: str, verifier: str, nonce: str) -> dict:
         raise GoogleError(f"token endpoint unreachable: {e}") from e
     if res.status_code != 200:
         raise GoogleError(f"token endpoint said {res.status_code}")
-    id_token = res.json().get("id_token")
+    try:
+        body = res.json()
+    except ValueError as e:
+        raise GoogleError("token endpoint sent no JSON") from e
+    id_token = body.get("id_token") if isinstance(body, dict) else None
     if not isinstance(id_token, str):
         raise GoogleError("no id_token")
     return check_claims(id_token, nonce)
@@ -87,6 +91,8 @@ def check_claims(id_token: str, nonce: str, now: float | None = None) -> dict:
         claims = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
     except (IndexError, ValueError) as e:
         raise GoogleError("malformed id_token") from e
+    if not isinstance(claims, dict):
+        raise GoogleError("malformed id_token")
     now = time.time() if now is None else now
     if claims.get("iss") not in ISSUERS:
         raise GoogleError("wrong issuer")

@@ -37,7 +37,7 @@ export default function App() {
   useEffect(() => {
     // finish a login the page came back from, then merge server progress (the
     // account's, once logged in) into local storage before the first board shows
-    const synced = bootAuth().then(a => { setAuth(a); return progressStore.sync(); });
+    const synced = bootAuth().then(a => { setAuth(a); return a.settled ? progressStore.sync() : undefined; });
     Promise.all([api.days(), synced])
       .then(([d]) => { setDays(d); setDate(d.days.at(-1)?.date ?? null); })
       .catch(() => setLoadError(true));
