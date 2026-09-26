@@ -202,6 +202,24 @@ A link works once, for 15 minutes. An address gets at most 3 links per 15
 minutes, and an IP 10 an hour. These limits are held in the API process's
 memory, which is why the API runs as a single worker.
 
+### Testing login locally
+
+The dev stack (`docker-compose.yml`) reads the same settings from a `.env` next to
+it. For Google, register a second redirect URI on the same client (or on a separate
+test client): `http://localhost:<RIBUON_WEB_PORT>/api/auth/google/callback`. Google
+allows plain http for localhost. For real email without a domain, a Gmail account
+with 2-Step Verification and an app password works as the relay:
+
+```
+RIBUON_SMTP_HOST=smtp.gmail.com
+RIBUON_SMTP_PORT=587
+RIBUON_SMTP_USER=you@gmail.com
+RIBUON_SMTP_PASSWORD=<16-letter app password>
+RIBUON_MAIL_FROM="ריבועון <you@gmail.com>"
+```
+
+Gmail rewrites the From address to the account's own, so use that address.
+
 ### Turning it on
 
 ```bash
