@@ -30,6 +30,14 @@
 @media (max-width: 420px) {
   .pill.cal { width: 40px; height: 40px; padding: 0; justify-content: center; }
   .pill.cal .pilllabel { display: none; }
+  /* four don't fit: the account waits on today's page, one tap away */
+  .headbtns:has(> .pill.strong) .pill.acct { display: none; }
+}
+
+/* logged in: the player's initial on a lit tile's colours */
+.pill.acct.in {
+  background: var(--cobalt); border-color: var(--cobalt); color: var(--cobalt-ink);
+  font-family: var(--display); font-weight: 700; font-size: 1.05rem;
 }
 /* An archive day adds "back to today"; on a narrow phone four pills and the name
    don't fit one line, so the theme switch steps aside until the player is back on today. */

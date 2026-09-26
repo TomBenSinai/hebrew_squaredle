@@ -17,6 +17,16 @@ services:
       - ribuon-db:/data               # ribuon.db, the players' progress
     environment:
       RIBUON_DB: /data/ribuon.db
+      # Optional login (docs/DEPLOY.md, "Login"): set these in .env. Left empty,
+      # each way to log in stays off and the game plays as before.
+      RIBUON_PUBLIC_URL: https://${RIBUON_DOMAIN:-ribuon.com}
+      RIBUON_GOOGLE_CLIENT_ID: ${RIBUON_GOOGLE_CLIENT_ID:-}
+      RIBUON_GOOGLE_CLIENT_SECRET: ${RIBUON_GOOGLE_CLIENT_SECRET:-}
+      RIBUON_SMTP_HOST: ${RIBUON_SMTP_HOST:-}
+      RIBUON_SMTP_PORT: ${RIBUON_SMTP_PORT:-}
+      RIBUON_SMTP_USER: ${RIBUON_SMTP_USER:-}
+      RIBUON_SMTP_PASSWORD: ${RIBUON_SMTP_PASSWORD:-}
+      RIBUON_MAIL_FROM: ${RIBUON_MAIL_FROM:-}
     expose:
       - "8000"                        # reachable from web only, never from outside
     healthcheck:

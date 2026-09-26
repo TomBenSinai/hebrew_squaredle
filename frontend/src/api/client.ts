@@ -1,9 +1,10 @@
 import type {
-  CellCounts, CheckResult, DayProgress, DaysResponse, Definition, FoundWord, PublicBoard,
+  AuthInfo, CellCounts, CheckResult, DayProgress, DaysResponse, Definition, FoundWord, PublicBoard, User,
 } from "./types";
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  /** `detail` is the server's short reason when it gave one, e.g. "too_many" */
+  constructor(public status: number, message: string, public detail?: string) {
     super(message);
   }
 }
@@ -15,7 +16,11 @@ async function request<T>(path: string, init: RequestInit & { headers?: Headers 
     ...init,
     headers: { "Content-Type": "application/json", ...init.headers },
   });
-  if (!res.ok) throw new ApiError(res.status, `${init.method ?? "GET"} ${path}: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => null) as { detail?: unknown } | null;
+    throw new ApiError(res.status, `${init.method ?? "GET"} ${path}: ${res.status}`,
+      typeof body?.detail === "string" ? body.detail : undefined);
+  }
   return res.json() as Promise<T>;
 }
 
@@ -31,6 +36,19 @@ export const api = {
     post<CellCounts>(`/boards/${date}/live-cells`, { found }),
   define: (word: string, signal?: AbortSignal) =>
     request<Definition>(`/define/${encodeURIComponent(word)}`, { signal }),
+
+  /** The session is an HttpOnly cookie: the browser sends it by itself. */
+  auth: {
+    me: () => request<AuthInfo>("/auth/me", { cache: "no-store" }),
+    /** Not fetched: the page goes there, and Google sends it back to /?login=... */
+    googleStart: "/api/auth/google/start",
+    emailStart: (email: string) => post<{ ok: true }>("/auth/email/start", { email }),
+    emailVerify: (token: string) => post<{ user: User }>("/auth/email/verify", { token }),
+    /** Move this browser's anonymous progress into the account. */
+    claim: (player: string) => post<{ moved: string[] }>("/auth/claim", {}, { "X-Player-Id": player }),
+    logout: () => post<{ ok: true }>("/auth/logout", {}),
+    deleteAccount: () => request<{ ok: true }>("/auth/me", { method: "DELETE", body: "{}" }),
+  },
 
   progress: {
     all: (player: string) =>

@@ -1,8 +1,8 @@
 """Player progress in SQLite, keyed by player id.
 
-Today the id is an anonymous one the browser makes up (X-Player-Id). When
-login arrives, `deps.current_player` returns the user's id instead and this
-module stays as it is.
+The id is either an anonymous one the browser makes up (X-Player-Id) or, for a
+logged-in player, `user:<id>` (see `deps.current_player`). Logging in moves the
+anonymous rows onto the user (`move`).
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS progress (
 class ProgressRepo:
     def __init__(self, path: Path):
         path.parent.mkdir(parents=True, exist_ok=True)
-        self._db = sqlite3.connect(path, check_same_thread=False)
+        self._db = sqlite3.connect(path, check_same_thread=False, timeout=10)
         self._db.row_factory = sqlite3.Row
         self._lock = threading.Lock()
         with self._tx() as db:
@@ -63,6 +63,23 @@ class ProgressRepo:
             new = change(self._get(db, player, date))
             self._put(db, player, date, new["found"], new["rot"])
         return new
+
+    def move(self, src: str, dst: str,
+             merge: Callable[[str, dict, dict | None], dict]) -> list[str]:
+        """Hand every day of player `src` to `dst` and drop `src`, in one transaction.
+        `merge(date, src_row, dst_row_or_None)` gives the day's new {found, rot}.
+        Returns the dates moved."""
+        with self._tx() as db:
+            dates = [r["date"] for r in db.execute("SELECT date FROM progress WHERE player_id = ?", (src,))]
+            for date in dates:
+                new = merge(date, self._get(db, src, date), self._get(db, dst, date))
+                self._put(db, dst, date, new["found"], new["rot"])
+            db.execute("DELETE FROM progress WHERE player_id = ?", (src,))
+        return dates
+
+    def delete_player(self, player: str) -> None:
+        with self._tx() as db:
+            db.execute("DELETE FROM progress WHERE player_id = ?", (player,))
 
     @staticmethod
     def _get(db: sqlite3.Connection, player: str, date: str) -> dict | None:

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>מדיניות פרטיות · ריבועון</title>
+    <meta name="description" content="מה ריבועון שומר, למה, ואיך מוחקים." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script>
+      try {
+        var t = localStorage.getItem("ribuon:theme");
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800&family=Assistant:wght@400;700&display=swap" />
+    <style>
+      /* The game's tokens (src/styles/tokens.css), trimmed to what this page uses. */
+      :root {
+        --ground: #ECECEA; --paper: #FFFFFF; --ink: #111111; --muted: #6A6A67; --line: #D2D2CF;
+        --display: "Rubik", "Segoe UI", "Arial Hebrew", Arial, sans-serif;
+        --body: "Assistant", "Segoe UI", "Arial Hebrew", Arial, sans-serif;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --ground: #0B0B0B; --paper: #1A1A1A; --ink: #F2F2F0; --muted: #9A9A96; --line: #2E2E2E;
+          color-scheme: dark;
+        }
+      }
+      :root[data-theme="dark"] {
+        --ground: #0B0B0B; --paper: #1A1A1A; --ink: #F2F2F0; --muted: #9A9A96; --line: #2E2E2E;
+        color-scheme: dark;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; background: var(--ground); color: var(--ink);
+        font: 17px/1.65 var(--body); -webkit-text-size-adjust: 100%;
+      }
+      main {
+        max-width: 640px; margin: 24px auto; padding: 28px 24px 32px;
+        background: var(--paper); border: 1px solid var(--line); border-radius: 14px;
+      }
+      @media (max-width: 680px) { main { margin: 0; border: 0; border-radius: 0; padding: 24px 16px; } }
+      .brand { font: 800 26px/1 var(--display); color: var(--ink); text-decoration: none; }
+      h1 { font: 700 22px/1.3 var(--display); margin: 20px 0 4px; }
+      h2 { font: 700 18px/1.3 var(--display); margin: 28px 0 6px; }
+      p, ul { margin: 0 0 12px; }
+      ul { padding-inline-start: 20px; }
+      li { margin-bottom: 6px; }
+      .muted { color: var(--muted); }
+      a { color: inherit; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="brand" href="/">ריבועון</a>
+      <h1>מדיניות פרטיות</h1>
+      <p class="muted">עודכן: 27 בספטמבר 2026</p>
+
+      <p>ריבועון הוא משחק מילים יומי. אפשר לשחק בלי להתחבר ובלי למסור שום פרט. הדף הזה מסביר מה נשמר, למה, ואיך מוחקים.</p>
+
+      <h2>בלי התחברות</h2>
+      <ul>
+        <li>הדפדפן יוצר מזהה אקראי שלא קשור לשום פרט אישי, ושומר אותו אצלו יחד עם ההתקדמות (המילים שמצאתם בכל יום) והגדרות כמו מצב בהיר או כהה.</li>
+        <li>ההתקדמות נשמרת גם בשרת לפי המזהה הזה, כדי שלא תאבד.</li>
+      </ul>
+
+      <h2>עם התחברות (לא חובה)</h2>
+      <p>מתחברים כדי שההתקדמות תעבור איתכם בין מכשירים. נשמרים:</p>
+      <ul>
+        <li><b>בהתחברות עם Google:</b> מזהה החשבון ש-Google נותנת, כתובת המייל והשם. אנחנו מבקשים רק את אלה (openid, email, profile), ואין לנו שום גישה ל-Gmail, ל-Drive או לכל דבר אחר בחשבון.</li>
+        <li><b>בהתחברות בקישור במייל:</b> כתובת המייל. הקישור עובד פעם אחת ל-15 דקות.</li>
+        <li>עוגייה אחת של התחברות (<code>ribuon_session</code>), כדי לזכור שהתחברתם. בשרת נשמר רק גיבוב שלה.</li>
+        <li>ההתקדמות במשחק, משויכת לחשבון.</li>
+      </ul>
+      <p>המייל משמש רק להתחברות. לא שולחים ממנו פרסומות או עדכונים, ולא מוסרים אותו לאף אחד.</p>
+
+      <h2>מה עוד עובר בדרך</h2>
+      <ul>
+        <li>השרת רושם ביומנים את כתובת ה-IP ואת הבקשות, לתפעול, לאבטחה ולהגבלת שליחת קישורים.</li>
+        <li>הגופנים נטענים מ-Google Fonts, כך ש-Google רואה את כתובת ה-IP של מי שפותח את האתר.</li>
+        <li>הגדרות מילים מגיעות ממילוג. השרת שלנו פונה אליהם עם המילה בלבד, בלי שום פרט עליכם.</li>
+        <li>מיילים של התחברות נשלחים דרך ספק דואר שמקבל את הכתובת ואת תוכן ההודעה, רק כדי לשלוח אותה.</li>
+      </ul>
+      <p>אין באתר פרסומות, אין כלי מעקב ואין אנליטיקס.</p>
+
+      <h2>מחיקה</h2>
+      <ul>
+        <li>מחיקת חשבון: בכרטיס החשבון (הכפתור העגול למעלה) יש "מחיקת החשבון". היא מוחקת את החשבון ואת כל ההתקדמות שלו מהשרת.</li>
+        <li>בלי חשבון: ניקוי נתוני האתר בדפדפן מוחק את המזהה ואת ההתקדמות מהמכשיר.</li>
+        <li>לכל בקשה אחרת, או כדי למחוק גם התקדמות שנשמרה בלי חשבון, כתבו לנו.</li>
+      </ul>
+
+      <h2>יצירת קשר</h2>
+      <p><a href="mailto:tom.bensinai@gmail.com">tom.bensinai@gmail.com</a></p>
+    </main>
+  </body>
+</html>

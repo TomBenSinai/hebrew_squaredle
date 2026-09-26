@@ -85,3 +85,16 @@ export interface Definition {
   url: string;
   entries: MilogEntry[];
 }
+
+export interface User {
+  name: string;
+  email: string | null;
+}
+
+export interface AuthInfo {
+  /** the ways to log in the server offers (neither: login is hidden) */
+  providers: { google: boolean; email: boolean };
+  user: User | null;
+  /** this login made the account, so what this device played goes into it */
+  newAccount: boolean;
+}
