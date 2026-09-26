@@ -47,3 +47,36 @@
 /* Sits before the shape name (also in the archive list), so "סופגנייה" reads as the board's shape, not the theme. */
 .shape { white-space: nowrap; }
 .shape-icon { vertical-align: -1px; margin-inline-end: 4px; opacity: .75; }
+
+/* "New: log in" note, a row under the header (only on today's page, logged out).
+   Its arrow points up at the account button: the third pill from the row's end,
+   after the theme and help pills (40px each, 8px apart), so its centre is 116px in. */
+.loginnews {
+  position: relative; align-self: flex-end;
+  width: min(300px, 100%); margin-top: -2px;
+  display: flex; align-items: flex-start;
+  background: var(--cobalt); color: var(--cobalt-ink);
+  border-radius: 12px; box-shadow: var(--shadow);
+  animation: newsin .35s var(--ease-out) both;
+}
+.loginnews::before {
+  content: ""; position: absolute; top: -6px; inset-inline-end: 109px;
+  border: 7px solid transparent; border-top: 0; border-bottom: 7px solid var(--cobalt);
+}
+.newsbody {
+  flex: 1; text-align: start; font: inherit; font-size: .92rem; line-height: 1.4;
+  color: inherit; background: none; border: 0; padding: 10px 12px 11px; padding-inline-end: 4px;
+  cursor: pointer;
+}
+/* an amber tag: dark text on amber reads the same on the dark and the light bubble */
+.newsbody b {
+  display: inline-block; margin-inline-end: 4px; padding: 0 6px; border-radius: 5px;
+  background: var(--amber-fill); color: #111111; font-weight: 700; font-size: .85em;
+}
+.newsclose {
+  flex: none; width: 36px; height: 36px; margin: 2px;
+  font-size: 1.25rem; line-height: 1; color: inherit; opacity: .7;
+  background: none; border: 0; border-radius: 8px; cursor: pointer;
+}
+.newsclose:hover, .newsclose:focus-visible { opacity: 1; }
+@keyframes newsin { from { opacity: 0; transform: translateY(-4px); } }

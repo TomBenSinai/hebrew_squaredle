@@ -7,7 +7,7 @@ import { Board, boardVars } from "./features/Board";
 import { DefinitionModal } from "./features/DefinitionModal";
 import { HelpModal } from "./features/HelpModal";
 import { introName, IntroModal, type Intro } from "./features/IntroModal";
-import { Masthead } from "./features/Masthead";
+import { LoginNews, Masthead } from "./features/Masthead";
 import { Readout } from "./features/Readout";
 import { Score } from "./features/Score";
 import { SpinButton } from "./features/SpinButton";
@@ -46,7 +46,8 @@ export default function App() {
   const { game, error } = useGame(date);
   // a first-time player learns on a practice board before the game opens
   const [learned, setLearned] = useState(() => hasSeen("tutorial"));
-  const finishTutorial = () => { markSeen("tutorial"); setLearned(true); };
+  // a player who starts after login came out isn't told it's new
+  const finishTutorial = () => { markSeen("tutorial"); markSeen("login-news"); setLearned(true); };
 
   if (!learned) return <div className="app"><Tutorial onDone={finishTutorial} /></div>;
   if (loadError || error) return <div className="app"><p className="status">לא הצלחנו לטעון את המשחק. נסו לרענן.</p></div>;
@@ -68,6 +69,10 @@ function Play({ days, game, setDate, auth }:
   const [accountOpen, setAccountOpen] = useState(auth.notice !== null);
   const { providers, user } = auth.info;
   const loginOn = providers.google || providers.email || user !== null;
+  // login is new: tell a logged-out player once, until they close the note or open the sheet
+  const [newsSeen, setNewsSeen] = useState(() => hasSeen("login-news"));
+  const seeNews = () => { markSeen("login-news"); setNewsSeen(true); };
+  const openAccount = () => { setNotice(null); setAccountOpen(true); seeNews(); };
 
   // on a computer the list is always beside the board, so the count opens nothing
   const wide = useMedia(WIDE_QUERY);
@@ -78,6 +83,7 @@ function Play({ days, game, setDate, auth }:
 
   const swiping = withFinal(path.map(i => layout.letters[i]).join(""));
   const isToday = board.date === days.today;
+  const showNews = !newsSeen && user === null && isToday;
   const mainFound = found.filter(f => f.cat === "main").length;
   const bonusFound = found.length - mainFound;
   const fraction = letterFraction(found, board.mainLetters);
@@ -122,7 +128,8 @@ function Play({ days, game, setDate, auth }:
         <Masthead day={board} isToday={isToday} canGoToday={days.days.some(d => d.date === days.today)}
           onToday={() => setDate(days.today)} onArchive={() => setArchiveOpen(true)}
           onHelp={() => setHelpOpen(true)}
-          account={loginOn ? { user, onOpen: () => { setNotice(null); setAccountOpen(true); } } : undefined} />
+          account={loginOn ? { user, onOpen: openAccount } : undefined} />
+        {loginOn && showNews && <LoginNews onOpen={openAccount} onDismiss={seeNews} />}
 
         <Score found={mainFound} total={board.mainTotal} bonus={bonusFound}
           rank={rankFor(fraction)} fraction={fraction}

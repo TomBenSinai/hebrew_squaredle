@@ -66,6 +66,21 @@ function AccountPill({ user, onClick }: { user: User | null; onClick: () => void
   );
 }
 
+/**
+ * Tells players who haven't logged in that they now can. A row of its own under
+ * the header, so it covers nothing; its arrow points up at the account button.
+ */
+export function LoginNews({ onOpen, onDismiss }: { onOpen: () => void; onDismiss: () => void }) {
+  return (
+    <div className="loginnews" role="note">
+      <button type="button" className="newsbody" onClick={onOpen}>
+        <b>חדש!</b> התחברו כדי שההתקדמות שלכם תישמר, ותוכלו להמשיך אותה מכל המכשירים שלכם.
+      </button>
+      <button type="button" className="newsclose" aria-label="סגירה" onClick={onDismiss}>×</button>
+    </div>
+  );
+}
+
 export function HelpPill({ className, onClick }: { className?: string; onClick: () => void }) {
   return (
     <Pill className={["round", className].filter(Boolean).join(" ")} aria-label="איך משחקים" title="איך משחקים"
