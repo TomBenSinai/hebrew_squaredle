@@ -51,3 +51,34 @@ export function ExternalLinkIcon() {
     </svg>
   );
 }
+
+/** A 3x3 board with a tile missing: marks the day's board shape, so it doesn't read as the theme. */
+export function ShapeIcon() {
+  return (
+    <svg className="shape-icon" viewBox="0 0 12 12" width="11" height="11" aria-hidden="true">
+      {[0, 1, 2].flatMap(r => [0, 1, 2].map(c => r === 0 && c === 2 ? null :
+        <rect key={`${r}${c}`} x={c * 4 + .5} y={r * 4 + .5} width="3" height="3" rx=".7" fill="currentColor" />))}
+    </svg>
+  );
+}
+
+/** Shown in light mode: switches to dark. */
+export function MoonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">
+      <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" strokeWidth="1.8"
+        strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** Shown in dark mode: switches to light. */
+export function SunIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.55 1.55M17.15 17.15l1.55 1.55M5.3 18.7l1.55-1.55M17.15 6.85l1.55-1.55"
+        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}

@@ -70,7 +70,9 @@ function WordsList({ board, found, fresh, reveals, hintsOpen, az, onToggleSort, 
   const canSort = hintsOpen.has("sort");
   const slotsOf = (length: number) =>
     hintsOpen.has("reveal") && reveals
-      ? reveals.filter(r => groupOfLength(r.n) === length).map((slot): Entry => ({ slot }))
+      ? reveals.filter(r => groupOfLength(r.n) === length)
+          .sort((a, b) => a.pre.localeCompare(b.pre, "he") || a.post.localeCompare(b.post, "he"))
+          .map((slot): Entry => ({ slot }))
       : [];
 
   const groups: GroupProps[] = [];

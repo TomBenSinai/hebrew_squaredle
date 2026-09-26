@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { Modal, SheetBody, ProgressBar } from "../components";
+import { Modal, SheetBody, ProgressBar, ShapeIcon } from "../components";
 import type { DayProgress, DaySummary } from "../api/types";
 import { shortDate, weekday } from "../lib/dates";
 import { letterFraction } from "../lib/scoring";
@@ -50,7 +50,9 @@ function DayRow({ day, index, isToday, isCurrent, progress, onPick }: RowProps) 
       aria-current={isCurrent || undefined} onClick={onPick}>
       <span className="dname">{isToday ? "היום" : weekday(day.date)} · {shortDate(day.date)}</span>
       <span className="dsub">
-        לוח {day.number}{day.shapeName && ` · ${day.shapeName}`}{day.theme && ` · ★ ${day.theme}`}
+        לוח {day.number}
+        {day.shapeName && <> · <span className="shape" title="צורת הלוח"><ShapeIcon />{day.shapeName}</span></>}
+        {day.theme && ` · ★ ${day.theme}`}
       </span>
       <span className="dstat">
         <span className="dcount">{done ? "הושלם ✓" : <><b>{n}</b>/{day.mainTotal}</>}</span>
