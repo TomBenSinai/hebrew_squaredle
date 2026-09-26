@@ -156,6 +156,11 @@ class AccountRepo:
                 db.execute("UPDATE sessions SET expires_at = ? WHERE token_hash = ?", (new_expiry, h))
             return {**_user(row), "made_here": bool(row["made_user"])}
 
+    def end_claim(self, token: str) -> None:
+        """This session has brought its device's progress in: it may not claim again."""
+        with self._tx() as db:
+            db.execute("UPDATE sessions SET made_user = 0 WHERE token_hash = ?", (_hash(token),))
+
     def delete_session(self, token: str) -> None:
         with self._tx() as db:
             db.execute("DELETE FROM sessions WHERE token_hash = ?", (_hash(token),))
@@ -194,6 +199,10 @@ class AccountRepo:
             db.execute("INSERT INTO email_tokens VALUES (?, ?, ?, ?)",
                        (_hash(token), email.lower(), now, now + EMAIL_TOKEN_TTL))
         return token
+
+    def drop_email_token(self, token: str) -> None:
+        with self._tx() as db:
+            db.execute("DELETE FROM email_tokens WHERE token_hash = ?", (_hash(token),))
 
     def use_email_token(self, token: str) -> str | None:
         """The address this link was sent to, once and only while fresh. Using it

@@ -43,7 +43,7 @@ export const api = {
     /** Not fetched: the page goes there, and Google sends it back to /?login=... */
     googleStart: "/api/auth/google/start",
     emailStart: (email: string) => post<{ ok: true }>("/auth/email/start", { email }),
-    emailVerify: (token: string) => post<{ user: User }>("/auth/email/verify", { token }),
+    emailVerify: (token: string) => post<{ user: User; newAccount: boolean }>("/auth/email/verify", { token }),
     /** Move this browser's anonymous progress into the account. */
     claim: (player: string) => post<{ moved: string[] }>("/auth/claim", {}, { "X-Player-Id": player }),
     logout: () => post<{ ok: true }>("/auth/logout", {}),

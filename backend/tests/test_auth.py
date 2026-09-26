@@ -175,10 +175,15 @@ class TestSession(Base):
         other.cookies.set("ribuon_session", token, path="/api")
         self.assertIsNone(self.me(other))
 
-    def test_garbage_session_falls_back_to_anonymous(self):
+    def test_dead_session_is_refused_then_cleared(self):
         c = self.client()
-        c.cookies.set("ribuon_session", "nope", path="/api")
-        self.assertIsNone(self.me(c))
+        self.email_login(c, "a@example.com")
+        deps.accounts()._db.execute("DELETE FROM sessions")   # expired, or ended elsewhere
+        # not read as anonymous: the device may hold an account's progress
+        r = c.put(f"/api/progress/{DATE}", json={"found": found(words(DATE, 1)), "rot": 0},
+                  headers={"X-Player-Id": ANON_A})
+        self.assertEqual((r.status_code, r.json()["detail"]), (401, "session_ended"))
+        self.assertIsNone(self.me(c))               # clears the cookie
         self.play(c, ANON_A, DATE, words(DATE, 1))
         self.assertIn(DATE, self.progress(c, ANON_A))
 
@@ -189,6 +194,18 @@ class TestSession(Base):
         self.assertEqual(r.status_code, 415)
         r = c.post("/api/auth/logout", content="", headers={"Content-Type": "text/plain"})
         self.assertEqual(r.status_code, 415)
+
+
+class TestRateLimit(unittest.TestCase):
+    def test_quiet_keys_are_dropped(self):
+        now = [0.0]
+        rl = auth.RateLimit(2, 60)
+        with mock.patch.object(auth.time, "monotonic", lambda: now[0]):
+            for i in range(100):
+                rl.hit(f"ip{i}")
+            now[0] = 61
+            self.assertTrue(rl.hit("fresh"))
+        self.assertEqual(set(rl._hits), {"fresh"})
 
 
 class TestSessionExpiry(unittest.TestCase):
@@ -251,8 +268,19 @@ class TestEmailLogin(Base):
 
     def test_bad_address(self):
         c = self.client()
-        self.assertEqual(c.post("/api/auth/email/start", json={"email": "not-an-email"}).status_code, 422)
+        for bad in ("not-an-email", "a@example.com,1", "a@example.com, b@example.com", "a@example.com;b",
+                    '"a b"@example.com', "<a@example.com>", "a@example"):
+            with self.subTest(bad=bad):
+                self.assertEqual(c.post("/api/auth/email/start", json={"email": bad}).status_code, 422)
         self.assertEqual(self.sent, [])
+        self.assertEqual(c.post("/api/auth/email/start", json={"email": "Tom.B+x@mail.co.il"}).status_code, 200)
+
+    def test_failed_send_does_not_count(self):
+        c = self.client()
+        with mock.patch.object(mailer, "send_login_link", side_effect=OSError("relay down")):
+            for _ in range(auth.LINKS_PER_ADDRESS):
+                self.assertEqual(c.post("/api/auth/email/start", json={"email": "a@example.com"}).status_code, 502)
+        self.assertEqual(c.post("/api/auth/email/start", json={"email": "a@example.com"}).status_code, 200)
 
     def test_rate_limit_per_address(self):
         c = self.client()
@@ -333,6 +361,22 @@ class TestGoogleLogin(Base):
                 self.assertEqual(self.google_login(c, **bad).headers["location"], "/?login=failed")
                 self.assertIsNone(self.me(c))
 
+    def test_odd_token_endpoint_answers_fail_cleanly(self):
+        for answer, claims in ((httpx.Response(200, text="<html>portal</html>"), None),
+                               (httpx.Response(200, json=["x"]), None),
+                               (None, "[1, 2]")):
+            with self.subTest(answer=answer, claims=claims):
+                c = self.client()
+                state, _ = self.google_start(c)
+                if answer is None:
+                    part = base64.urlsafe_b64encode(claims.encode()).rstrip(b"=").decode()
+                    answer = httpx.Response(200, json={"id_token": f"h.{part}.s"})
+                real = httpx.AsyncClient
+                with mock.patch.object(google.httpx, "AsyncClient",
+                                       lambda **kw: real(transport=httpx.MockTransport(lambda r: answer), **kw)):
+                    r = c.get(f"/api/auth/google/callback?state={state}&code=abc", follow_redirects=False)
+                self.assertEqual(r.headers["location"], "/?login=failed")
+
     def test_off_without_client(self):
         with mock.patch.object(config, "GOOGLE_CLIENT_ID", ""):
             c = self.client()
@@ -395,13 +439,25 @@ class TestProgressFollowsTheAccount(Base):
         self.claim(c, ANON_A)
         self.assertEqual([f["w"] for f in self.progress(c, ANON_A)[DATE]["found"]], words(DATE, 1))
 
-    def test_claim_again_is_harmless(self):
+    def test_claim_happens_once(self):
         c = self.client()
         self.play(c, ANON_A, DATE, words(DATE, 2))
         self.email_login(c, "a@example.com")
         self.claim(c, ANON_A)
-        self.assertEqual(self.claim(c, ANON_A).json()["moved"], [])
+        self.assertFalse(c.get("/api/auth/me").json()["newAccount"])
+        # someone else's anonymous id can't be pulled in later
+        self.play(self.client(), ANON_B, OTHER, words(OTHER, 1))
+        self.assertEqual(self.claim(c, ANON_B).json()["moved"], [])
+        self.assertNotIn(OTHER, self.progress(c, ANON_A))
         self.assertEqual(len(self.progress(c, ANON_A)[DATE]["found"]), 2)
+
+    def test_verify_says_whether_the_account_is_new(self):
+        c = self.client()
+        c.post("/api/auth/email/start", json={"email": "a@example.com"})
+        self.assertTrue(c.post("/api/auth/email/verify", json={"token": self.sent[-1][1]}).json()["newAccount"])
+        other = self.client()
+        other.post("/api/auth/email/start", json={"email": "a@example.com"})
+        self.assertFalse(other.post("/api/auth/email/verify", json={"token": self.sent[-1][1]}).json()["newAccount"])
 
     def test_claim_needs_login(self):
         c = self.client()
@@ -430,6 +486,17 @@ class TestProgressFollowsTheAccount(Base):
         again = self.client()
         self.email_login(again, "a@example.com")             # a fresh, empty account
         self.assertEqual(self.progress(again, ANON_B), {})
+
+    def test_deleting_on_one_device_ends_the_others(self):
+        phone, laptop = self.client(), self.client()
+        self.email_login(phone, "a@example.com")
+        self.email_login(laptop, "a@example.com")
+        phone.request("DELETE", "/api/auth/me", json={})
+        # the laptop's copy of the account's progress doesn't go up as anonymous
+        r = laptop.put(f"/api/progress/{DATE}", json={"found": found(words(DATE, 1)), "rot": 0},
+                       headers={"X-Player-Id": ANON_B})
+        self.assertEqual(r.status_code, 401)
+        self.assertEqual(self.progress(self.client(), ANON_B), {})
 
 
 if __name__ == "__main__":
