@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CalendarIcon, Chip, Pill } from "../components";
+import { CalendarIcon, Chip, Pill, ShapeIcon } from "../components";
 import type { DaySummary } from "../api/types";
 import { shortDate, weekday } from "../lib/dates";
 import "./Masthead.css";
@@ -18,8 +18,8 @@ export function Masthead({ day, isToday, canGoToday, onToday, onArchive, onHelp 
     <MastheadFrame live when={<>
       {isToday ? <b>היום</b> : <><b>ארכיון</b> · {weekday(day.date)}</>}
       {` ${shortDate(day.date)} · לוח ${day.number}`}
-      {day.shapeName && <> · <span className="shape">{day.shapeName}</span></>}
-      {day.theme && <Chip>{day.theme}</Chip>}
+      {day.shapeName && <> · <span className="shape" title="צורת הלוח"><ShapeIcon />{day.shapeName}</span></>}
+      {day.theme && <Chip>★ {day.theme}</Chip>}
     </>}>
       {!isToday && canGoToday && <Pill strong onClick={onToday}>חזרה להיום</Pill>}
       <ArchivePill onClick={onArchive} />

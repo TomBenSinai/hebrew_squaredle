@@ -31,3 +31,6 @@
   .pill.cal { width: 40px; height: 40px; padding: 0; justify-content: center; }
   .pill.cal .pilllabel { display: none; }
 }
+/* Sits before the shape name (also in the archive list), so "סופגנייה" reads as the board's shape, not the theme. */
+.shape { white-space: nowrap; }
+.shape-icon { vertical-align: -1px; margin-inline-end: 4px; opacity: .75; }
