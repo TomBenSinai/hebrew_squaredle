@@ -17,8 +17,10 @@ SUBJECT = "הקישור שלך לכניסה לריבועון"
 LEAD = ("לחצו על הכפתור כדי להתחבר למשתמש - ההתקדמות שלכם במשחק תישמר ותוכלו להתחבר עם המשתמש"
         " במכשירים אחרים ולהמשיך מאיפה שהפסקתם!")
 
+FINE = "הקישור תקף ל־15 דקות ולשימוש אחד. לא ביקשתם להיכנס? אפשר להתעלם מהמייל הזה."
+
 # ‏ (RLM) starts each line right-to-left in clients that show the plain text
-TEXT = "‏" + LEAD + "\n\n{link}\n"
+TEXT = "‏" + LEAD + "\n\n{link}\n\n‏" + FINE + "\n"
 
 # Gmail and others drop <html> and <body> attributes, so the direction and the
 # alignment are set again on the table and on every cell.
@@ -31,8 +33,9 @@ HTML = """<!doctype html>
 </td></tr>
 <tr><td dir="rtl" align="right" style="direction:rtl;text-align:right;padding:20px 24px 26px;font-size:16px;line-height:1.5">
   <p style="margin:0 0 18px">{lead}</p>
-  <p style="margin:0"><a href="{link}" style="display:inline-block;padding:10px 20px;background:#111;color:#fff;
+  <p style="margin:0 0 18px"><a href="{link}" style="display:inline-block;padding:10px 20px;background:#111;color:#fff;
     border-radius:10px;text-decoration:none;font-weight:700">כניסה לריבועון</a></p>
+  <p style="margin:0;color:#6A6A67;font-size:14px">{fine}</p>
 </td></tr>
 </table>
 </div>
@@ -55,7 +58,8 @@ def send_login_link(to: str, token: str) -> None:
     msg["From"] = config.MAIL_FROM
     msg["To"] = to
     msg.set_content(TEXT.format(link=link))
-    msg.add_alternative(HTML.format(link=escape(link, quote=True), lead=escape(LEAD)), subtype="html")
+    msg.add_alternative(HTML.format(link=escape(link, quote=True), lead=escape(LEAD), fine=escape(FINE)),
+                        subtype="html")
 
     context = ssl.create_default_context()
     if config.SMTP_PORT == 465:
