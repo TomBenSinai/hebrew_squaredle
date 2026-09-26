@@ -48,19 +48,19 @@
 .shape { white-space: nowrap; }
 .shape-icon { vertical-align: -1px; margin-inline-end: 4px; opacity: .75; }
 
-/* "New: log in" bubble under the header, its arrow on the account button (--arrow-x,
-   measured). It sits on the header's button side and floats over the score line. */
-.masthead { position: relative; }
+/* "New: log in" note, a row under the header (only on today's page, logged out).
+   Its arrow points up at the account button: the third pill from the row's end,
+   after the theme and help pills (40px each, 8px apart), so its centre is 116px in. */
 .loginnews {
-  position: absolute; top: calc(100% + 10px); inset-inline-end: 0; z-index: 5;
-  width: min(300px, 100%);
+  position: relative; align-self: flex-end;
+  width: min(300px, 100%); margin-top: -2px;
   display: flex; align-items: flex-start;
   background: var(--cobalt); color: var(--cobalt-ink);
   border-radius: 12px; box-shadow: var(--shadow);
   animation: newsin .35s var(--ease-out) both;
 }
 .loginnews::before {
-  content: ""; position: absolute; top: -6px; left: calc(var(--arrow-x, -99px) - 7px);
+  content: ""; position: absolute; top: -6px; inset-inline-end: 109px;
   border: 7px solid transparent; border-top: 0; border-bottom: 7px solid var(--cobalt);
 }
 .newsbody {
@@ -80,4 +80,3 @@
 }
 .newsclose:hover, .newsclose:focus-visible { opacity: 1; }
 @keyframes newsin { from { opacity: 0; transform: translateY(-4px); } }
-@media (prefers-reduced-motion: reduce) { .loginnews { animation: none; } }
