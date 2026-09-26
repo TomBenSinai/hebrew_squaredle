@@ -283,6 +283,50 @@ class TestEmailLogin(Base):
             self.assertFalse(c.get("/api/auth/me").json()["providers"]["email"])
 
 
+class FakeSMTP:
+    """Stands in for smtplib.SMTP / SMTP_SSL: records how it was used."""
+    made: list["FakeSMTP"] = []
+
+    def __init__(self, host, port, **kw):
+        self.port, self.tls, self.sent = port, "context" in kw, []
+        FakeSMTP.made.append(self)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def starttls(self, context):
+        self.tls = "starttls"
+
+    def login(self, user, password):
+        pass
+
+    def send_message(self, msg):
+        self.sent.append(msg)
+
+
+class TestMailer(unittest.TestCase):
+    def send(self, port: int) -> FakeSMTP:
+        FakeSMTP.made = []
+        with mock.patch.object(config, "SMTP_HOST", "smtp.example.com"), \
+                mock.patch.object(config, "SMTP_PORT", port), \
+                mock.patch.object(config, "MAIL_REPLY_TO", "me@example.com"), \
+                mock.patch("smtplib.SMTP", FakeSMTP), mock.patch("smtplib.SMTP_SSL", FakeSMTP):
+            mailer.send_login_link("player@example.com", "tok")
+        return FakeSMTP.made[0]
+
+    def test_replies_go_to_the_reply_to_address(self):
+        msg = self.send(2587).sent[0]
+        self.assertEqual(msg["Reply-To"], "me@example.com")
+        self.assertIn("/#login=tok", msg.get_body(("plain",)).get_content())
+
+    def test_ports_that_get_past_a_blocked_587(self):
+        self.assertEqual(self.send(2587).tls, "starttls")
+        self.assertEqual(self.send(2465).tls, True)          # SMTP_SSL, TLS from the start
+
+
 class TestGoogleLogin(Base):
     def test_login(self):
         c = self.client()

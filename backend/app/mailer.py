@@ -57,17 +57,20 @@ def send_login_link(to: str, token: str) -> None:
     msg["Subject"] = SUBJECT
     msg["From"] = config.MAIL_FROM
     msg["To"] = to
+    if config.MAIL_REPLY_TO:
+        msg["Reply-To"] = config.MAIL_REPLY_TO
     msg.set_content(TEXT.format(link=link))
     msg.add_alternative(HTML.format(link=escape(link, quote=True), lead=escape(LEAD), fine=escape(FINE)),
                         subtype="html")
 
     context = ssl.create_default_context()
-    if config.SMTP_PORT == 465:
+    implicit_tls = config.SMTP_PORT in (465, 2465)
+    if implicit_tls:
         smtp = smtplib.SMTP_SSL(config.SMTP_HOST, config.SMTP_PORT, context=context, timeout=15)
     else:
         smtp = smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT, timeout=15)
     with smtp:
-        if config.SMTP_PORT != 465:
+        if not implicit_tls:
             smtp.starttls(context=context)
         if config.SMTP_USER:
             smtp.login(config.SMTP_USER, config.SMTP_PASSWORD)

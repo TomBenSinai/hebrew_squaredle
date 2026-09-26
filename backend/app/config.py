@@ -32,7 +32,8 @@ GOOGLE_CLIENT_ID = _env("RIBUON_GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = _env("RIBUON_GOOGLE_CLIENT_SECRET")
 
 # Email login links go out over SMTP (any relay: Resend, Brevo, SES, Gmail...).
-# Port 465 is TLS from the start, anything else upgrades with STARTTLS.
+# Ports 465 and 2465 are TLS from the start, anything else upgrades with STARTTLS.
+# DigitalOcean blocks 25, 465 and 587 going out: use the relay's 2587 or 2465 there.
 # Without a host email login is off, unless RIBUON_MAIL_TO_LOG=1 (development):
 # then the links are only written to the log.
 SMTP_HOST = _env("RIBUON_SMTP_HOST")
@@ -40,6 +41,8 @@ SMTP_PORT = int(_env("RIBUON_SMTP_PORT", "587"))
 SMTP_USER = _env("RIBUON_SMTP_USER")
 SMTP_PASSWORD = _env("RIBUON_SMTP_PASSWORD")
 MAIL_FROM = _env("RIBUON_MAIL_FROM", "ריבועון <login@ribuon.com>")
+# where a player's reply to a login email goes (the From address has no mailbox)
+MAIL_REPLY_TO = _env("RIBUON_MAIL_REPLY_TO", "tom.bensinai@gmail.com")
 MAIL_TO_LOG = _env("RIBUON_MAIL_TO_LOG") == "1"
 EMAIL_LOGIN = bool(SMTP_HOST) or MAIL_TO_LOG
 

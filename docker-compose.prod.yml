@@ -27,6 +27,7 @@ services:
       RIBUON_SMTP_USER: ${RIBUON_SMTP_USER:-}
       RIBUON_SMTP_PASSWORD: ${RIBUON_SMTP_PASSWORD:-}
       RIBUON_MAIL_FROM: ${RIBUON_MAIL_FROM:-}
+      RIBUON_MAIL_REPLY_TO: ${RIBUON_MAIL_REPLY_TO:-}
     expose:
       - "8000"                        # reachable from web only, never from outside
     healthcheck:
