@@ -14,29 +14,28 @@ log = logging.getLogger("ribuon.mail")
 
 SUBJECT = "הקישור שלך לכניסה לריבועון"
 
-TEXT = """שלום,
+LEAD = ("לחצו על הכפתור כדי להתחבר למשתמש - ההתקדמות שלכם במשחק תישמר ותוכלו להתחבר עם המשתמש"
+        " במכשירים אחרים ולהמשיך מאיפה שהפסקתם!")
 
-לכניסה לריבועון, פתחו את הקישור:
-{link}
+# ‏ (RLM) starts each line right-to-left in clients that show the plain text
+TEXT = "‏" + LEAD + "\n\n{link}\n"
 
-הקישור תקף ל־15 דקות ולשימוש אחד.
-לא ביקשתם להיכנס? אפשר להתעלם מהמייל הזה.
-"""
-
+# Gmail and others drop <html> and <body> attributes, so the direction and the
+# alignment are set again on the table and on every cell.
 HTML = """<!doctype html>
-<html lang="he" dir="rtl"><body style="margin:0;padding:24px;background:#ECECEA;font-family:Arial,sans-serif;color:#111">
-<table role="presentation" width="100%" style="max-width:460px;margin:0 auto;background:#fff;border:1.5px solid #111;border-radius:4px">
-<tr><td style="padding:20px 24px 12px;border-bottom:1.5px solid #111">
+<html lang="he" dir="rtl"><body dir="rtl" style="margin:0;padding:24px;background:#ECECEA;font-family:Arial,sans-serif;color:#111">
+<div dir="rtl" style="direction:rtl;text-align:right">
+<table role="presentation" dir="rtl" width="100%" style="direction:rtl;max-width:460px;margin:0 auto;background:#fff;border:1.5px solid #111;border-radius:4px">
+<tr><td dir="rtl" align="right" style="direction:rtl;text-align:right;padding:20px 24px 12px;border-bottom:1.5px solid #111">
   <div style="font-size:28px;font-weight:800;line-height:1">ריבועון</div>
 </td></tr>
-<tr><td style="padding:20px 24px 26px;font-size:16px;line-height:1.5">
-  <p style="margin:0 0 18px">לחצו כדי להיכנס. ההתקדמות שלכם תחכה בכל מכשיר.</p>
-  <p style="margin:0 0 18px"><a href="{link}" style="display:inline-block;padding:10px 20px;background:#111;color:#fff;
+<tr><td dir="rtl" align="right" style="direction:rtl;text-align:right;padding:20px 24px 26px;font-size:16px;line-height:1.5">
+  <p style="margin:0 0 18px">{lead}</p>
+  <p style="margin:0"><a href="{link}" style="display:inline-block;padding:10px 20px;background:#111;color:#fff;
     border-radius:10px;text-decoration:none;font-weight:700">כניסה לריבועון</a></p>
-  <p style="margin:0;color:#6A6A67;font-size:14px">הקישור תקף ל־15 דקות ולשימוש אחד.
-    לא ביקשתם להיכנס? אפשר להתעלם מהמייל הזה.</p>
 </td></tr>
 </table>
+</div>
 </body></html>
 """
 
@@ -56,7 +55,7 @@ def send_login_link(to: str, token: str) -> None:
     msg["From"] = config.MAIL_FROM
     msg["To"] = to
     msg.set_content(TEXT.format(link=link))
-    msg.add_alternative(HTML.format(link=escape(link, quote=True)), subtype="html")
+    msg.add_alternative(HTML.format(link=escape(link, quote=True), lead=escape(LEAD)), subtype="html")
 
     context = ssl.create_default_context()
     if config.SMTP_PORT == 465:
