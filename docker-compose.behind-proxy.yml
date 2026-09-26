@@ -31,6 +31,7 @@ services:
       RIBUON_SMTP_USER: ${RIBUON_SMTP_USER:-}
       RIBUON_SMTP_PASSWORD: ${RIBUON_SMTP_PASSWORD:-}
       RIBUON_MAIL_FROM: ${RIBUON_MAIL_FROM:-}
+      RIBUON_MAIL_REPLY_TO: ${RIBUON_MAIL_REPLY_TO:-}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
       interval: 30s
