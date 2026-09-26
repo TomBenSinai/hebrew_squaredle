@@ -1,6 +1,6 @@
 /* Calm, not a wall of text: a warm line, one instruction, the fine print in grey.
    The height fits the longest step, so the board stays put between steps. */
-.tutstep { margin: 6px 0 0; min-height: 8.2rem; }
+.tutstep { margin: 6px 0 0; min-height: 6.6rem; }
 /* the span is swapped on every step, so each one rises in; the p stays put for screen readers */
 .tutstep > span { display: block; animation: rise .5s var(--ease-out) both; }
 .tuthead {
@@ -20,17 +20,23 @@
 /* the buttons the last step introduces */
 .tutnew { animation: rise .4s var(--ease-out) both; }
 
-/* Step 3's cue on what to tap: a ring swells out and fades while the fill
-   breathes, once every beat, quiet enough to read the step text over it. */
+/* Step 3's cue on what to tap: the count turns solid, a ring swells out of it
+   every beat and the chevron nudges the way the list opens. */
 @keyframes tutcue {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ink) 40%, transparent); background-color: transparent; }
-  35% { background-color: var(--cobalt-soft); }
-  75%, 100% { box-shadow: 0 0 0 12px transparent; background-color: transparent; }
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ink) 55%, transparent); }
+  70%, 100% { box-shadow: 0 0 0 16px transparent; }
 }
-.tutcue .counter { animation: tutcue 1.8s var(--ease-out) infinite; }
-/* the words get room for the ring, without moving */
-.tutcue .w { border-radius: 8px; padding-inline: 8px; margin-inline: -8px; animation: tutcue 1.8s var(--ease-out) infinite; }
-.tutcue .w:nth-child(2) { animation-delay: .35s; }
+@keyframes tutnudge {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-5px); }
+}
+.tutcue .counter {
+  background: var(--cobalt); color: var(--cobalt-ink);
+  animation: tutcue 1.6s var(--ease-out) infinite;
+}
+.tutcue .counter .num small, .tutcue .counter .chev { color: inherit; }
+.tutcue .counter .chev { animation: tutnudge .8s ease-in-out infinite; }
+@media (hover: hover) { .tutcue button.counter:hover { background: var(--cobalt); } }
 @media (prefers-reduced-motion: reduce) {
-  .tutcue .counter, .tutcue .w { animation: none; box-shadow: 0 0 0 2px var(--ink); }
+  .tutcue .counter, .tutcue .counter .chev { animation: none; }
 }
