@@ -193,11 +193,17 @@ Any SMTP relay will do (Resend, Brevo, Amazon SES, Postmark...). With the relay:
 2. Put the SMTP settings in `.env`:
    ```
    RIBUON_SMTP_HOST=smtp.resend.com
-   RIBUON_SMTP_PORT=587
+   RIBUON_SMTP_PORT=2587
    RIBUON_SMTP_USER=resend
    RIBUON_SMTP_PASSWORD=re_...
    RIBUON_MAIL_FROM="ריבועון <login@ribuon.com>"
    ```
+   **Port:** DigitalOcean blocks outgoing 25, 465 and 587, so a send there fails
+   with `could not send login email: timed out` in `logs api`. Resend also listens
+   on 2587 (STARTTLS) and 2465 (TLS), which get through. Gmail has no such port,
+   so it can't be the relay on a droplet.
+   Replies to a login email go to `RIBUON_MAIL_REPLY_TO` (the From address has no
+   mailbox).
 
 A link works once, for 15 minutes. An address gets at most 3 links per 15
 minutes, and an IP 10 an hour. These limits are held in the API process's
