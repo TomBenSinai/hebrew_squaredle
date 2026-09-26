@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { CalendarIcon, Chip, MoonIcon, PersonIcon, Pill, ShapeIcon, SunIcon } from "../components";
 import type { DaySummary, User } from "../api/types";
 import { shortDate, weekday } from "../lib/dates";
@@ -13,7 +13,7 @@ interface Props {
   onArchive: () => void;
   onHelp: () => void;
   /** undefined: login is off, so no account button */
-  account?: { user: User | null; onOpen: () => void };
+  account?: { user: User | null; onOpen: () => void; news?: { onDismiss: () => void } };
 }
 
 export function Masthead({ day, isToday, canGoToday, onToday, onArchive, onHelp, account }: Props) {
@@ -29,6 +29,7 @@ export function Masthead({ day, isToday, canGoToday, onToday, onArchive, onHelp,
       {account && <AccountPill user={account.user} onClick={account.onOpen} />}
       <HelpPill onClick={onHelp} />
       <ThemePill />
+      {account?.news && <LoginNews onOpen={account.onOpen} onDismiss={account.news.onDismiss} />}
     </MastheadFrame>
   );
 }
@@ -63,6 +64,35 @@ function AccountPill({ user, onClick }: { user: User | null; onClick: () => void
     <Pill className={"round acct" + (user ? " in" : "")} aria-label={label} title={label} onClick={onClick}>
       {user ? initial || <PersonIcon /> : <PersonIcon />}
     </Pill>
+  );
+}
+
+/**
+ * Tells players who haven't logged in that they now can: a bubble under the
+ * header whose arrow points at the account button, wherever that sits.
+ */
+function LoginNews({ onOpen, onDismiss }: { onOpen: () => void; onDismiss: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [arrow, setArrow] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const place = () => {
+      const bubble = ref.current, pill = bubble?.closest(".masthead")?.querySelector(".pill.acct");
+      if (!bubble || !pill) return;
+      const b = bubble.getBoundingClientRect(), p = pill.getBoundingClientRect();
+      setArrow(p.left + p.width / 2 - b.left);
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, []);
+  return (
+    <div ref={ref} className="loginnews" role="note"
+      style={arrow === null ? undefined : { "--arrow-x": `${arrow}px` } as CSSProperties}>
+      <button type="button" className="newsbody" onClick={onOpen}>
+        <b>חדש!</b> התחברו כדי שההתקדמות שלכם תישמר, ותוכלו להמשיך אותה מכל המכשירים שלכם.
+      </button>
+      <button type="button" className="newsclose" aria-label="סגירה" onClick={onDismiss}>×</button>
+    </div>
   );
 }
 
