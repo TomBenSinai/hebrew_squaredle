@@ -1,7 +1,7 @@
 {
   "shape": "4x4",
   "required": ["סבתא", "בשבילך"],
-  "settings": {"main_zipf": 3.5, "min_main": 25, "max_main": 40,
+  "settings": {"max_bonus_ratio": 0.7, "min_main": 25, "max_main": 40,
                "min_longest": 6, "max_longest": 6, "min_long_words": 1, "max_long_words": 2},
   "_help": "An easy board with two placed words. Not shown as a theme: generate_days writes it, then the theme key is removed from the board file."
 }
