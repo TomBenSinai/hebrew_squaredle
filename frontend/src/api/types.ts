@@ -20,6 +20,14 @@ export interface PublicBoard extends DaySummary {
   groups: { length: number; total: number }[];
   bonusTotal: number;
   themeTotal: number;
+  /** the words hashed, for checking swipes locally (lib/answers.ts); missing from older APIs */
+  salt?: string;
+  answers?: Answer[];
+}
+
+export interface Answer {
+  h: string;
+  d: string;
 }
 
 export type Category = "main" | "bonus";
