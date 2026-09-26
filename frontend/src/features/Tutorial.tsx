@@ -36,22 +36,22 @@ const NO_HINTS = new Set<never>();
 const STEPS: { head: string; text: ReactNode; aside?: ReactNode }[] = [
   {
     head: "ברוכים הבאים לריבועון",
-    text: <>נתחיל ממילה אחת: החליקו על <b>ש</b>, <b>ל</b>, <b>ו</b>, <b>מ</b> בלי להרים את האצבע.</>,
-    aside: <>אפשר לזוז לכל כיוון, גם באלכסון. ובסוף מילה, <b>מ</b> הופכת לבד ל-<b>ם</b>.</>,
+    text: <>החליקו על <b>ש</b>, <b>ל</b>, <b>ו</b>, <b>מ</b> בלי להרים את האצבע.</>,
+    aside: <>אפשר לזוז לכל כיוון, גם באלכסון.</>,
   },
   {
     head: "שלום גם לכם!",
-    text: <><b>ש</b> ו-<b>ל</b> האפירו, כי אף מילה אחרת לא צריכה אותן. באותיות שנשארו מסתתרת עוד מילה.</>,
-    aside: <>אות אפורה אומרת שכבר אין בה מה לחפש.</>,
+    text: <>יש עוד מילה על הלוח. מצאו אותה.</>,
+    aside: <>אות אפורה כבר לא נחוצה לאף מילה.</>,
   },
   {
     head: "פתרתם את הלוח",
-    text: <>לחצו על <b>מספר המילים</b> למעלה כדי לראות את הרשימה, ועל מילה ברשימה כדי לראות מה פירושה.</>,
+    text: <>לחצו על <b>מספר המילים</b> כדי לראות את הרשימה.</>,
   },
   {
     head: "אתם מוכנים",
-    text: <>כפתור <b>הסיבוב</b> מסובב את הלוח, כשרוצים זווית חדשה. ב<b>ארכיון</b> מחכים הלוחות של ימים קודמים.</>,
-    aside: <>וכל הכללים, מתי שתרצו, מאחורי ה-<b>?</b>.</>,
+    text: <>ה<b>סיבוב</b> מסובב את הלוח, וב<b>ארכיון</b> יש ימים קודמים.</>,
+    aside: <>לחיצה על מילה ברשימה מראה את פירושה. לחצו על <b>?</b> כדי להגיע לכל החוקים.</>,
   },
 ];
 
@@ -66,12 +66,12 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
   const [flashWord, showWord] = useFlash<string>();
   const [wordsOpen, setWordsOpen] = useState(false);
   const [defWord, setDefWord] = useState<string | null>(null);
-  const [defined, setDefined] = useState(false);
+  const [listed, setListed] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const { phase, turns, spin } = useSpin(() => setRot(r => (r + 1) % 4));
 
   const next = WORDS[found.length];
-  const step = next ? found.length : defined ? 3 : 2;
+  const step = next ? found.length : listed ? 3 : 2;
 
   const submit = (path: number[]) => {
     const key = path.map(i => layout.letters[i]).join("");
@@ -96,8 +96,9 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
 
   const foundWords: FoundWord[] = found.map(w => ({ w, cat: "main" }));
   const fraction = letterFraction(foundWords, BOARD.mainLetters);
-  // only a definition opened at step 3 finishes it, or an early tap would skip the list
-  const define = (w: string) => { setDefWord(w); if (step === 2) setDefined(true); };
+  // opening the list once the board is solved finishes step 3
+  const openWords = () => { setWordsOpen(true); if (!next) setListed(true); };
+  const define = (w: string) => setDefWord(w);
   const showOnBoard = (w: string) => { setDefWord(null); setWordsOpen(false); showWord(w); };
   const swiping = withFinal(path.map(i => layout.letters[i]).join(""));
   const flash = flashWord ? { cells: findPath(layout, flashWord) ?? [], bonus: false } : null;
@@ -115,11 +116,11 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
       </MastheadFrame>
 
       {/* the first step is only the swipe: the score comes in with the first word.
-          Step 3 points at what to tap: the count, then the words in the list. */}
+          Step 3 points at what to tap: the count. */}
       {step > 0 && (
         <div className={step === 2 && !wordsOpen ? "tutnew tutcue" : "tutnew"}>
           <Score found={found.length} total={WORDS.length} bonus={0} rank={rankFor(fraction)}
-            fraction={fraction} onOpen={() => setWordsOpen(true)} />
+            fraction={fraction} onOpen={openWords} />
         </div>
       )}
 
@@ -147,7 +148,7 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
         </>}
       </div>
 
-      <WordsModal open={wordsOpen} onClose={() => setWordsOpen(false)} sheetClassName={step === 2 ? "tutcue" : undefined}
+      <WordsModal open={wordsOpen} onClose={() => setWordsOpen(false)}
         board={BOARD} found={foundWords}
         fresh={found.at(-1) ?? null} reveals={null} hintsOpen={NO_HINTS} az={false} onToggleSort={() => {}}
         onWord={define} />
