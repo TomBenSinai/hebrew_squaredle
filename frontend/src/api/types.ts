@@ -44,6 +44,9 @@ export interface Reveal {
   pre: string;
   /** the letters shown at its end, the last one in final form ("" when none) */
   post: string;
+  /** how many of its group's main words, found or not, come before it by a-b
+   *  (missing from an API older than it) */
+  at?: number;
 }
 
 /** What the server tells the player about the main words not found yet. */
