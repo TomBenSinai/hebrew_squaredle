@@ -5,7 +5,7 @@ import { answerLookup, type Hit } from "../lib/answers";
 import { norm, withFinal } from "../lib/hebrew";
 import { useFlash } from "../hooks/useFlash";
 import { findPath, makeLayout, pathCells, type Layout } from "../lib/layout";
-import { hintById, letterFraction, openHints, type HintId } from "../lib/scoring";
+import { groupOfLength, hintById, letterFraction, openHints, type HintId } from "../lib/scoring";
 import { progressStore } from "./progressStore";
 
 export const MIN_LEN = 4;
@@ -157,18 +157,27 @@ export function useGame(date: string | null): { game: Game | null; error: string
     };
   }, [layout, counts, mainKey]);
   // the slots must not blank out on every find while the new counts load: keep
-  // the ones we have and drop those the words found since then have filled
-  // (slots that spell the same are interchangeable, so one slot per word)
+  // the ones we have and drop those the words found since then have filled.
+  // Slots that spell the same still differ in `at` (their place in the a-b
+  // sort), so of those take the one whose place is the word's own: the found
+  // words before it plus the slots still before it
   const reveals = useMemo((): Reveal[] | null => {
     if (!counts?.reveals) return null;
     if (counts.key === mainKey) return counts.reveals;
     const had = new Set(counts.key ? counts.key.split(" ") : []);
+    const known = [...had].map(norm);
     const left = [...counts.reveals];
     for (const w of mainKey ? mainKey.split(" ") : []) {
       if (had.has(w)) continue;
       const key = norm(w);
-      const i = left.findIndex(r => r.n === key.length && key.startsWith(r.pre) && key.endsWith(norm(r.post)));
-      if (i >= 0) left.splice(i, 1);
+      const fits = (r: Reveal) => r.n === key.length && key.startsWith(r.pre) && key.endsWith(norm(r.post));
+      const rank = (r: Reveal) =>
+        known.filter(k => groupOfLength(k.length) === groupOfLength(key.length) && k < key).length
+        + left.filter(o => o !== r && groupOfLength(o.n) === groupOfLength(r.n) && o.at !== undefined && o.at < r.at!).length;
+      const i = left.findIndex(r => fits(r) && r.at === rank(r));
+      const j = i >= 0 ? i : left.findIndex(fits);
+      if (j >= 0) left.splice(j, 1);
+      known.push(key);
     }
     return left;
   }, [counts, mainKey]);

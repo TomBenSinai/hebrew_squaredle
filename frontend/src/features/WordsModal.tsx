@@ -61,6 +61,26 @@ type Entry = { word: string } | { slot: Reveal };
 const sortKey = (e: Entry) => ("word" in e ? norm(e.word) : e.slot.pre);
 
 /**
+ * The a-b order of a group. A slot goes where its hidden word belongs, not just
+ * by the letters it shows: that is the hint. Its `at` counts the words before it,
+ * the slots among them included, so the rest are found words.
+ */
+function sortEntries(entries: Entry[]): Entry[] {
+  const byKey = (a: Entry, b: Entry) => sortKey(a).localeCompare(sortKey(b), "he");
+  const words = entries.filter(e => "word" in e).sort(byKey);
+  const slots = entries.flatMap(e => ("slot" in e ? [e] : []));
+  if (slots.some(e => e.slot.at === undefined)) return [...entries].sort(byKey);
+  slots.sort((a, b) => a.slot.at! - b.slot.at!);
+  const out: Entry[] = [];
+  let w = 0;
+  slots.forEach((e, i) => {
+    while (w < words.length && w < e.slot.at! - i) out.push(words[w++]);
+    out.push(e);
+  });
+  return out.concat(words.slice(w));
+}
+
+/**
  * Found words grouped by length, with how many are left in each group. Two
  * hints land here: sorting the groups by alphabet, and slots that part-spell
  * the main words still missing.
@@ -99,7 +119,7 @@ function WordsList({ board, found, fresh, reveals, hintsOpen, az, onToggleSort, 
   });
 
   if (canSort && az) {
-    for (const g of groups) g.entries = [...g.entries].sort((a, b) => sortKey(a).localeCompare(sortKey(b), "he"));
+    for (const g of groups) g.entries = sortEntries(g.entries);
   }
   return (
     <>

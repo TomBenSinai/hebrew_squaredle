@@ -255,7 +255,12 @@ class Day:
             out["starts"] = counts["starts"]
         if frac >= HINT_REVEAL_AT:
             got = set(words)
-            out["reveals"] = [reveal_mask(w) for w in self.board.main if w not in got]
+            # `at` is the word's place in its group's a-b order (all its main
+            # words, found or not), so the sort hint can put the slot where it belongs
+            keys = [normalize(w) for w in self.board.main]
+            out["reveals"] = [
+                {**reveal_mask(w), "at": sum(group_of(k) == group_of(w) and k < normalize(w) for k in keys)}
+                for w in self.board.main if w not in got]
         if SHOW_USES_HINT and frac >= HINT_USES_AT:
             out["uses"] = counts["uses"]
         return out
