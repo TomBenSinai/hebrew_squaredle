@@ -24,7 +24,7 @@ MAX_GROUP = 8          # words of 8+ letters share one group
 # of the hint with the same id in HINTS in frontend/src/lib/scoring.ts (which
 # also holds `sort`, a client-only hint, and SHOW_USES_HINT)
 HINT_STARTS_AT = 0.3
-HINT_REVEAL_AT = 0.6
+HINT_REVEAL_AT = 0.5
 HINT_USES_AT = 0.75
 SHOW_USES_HINT = False
 

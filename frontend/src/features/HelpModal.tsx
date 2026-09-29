@@ -49,7 +49,7 @@ export function HelpModal({ open, onClose }: { open: boolean; onClose: () => voi
             <li>אות מאפירה כשאין בה עוד צורך לאף מילה מרכזית שנותרה. אפשר עדיין להשתמש בה כדי ליצור מילות בונוס</li>
             <li><b>רמזים נפתחים בדרך</b> - הסימנים על פס ההתקדמות מראים מתי, וכל רמז מוסבר ברגע שהוא נפתח:
               <b className="hintstarts">מספר אדום</b> על כל אות - כמה מילים מרכזיות שמתחילות בה נותרו, אחר כך
-              <b className="hintsort">מיון רשימת המילים לפי א-ב</b>, ולבסוף <b className="hintreveal">חשיפת אותיות מהמילים שנותרו</b></li>
+              <b className="hintreveal">חשיפת אותיות מהמילים שנותרו</b>, ולבסוף <b className="hintsort">מיון רשימת המילים לפי א-ב</b></li>
           </ul>
         </section>
 
