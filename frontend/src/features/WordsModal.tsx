@@ -41,7 +41,8 @@ export function WordsPanel({ className, ...list }: ListProps & { className?: str
 }
 
 const SORT_KEY = "ribuon:words-az";
-const readSort = () => { try { return localStorage.getItem(SORT_KEY) === "1"; } catch { return false; } };
+// on from the moment the hint opens, unless the player has turned it off
+const readSort = () => { try { return localStorage.getItem(SORT_KEY) !== "0"; } catch { return true; } };
 const writeSort = (on: boolean) => { try { localStorage.setItem(SORT_KEY, on ? "1" : "0"); } catch { /* private mode */ } };
 
 /**

@@ -30,7 +30,7 @@
 .toast .note {
   /* one line even on a 360px phone */
   font-size: min(.85rem, 3.5vw); line-height: 1.15;
-  text-wrap: balance;
+  text-wrap: balance; text-align: center;
   animation: notein .4s var(--ease-out) .25s both;
 }
 .toast .note.hint-sort { color: var(--hint-sort); }
