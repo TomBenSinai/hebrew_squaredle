@@ -177,25 +177,34 @@ class TestStats(LeaderboardBase):
         self.assertEqual(r.status_code, 200, r.text)
         return r.json()
 
-    def test_everyone_counts_named_or_not(self):
+    def test_every_account_counts_named_or_not(self):
         main = words(D1, 999)
         self.put(self.player("a@example.com", "aa"), D1, main)                # finished
-        self.put(self.client(), D1, main[:2], anon=ANON_B)                    # anonymous
+        self.put(self.player("b@example.com", None), D1, main[:2])           # no nickname
         st = self.stats()
         self.assertEqual(set(st), {"avgWords", "avgFraction"})               # no counts
         self.assertEqual(st["avgWords"], (len(main) + 2) / 2)
         letters = sum(len(normalize(w)) for w in main)
         self.assertAlmostEqual(st["avgFraction"], (letters + sum(len(normalize(w)) for w in main[:2])) / 2 / letters, 3)
 
+    def test_anonymous_play_does_not_count(self):
+        # an anonymous row stays beside the account it logged in to: one player, two rows
+        main = words(D1, 999)
+        self.put(self.player("a@example.com", "aa"), D1, main[:4])
+        self.put(self.client(), D1, main[:2], anon=ANON_B)
+        self.assertEqual(self.stats()["avgWords"], None)
+        self.put(self.player("b@example.com", None), D1, main[:2])
+        self.assertEqual(self.stats()["avgWords"], 3)
+
     def test_no_average_until_two_played(self):
         self.assertEqual(self.stats(), {"avgWords": None, "avgFraction": None})
-        self.put(self.client(), D1, words(D1, 3))
+        self.put(self.player("a@example.com", None), D1, words(D1, 3))
         self.assertEqual(self.stats()["avgWords"], None)
 
     def test_archive_play_does_not_count(self):
         self.today = D2
-        self.put(self.client(), D1, words(D1, 3))
-        self.put(self.client(), D1, words(D1, 3), anon=ANON_B)
+        self.put(self.player("a@example.com", None), D1, words(D1, 3))
+        self.put(self.player("b@example.com", None), D1, words(D1, 3))
         self.assertEqual(self.stats()["avgWords"], None)
 
 

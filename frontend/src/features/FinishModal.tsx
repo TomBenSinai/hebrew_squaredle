@@ -54,8 +54,10 @@ export function FinishModal({ open, onClose, board, bonus, isToday, user, onLead
     } as CSSProperties,
   })), [board.letters]);
 
-  const me = lead?.day.me;
-  const streak = lead?.streaks.me?.streak ?? 0;
+  // the last fetch was for today's board: an archive board doesn't get its place or streak
+  const shown = isToday ? lead : null;
+  const me = shown?.day.me;
+  const streak = shown?.streaks.me?.streak ?? 0;
   // the main words are done, the bonus words aren't: say the board isn't over
   const bonusLeft = Math.max(board.bonusTotal - bonus, 0);
   // finished today, but not on the list: say where they'd be, and how to get there

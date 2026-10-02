@@ -119,11 +119,13 @@ class ProgressRepo:
             db.execute(_ON_DAY_UPSERT, (player, date, main, letters, bonus, done_at))
 
     def day_totals(self, date: str) -> dict:
-        """Over everyone who found a main word on `date`, that day: how many, and
-        their average words and letters."""
+        """Over every account that found a main word on `date`, that day: how many,
+        and their average words and letters. Anonymous rows are left out: a player
+        who logs in to an existing account keeps their anonymous row beside it."""
         with self._tx() as db:
             r = db.execute("SELECT COUNT(*) n, AVG(main) words, AVG(letters) letters "
-                           "FROM on_day WHERE date = ? AND main > 0", (date,)).fetchone()
+                           "FROM on_day WHERE date = ? AND main > 0 AND player_id LIKE 'user:%'",
+                           (date,)).fetchone()
         return {"players": r["n"], "words": r["words"] or 0, "letters": r["letters"] or 0}
 
     def on_day(self, date: str) -> list[dict]:

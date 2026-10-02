@@ -46,6 +46,14 @@ export default function App() {
       .catch(() => setLoadError(true));
   }, []);
 
+  // a tab left open past midnight learns the new day: what's today, and the new board in the archive
+  const refreshDays = useCallback(() => { api.days().then(setDays, () => {}); }, []);
+  useEffect(() => {
+    const onShow = () => { if (document.visibilityState === "visible") refreshDays(); };
+    document.addEventListener("visibilitychange", onShow);
+    return () => document.removeEventListener("visibilitychange", onShow);
+  }, [refreshDays]);
+
   const { game, error } = useGame(date);
   // a first-time player learns on a practice board before the game opens
   const [learned, setLearned] = useState(() => hasSeen("tutorial"));
@@ -57,11 +65,12 @@ export default function App() {
   if (!days || !game || !auth) return <div className="app"><p className="status">טוען…</p></div>;
   const setNickname = (nickname: string | null) => setAuth(a => a && a.info.user
     ? { ...a, info: { ...a.info, user: { ...a.info.user, nickname } } } : a);
-  return <Play days={days} game={game} setDate={setDate} auth={auth} setNickname={setNickname} />;
+  return <Play days={days} refreshDays={refreshDays} game={game} setDate={setDate} auth={auth}
+    setNickname={setNickname} />;
 }
 
-function Play({ days, game, setDate, auth, setNickname }:
-  { days: DaysResponse; game: Game; setDate: (d: string) => void; auth: AuthState;
+function Play({ days, refreshDays, game, setDate, auth, setNickname }:
+  { days: DaysResponse; refreshDays: () => void; game: Game; setDate: (d: string) => void; auth: AuthState;
     setNickname: (nickname: string | null) => void }) {
   const { board, layout, found } = game;
   const [wordsOpen, setWordsOpen] = useState(false);
@@ -82,7 +91,8 @@ function Play({ days, game, setDate, auth, setNickname }:
   const openAccount = () => { setNotice(null); setAccountOpen(true); seeNews(); };
   // the leaderboard is new: a note once, and a dot on its button until it's opened
   const [leadersSeen, setLeadersSeen] = useState(() => hasSeen("leaders"));
-  const openLeaders = () => { markSeen("leaders"); setLeadersSeen(true); setLeadersOpen(true); };
+  // "today" is checked again, so the ranking is never yesterday's
+  const openLeaders = () => { markSeen("leaders"); setLeadersSeen(true); setLeadersOpen(true); refreshDays(); };
 
   // on a computer the list is always beside the board, so the count opens nothing
   const wide = useMedia(WIDE_QUERY);
