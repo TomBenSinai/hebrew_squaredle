@@ -56,6 +56,8 @@ export function FinishModal({ open, onClose, board, bonus, isToday, user, onLead
 
   const me = lead?.day.me;
   const streak = lead?.streaks.me?.streak ?? 0;
+  // the main words are done, the bonus words aren't: say the board isn't over
+  const bonusLeft = Math.max(board.bonusTotal - bonus, 0);
   // finished today, but not on the list: say where they'd be, and how to get there
   const missed = isToday && me && !me.listed ? me : null;
   return (
@@ -76,6 +78,18 @@ export function FinishModal({ open, onClose, board, bonus, isToday, user, onLead
           {me?.listed && <Stat value={me.rank} label="מקום היום" lit={me.rank <= 3} />}
           {streak > 1 && <Stat value={streak} label="ימים ברצף" />}
         </div>
+
+        {board.bonusTotal > 0 && (bonusLeft > 0
+          ? <div className="finishbonus">
+              <p className="finishbonushead">
+                {bonusLeft === 1 ? "יש עוד מילת בונוס אחת בלוח" : <>יש עוד <b>{bonusLeft}</b> מילות בונוס בלוח</>}
+              </p>
+              <p>
+                הן לא חובה, אבל אפשר להמשיך לחפש. גם אותיות שהאפירו יכולות להיות חלק ממילת בונוס.{" "}
+                <button type="button" className="linkish" onClick={onClose}>להמשיך לחפש</button>
+              </p>
+            </div>
+          : <p className="finishbonus all">ומצאתם גם את כל מילות הבונוס!</p>)}
 
         {missed && (
           <div className="finishmissed">
