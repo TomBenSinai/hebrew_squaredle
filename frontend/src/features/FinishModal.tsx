@@ -56,6 +56,8 @@ export function FinishModal({ open, onClose, board, bonus, isToday, user, onLead
 
   const me = lead?.day.me;
   const streak = lead?.streaks.me?.streak ?? 0;
+  // finished today, but not on the list: say where they'd be, and how to get there
+  const missed = isToday && me && !me.listed ? me : null;
   return (
     <Modal open={open} onClose={onClose} title="סיימתם!" sheetClassName="finishcard" layer={30}>
       {open && (
@@ -71,21 +73,28 @@ export function FinishModal({ open, onClose, board, bonus, isToday, user, onLead
         <div className="finishstats">
           <Stat value={board.mainTotal} label="מילים" />
           {bonus > 0 && <Stat value={`+${bonus}`} label="בונוס" bonus />}
-          {me && <Stat value={me.rank} label={me.listed ? "מקום היום" : "הייתם במקום"} lit={me.listed && me.rank <= 3} />}
+          {me?.listed && <Stat value={me.rank} label="מקום היום" lit={me.rank <= 3} />}
           {streak > 1 && <Stat value={streak} label="ימים ברצף" />}
         </div>
 
-        {isToday && me && !me.listed && (
-          <p className="finishfine">
-            {user ? "בחרו כינוי כדי שהמקום שלכם יופיע בטבלה." : "התחברו ובחרו כינוי כדי שהמקום שלכם יופיע בטבלה."}{" "}
-            <button type="button" className="linkish" onClick={onAccount}>{user ? "בחירת כינוי" : "התחברות"}</button>
-          </p>
+        {missed && (
+          <div className="finishmissed">
+            <p className="finishwould">
+              {user ? "עם כינוי, " : "אם הייתם מחוברים, "}
+              הייתם במקום <b className="finishplace">ה־{missed.rank}</b> היום.
+            </p>
+            <p>לא חבל שלא תופיעו בטבלת המובילים?</p>
+          </div>
         )}
         {!isToday && <p className="finishfine">לוחות מהארכיון לא נכנסים לטבלת המובילים, אבל הם נשמרים אצלכם.</p>}
 
         <div className="finishactions">
-          {isToday && onLeaders && <Button variant="primary" onClick={onLeaders}>לטבלת המובילים</Button>}
-          <Button onClick={onClose}>{isToday && onLeaders ? "סגירה" : "יופי"}</Button>
+          {missed
+            ? <Button variant="primary" onClick={onAccount}>{user ? "בחירת כינוי" : "התחברות"}</Button>
+            : isToday && onLeaders && <Button variant="primary" onClick={onLeaders}>לטבלת המובילים</Button>}
+          {missed && onLeaders
+            ? <Button onClick={onLeaders}>לטבלת המובילים</Button>
+            : <Button onClick={onClose}>{isToday && onLeaders ? "סגירה" : "יופי"}</Button>}
         </div>
       </SheetBody>
     </Modal>
