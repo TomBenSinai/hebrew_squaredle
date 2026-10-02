@@ -21,10 +21,11 @@ board on the same day (Israel time).
 
 | Part | What it does |
 |---|---|
-| Header | Name, date, board number, the day's shape (on special shapes) and theme chip |
+| Header | Name, date, board number, the day's shape (on special shapes) and theme chip; buttons for the account, ? and light/dark (and חזרה להיום on an archive day) |
 | Big counter | Main words found / total. The bar under it fills right to left, weighted by letters, so long words move it more |
 | Readout | The word being swiped, then the result: main, bonus, ★ theme, already found, not a word. Tap the result to see the definition |
 | Board | Swipe only (no tapping letters one by one). Letters that no remaining main word uses turn grey |
+| Under the board | סיבוב on one side; ארכיון and 🏆 at the other end, near the thumb on a phone |
 | סיבוב | Rotates the board 90° (same board, new view; helps you see words) |
 | המילים | Found words, grouped by length; theme words first; bonus words in their own section. Unfound words are never revealed; it only says how many are left |
 | ארכיון | Every past day with your progress; tap to play it. Future days stay hidden |
@@ -55,9 +56,9 @@ waits on today's page.
 
 ## Leaderboard
 
-The trophy in the header opens טבלת המובילים. Until a player first opens it, the
-trophy wears an amber dot, and today's page shows a "חדש!" note under the header
-pointing at it (once; closing it counts as seen, `ribuon:seen:leaders`). The older
+The trophy under the board opens טבלת המובילים. Until a player first opens it, the
+trophy wears an amber dot, and today's page shows a "חדש!" note just above that row
+pointing down at it (once; closing it counts as seen, `ribuon:seen:leaders`). The older
 login note waits until this one is gone. It has two tabs:
 
 - **היום**: today's board, by main words found; a tie goes to whoever finished the

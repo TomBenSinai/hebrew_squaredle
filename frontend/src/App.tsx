@@ -9,7 +9,7 @@ import { FinishModal } from "./features/FinishModal";
 import { HelpModal } from "./features/HelpModal";
 import { introName, IntroModal, type Intro } from "./features/IntroModal";
 import { LeaderboardModal } from "./features/LeaderboardModal";
-import { Masthead, News } from "./features/Masthead";
+import { ArchivePill, LeadersPill, Masthead, News } from "./features/Masthead";
 import { Readout } from "./features/Readout";
 import { Score } from "./features/Score";
 import { SpinButton } from "./features/SpinButton";
@@ -155,15 +155,9 @@ function Play({ days, game, setDate, auth, setNickname }:
     <div className={wide ? "app wide" : "app"}>
       <section className="play" aria-label="הלוח">
         <Masthead day={board} isToday={isToday} canGoToday={days.days.some(d => d.date === days.today)}
-          onToday={() => setDate(days.today)} onArchive={() => setArchiveOpen(true)}
+          onToday={() => setDate(days.today)}
           onHelp={() => setHelpOpen(true)}
-          onLeaders={loginOn ? openLeaders : undefined} leadersNew={!leadersSeen}
           account={loginOn ? { user, onOpen: openAccount } : undefined} />
-        {showLeadersNews && (
-          <News to="leaders" onOpen={openLeaders} onDismiss={() => { markSeen("leaders"); setLeadersSeen(true); }}>
-            טבלת המובילים: מי מצא הכי הרבה מילים היום, ומי שומר על רצף הכי ארוך. בחרו כינוי והצטרפו.
-          </News>
-        )}
         {loginOn && showNews && (
           <News to="acct" onOpen={openAccount} onDismiss={seeNews}>
             התחברו כדי שההתקדמות שלכם תישמר, ותוכלו להמשיך אותה מכל המכשירים שלכם.
@@ -181,8 +175,17 @@ function Play({ days, game, setDate, auth, setNickname }:
             tileRefs={tileRefs} handlers={handlers} />
         </div>
 
+        {showLeadersNews && (
+          <News to="leaders" onOpen={openLeaders} onDismiss={() => { markSeen("leaders"); setLeadersSeen(true); }}>
+            טבלת המובילים: מי מצא הכי הרבה מילים היום, ומי שומר על רצף הכי ארוך. בחרו כינוי והצטרפו.
+          </News>
+        )}
         <div className="tools">
           <SpinButton turns={turns} onClick={spin} />
+          <span className="toolsend">
+            <ArchivePill onClick={() => setArchiveOpen(true)} />
+            {loginOn && <LeadersPill fresh={!leadersSeen} onClick={openLeaders} />}
+          </span>
         </div>
       </section>
 

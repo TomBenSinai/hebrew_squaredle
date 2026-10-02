@@ -10,17 +10,12 @@ interface Props {
   isToday: boolean;
   canGoToday: boolean;
   onToday: () => void;
-  onArchive: () => void;
   onHelp: () => void;
-  /** undefined: no leaderboard (it needs login, for the nicknames) */
-  onLeaders?: () => void;
-  /** the player hasn't opened the leaderboard yet: a dot on its button */
-  leadersNew?: boolean;
   /** undefined: login is off, so no account button */
   account?: { user: User | null; onOpen: () => void };
 }
 
-export function Masthead({ day, isToday, canGoToday, onToday, onArchive, onHelp, onLeaders, leadersNew, account }: Props) {
+export function Masthead({ day, isToday, canGoToday, onToday, onHelp, account }: Props) {
   return (
     <MastheadFrame live when={<>
       {isToday ? <b>היום</b> : <><b>ארכיון</b> · {weekday(day.date)}</>}
@@ -29,13 +24,6 @@ export function Masthead({ day, isToday, canGoToday, onToday, onArchive, onHelp,
       {day.theme && <Chip>★ {day.theme}</Chip>}
     </>}>
       {!isToday && canGoToday && <Pill strong onClick={onToday}>חזרה להיום</Pill>}
-      <ArchivePill onClick={onArchive} />
-      {onLeaders && (
-        <Pill className={"round leaders" + (leadersNew ? " new" : "")} aria-label="טבלת המובילים" title="טבלת המובילים"
-          onClick={onLeaders}>
-          <TrophyIcon />
-        </Pill>
-      )}
       {account && <AccountPill user={account.user} onClick={account.onOpen} />}
       <HelpPill onClick={onHelp} />
       <ThemePill />
@@ -65,6 +53,16 @@ export function ArchivePill({ className, onClick }: { className?: string; onClic
   );
 }
 
+/** The leaderboard, in the row under the board; `fresh`: not opened yet, so a dot. */
+export function LeadersPill({ fresh, onClick }: { fresh?: boolean; onClick: () => void }) {
+  return (
+    <Pill className={"round leaders" + (fresh ? " new" : "")} aria-label="טבלת המובילים" onClick={onClick}>
+      <TrophyIcon />
+      <span className="tip" aria-hidden="true">טבלת המובילים</span>
+    </Pill>
+  );
+}
+
 /** Logged out, a person to log in; logged in, their initial on a lit tile. */
 function AccountPill({ user, onClick }: { user: User | null; onClick: () => void }) {
   const label = user ? "החשבון" : "התחברות";
@@ -77,9 +75,10 @@ function AccountPill({ user, onClick }: { user: User | null; onClick: () => void
 }
 
 /**
- * Tells players about something new up in the header, once. A row of its own
- * under the header, so it covers nothing; its arrow points up at the button
- * `to` names. Tapping it opens what it's about.
+ * Tells players about something new, once. A row of its own, so it covers
+ * nothing: under the header pointing up at the account button, or above the
+ * row under the board pointing down at the leaderboard. Tapping it opens what
+ * it's about.
  */
 export function News({ to, onOpen, onDismiss, children }:
   { to: "acct" | "leaders"; onOpen: () => void; onDismiss: () => void; children: ReactNode }) {

@@ -13,6 +13,8 @@
   gap: 10px;
 }
 .tools { display: flex; align-items: center; gap: 8px; }
+/* rotate turns the board; the way out to other days and the leaderboard sit at the row's other end */
+.tools .toolsend { display: flex; align-items: center; gap: 8px; margin-inline-start: auto; }
 /* Every press turns the icon another quarter, the way the board goes, and it stays there.
    The wrapper turns rather than the <svg> itself: Chrome ignores a transform built with
    calc(var(...)) on an SVG element. The angle is inline because the count has no bound. */
@@ -21,7 +23,7 @@
   transition: transform .46s cubic-bezier(.45, .05, .2, 1);
 }
 /* The label the icon replaced, shown on hover and to anyone tabbing to the button. */
-.tools .spinbtn .tip {
+.tools .pill .tip {
   position: absolute; bottom: calc(100% + 8px); left: 50%;
   transform: translateX(-50%);
   padding: 4px 9px;
@@ -33,11 +35,13 @@
   transition: opacity .14s var(--ease-out);
 }
 @media (hover: hover) {
-  .tools .spinbtn:hover .tip { opacity: 1; }
+  .tools .pill:hover .tip { opacity: 1; }
 }
-.tools .spinbtn:focus-visible .tip { opacity: 1; }
+.tools .pill:focus-visible .tip { opacity: 1; }
+/* the row's last pill sits at its end: its label hangs inward, not off the screen */
+.tools .toolsend .pill:last-child .tip { left: auto; right: 0; transform: none; }
 @media (prefers-reduced-motion: reduce) {
-  .tools .spinbtn .spinicon, .tools .spinbtn .tip { transition: none; }
+  .tools .spinbtn .spinicon, .tools .pill .tip { transition: none; }
 }
 .status { grid-column: 1 / -1; align-self: center; justify-self: center; color: var(--muted); font-size: 1.1rem; }
 

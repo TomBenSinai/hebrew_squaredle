@@ -25,21 +25,6 @@
    from 320px up. flex-wrap only guards against a future label wider than the row. */
 .headbtns { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; flex-shrink: 0; }
 
-/* On a narrow phone an archive day shows three pills; the calendar goes icon-only
-   so they still fit on one line and the header doesn't grow a second row. */
-@media (max-width: 420px) {
-  .pill.cal { width: 40px; height: 40px; padding: 0; justify-content: center; }
-  .pill.cal .pilllabel { display: none; }
-  /* four don't fit: the account and the leaderboard wait on today's page, one tap away */
-  .headbtns:has(> .pill.strong) .pill.acct,
-  .headbtns:has(> .pill.strong) .pill.leaders { display: none; }
-}
-/* today on the narrowest phones: five round pills and the name, so they close up a little */
-@media (max-width: 380px) {
-  .headbtns { gap: 5px; }
-  .headbtns .pill.round, .headbtns .pill.cal { width: 36px; height: 36px; }
-}
-
 /* not opened yet: an amber dot on the trophy */
 .pill.leaders.new::before {
   content: ""; position: absolute; top: 1px; inset-inline-end: 1px;
@@ -61,10 +46,9 @@
 .shape { white-space: nowrap; }
 .shape-icon { vertical-align: -1px; margin-inline-end: 4px; opacity: .75; }
 
-/* "New: ..." note, a row under the header (only on today's page). Its arrow
-   points up at a pill, counted from the row's end: theme, help, account,
-   leaderboard (40px each, 8px apart), so the account's centre is 116px in and
-   the leaderboard's 164px. */
+/* "New: ..." note (only on today's page), a row of its own. Under the header its
+   arrow points up at the account button, the third pill from the row's end after
+   theme and help (40px each, 8px apart), so its centre is 116px in. */
 .news {
   position: relative; align-self: flex-end;
   width: min(300px, 100%); margin-top: -2px;
@@ -77,11 +61,12 @@
   content: ""; position: absolute; top: -6px; inset-inline-end: 109px;
   border: 7px solid transparent; border-top: 0; border-bottom: 7px solid var(--cobalt);
 }
-.news.to-leaders::before { inset-inline-end: 157px; }
-/* the pills close up there (36px, 5px apart): centres at 100px and 141px */
-@media (max-width: 380px) {
-  .news::before { inset-inline-end: 93px; }
-  .news.to-leaders::before { inset-inline-end: 134px; }
+/* Above the row under the board, pointing down at the trophy: the last pill of
+   that row (40px), so its centre is 20px from the end. */
+.news.to-leaders { margin-top: 0; margin-bottom: -2px; }
+.news.to-leaders::before {
+  top: auto; bottom: -6px; inset-inline-end: 13px;
+  border-bottom: 0; border-top: 7px solid var(--cobalt);
 }
 .newsbody {
   flex: 1; text-align: start; font: inherit; font-size: .92rem; line-height: 1.4;
