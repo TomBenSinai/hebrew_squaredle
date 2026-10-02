@@ -108,11 +108,7 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
       <MastheadFrame when={<><b>איך משחקים</b> · {step + 1} מתוך {STEPS.length}</>}>
         {step < 3
           ? <Pill className="tutskip" onClick={onDone}>דילוג</Pill>
-          : <>
-              <ArchivePill className="tutnew"
-                onClick={() => setToast({ kind: "info", text: "הארכיון נפתח מתוך המשחק" })} />
-              <HelpPill className="tutnew" onClick={() => setHelpOpen(true)} />
-            </>}
+          : <HelpPill className="tutnew" onClick={() => setHelpOpen(true)} />}
       </MastheadFrame>
 
       {/* the first step is only the swipe: the score comes in with the first word.
@@ -143,6 +139,9 @@ export function Tutorial({ onDone }: { onDone: () => void }) {
         {step === 3 && <>
           <div className="tools tutnew">
             <SpinButton turns={turns} onClick={spin} />
+            <span className="toolsend">
+              <ArchivePill onClick={() => setToast({ kind: "info", text: "הארכיון נפתח מתוך המשחק" })} />
+            </span>
           </div>
           <Button variant="primary" onClick={onDone}>יאללה, מתחילים</Button>
         </>}

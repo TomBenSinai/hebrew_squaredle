@@ -12,6 +12,8 @@ interface Props {
   hints: Hints | null;
   flash: { cells: number[]; bonus: boolean } | null;
   spin: SpinPhase;
+  /** the board was just solved: a wave runs across the tiles */
+  won?: boolean;
   tileRefs: RefObject<(HTMLDivElement | null)[]>;
   handlers: {
     onPointerDown: (e: PointerEvent<HTMLElement>) => void;
@@ -22,7 +24,7 @@ interface Props {
 }
 
 /** The letter grid (any shape) with the swipe trace drawn over it. */
-export function Board({ layout, path, live, hints, flash, spin, tileRefs, handlers }: Props) {
+export function Board({ layout, path, live, hints, flash, spin, won, tileRefs, handlers }: Props) {
   const boardRef = useRef<HTMLDivElement>(null);
   const [trace, setTrace] = useState({ box: "0 0 0 0", points: "", width: 0 });
 
@@ -53,7 +55,7 @@ export function Board({ layout, path, live, hints, flash, spin, tileRefs, handle
       <svg className="trace" viewBox={trace.box} aria-hidden="true">
         <polyline points={trace.points} strokeWidth={trace.width} />
       </svg>
-      <div className={"tiles" + (spin === "spin" ? " spin" : spin === "settle" ? " settle" : "")}>
+      <div className={"tiles" + (spin === "spin" ? " spin" : spin === "settle" ? " settle" : "") + (won ? " won" : "")}>
         {layout.letters.map((ch, i) => (
           <Tile key={`${layout.base[i]}`} ref={el => { tileRefs.current[i] = el; }}
             letter={ch} row={layout.cells[i][0]} col={layout.cells[i][1]}

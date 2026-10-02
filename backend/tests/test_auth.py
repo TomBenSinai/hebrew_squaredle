@@ -360,7 +360,7 @@ class TestGoogleLogin(Base):
         c = self.client()
         r = self.google_login(c)
         self.assertEqual(r.headers["location"], "/?login=google")
-        self.assertEqual(self.me(c), {"name": "Tom", "email": "tom@example.com"})
+        self.assertEqual(self.me(c), {"name": "Tom", "email": "tom@example.com", "nickname": None})
 
     def test_same_verified_email_is_the_same_account(self):
         phone, laptop = self.client(), self.client()

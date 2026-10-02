@@ -8,6 +8,29 @@ export function CalendarIcon() {
   );
 }
 
+/** The world: everyone who played. Its meridian sweeps (`.globe .meridian`), so it seems to turn. */
+export function GlobeIcon() {
+  return (
+    <svg className="globe" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" strokeWidth="1.9" />
+      <path d="M3.6 12h16.8M5 7.6h14M5 16.4h14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <ellipse className="meridian" cx="12" cy="12" rx="3.8" ry="8.6" fill="none" stroke="currentColor" strokeWidth="1.7" />
+    </svg>
+  );
+}
+
+/** A cup on a stand: the leaderboard. */
+export function TrophyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">
+      <path d="M7 4h10v5a5 5 0 0 1-10 0V4ZM12 14v3.5M8.5 20.5h7M9.5 17.5h5v3h-5z" fill="none" stroke="currentColor"
+        strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M7 6H4.5v1.5A3 3 0 0 0 7.6 10.5M17 6h2.5v1.5a3 3 0 0 1-3.1 3" fill="none" stroke="currentColor"
+        strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 /** Head and shoulders: the account, before logging in. */
 export function PersonIcon() {
   return (

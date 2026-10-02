@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CalendarIcon, Chip, MoonIcon, PersonIcon, Pill, ShapeIcon, SunIcon } from "../components";
+import { CalendarIcon, Chip, MoonIcon, PersonIcon, Pill, ShapeIcon, SunIcon, TrophyIcon } from "../components";
 import type { DaySummary, User } from "../api/types";
 import { shortDate, weekday } from "../lib/dates";
 import { useTheme } from "../lib/theme";
@@ -10,13 +10,12 @@ interface Props {
   isToday: boolean;
   canGoToday: boolean;
   onToday: () => void;
-  onArchive: () => void;
   onHelp: () => void;
   /** undefined: login is off, so no account button */
   account?: { user: User | null; onOpen: () => void };
 }
 
-export function Masthead({ day, isToday, canGoToday, onToday, onArchive, onHelp, account }: Props) {
+export function Masthead({ day, isToday, canGoToday, onToday, onHelp, account }: Props) {
   return (
     <MastheadFrame live when={<>
       {isToday ? <b>היום</b> : <><b>ארכיון</b> · {weekday(day.date)}</>}
@@ -25,7 +24,6 @@ export function Masthead({ day, isToday, canGoToday, onToday, onArchive, onHelp,
       {day.theme && <Chip>★ {day.theme}</Chip>}
     </>}>
       {!isToday && canGoToday && <Pill strong onClick={onToday}>חזרה להיום</Pill>}
-      <ArchivePill onClick={onArchive} />
       {account && <AccountPill user={account.user} onClick={account.onOpen} />}
       <HelpPill onClick={onHelp} />
       <ThemePill />
@@ -55,6 +53,16 @@ export function ArchivePill({ className, onClick }: { className?: string; onClic
   );
 }
 
+/** The leaderboard, in the row under the board; `fresh`: not opened yet, so a dot. */
+export function LeadersPill({ fresh, onClick }: { fresh?: boolean; onClick: () => void }) {
+  return (
+    <Pill className={"round leaders" + (fresh ? " new" : "")} aria-label="טבלת המובילים" onClick={onClick}>
+      <TrophyIcon />
+      <span className="tip" aria-hidden="true">טבלת המובילים</span>
+    </Pill>
+  );
+}
+
 /** Logged out, a person to log in; logged in, their initial on a lit tile. */
 function AccountPill({ user, onClick }: { user: User | null; onClick: () => void }) {
   const label = user ? "החשבון" : "התחברות";
@@ -67,14 +75,17 @@ function AccountPill({ user, onClick }: { user: User | null; onClick: () => void
 }
 
 /**
- * Tells players who haven't logged in that they now can. A row of its own under
- * the header, so it covers nothing; its arrow points up at the account button.
+ * Tells players about something new, once. A row of its own, so it covers
+ * nothing: under the header pointing up at the account button, or above the
+ * row under the board pointing down at the leaderboard. Tapping it opens what
+ * it's about.
  */
-export function LoginNews({ onOpen, onDismiss }: { onOpen: () => void; onDismiss: () => void }) {
+export function News({ to, onOpen, onDismiss, children }:
+  { to: "acct" | "leaders"; onOpen: () => void; onDismiss: () => void; children: ReactNode }) {
   return (
-    <div className="loginnews" role="note">
+    <div className={"news to-" + to} role="note">
       <button type="button" className="newsbody" onClick={onOpen}>
-        <b>חדש!</b> התחברו כדי שההתקדמות שלכם תישמר, ותוכלו להמשיך אותה מכל המכשירים שלכם.
+        <b>חדש!</b> {children}
       </button>
       <button type="button" className="newsclose" aria-label="סגירה" onClick={onDismiss}>×</button>
     </div>

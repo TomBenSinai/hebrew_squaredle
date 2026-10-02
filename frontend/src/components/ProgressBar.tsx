@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import "./ProgressBar.css";
 
 export interface Mark {
@@ -6,8 +6,12 @@ export interface Mark {
   at: number;
   /** any CSS color */
   color: string;
-  /** what the point means, shown on hover, focus or tap */
+  /** what the point means: read out, and shown on hover, focus or tap unless `tip` is given */
   label: string;
+  /** a richer tip than the label */
+  tip?: ReactNode;
+  /** a round pin with this icon, sitting on the bar, instead of a dot */
+  icon?: ReactNode;
 }
 
 interface Props {
@@ -37,11 +41,12 @@ export function ProgressBar({ value, variant = "bar", label, marks = [] }: Props
   return (
     <div className="pbarwrap">
       {bar}
-      {marks.map(m => (
-        <span key={m.at} className={"mark" + (value >= m.at ? " reached" : "")} tabIndex={0}
+      {marks.map((m, i) => (
+        <span key={i} className={"mark" + (m.icon ? " pin" : "") + (value >= m.at ? " reached" : "")} tabIndex={0}
           role="note" aria-label={m.label}
           style={{ insetInlineStart: `${m.at}%`, "--mark": m.color, "--at": m.at } as CSSProperties}>
-          <span className="tip" aria-hidden="true">{m.label}</span>
+          {m.icon && <span className="pinface">{m.icon}</span>}
+          <span className="tip" aria-hidden="true">{m.tip ?? m.label}</span>
         </span>
       ))}
     </div>

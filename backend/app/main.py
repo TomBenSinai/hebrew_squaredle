@@ -12,6 +12,8 @@
   GET  /api/progress/{date}
   PUT  /api/progress/{date}             {found, rot}; merged with what's stored, words re-checked
   GET  /api/define/{word}               short definition from Milog
+  GET  /api/leaderboard/{date}          the day's ranking and the streaks (leaderboard.py)
+  GET  /api/leaderboard/{date}/stats    how everyone did on the day, for the progress bar
   /api/auth/...                         optional login (auth.py)
 
 Progress is the logged-in user's when the request carries a session cookie,
@@ -24,8 +26,9 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+from wordgame import normalize
 
-from . import auth, config, milog
+from . import auth, config, leaderboard, milog
 from .boards import Day, all_dates, load_day, playable_dates
 from .deps import current_player, day, repo
 
@@ -34,6 +37,7 @@ if config.CORS_ORIGINS:
     app.add_middleware(CORSMiddleware, allow_origins=config.CORS_ORIGINS,
                        allow_methods=["*"], allow_headers=["*"])
 app.include_router(auth.router)
+app.include_router(leaderboard.router)
 
 UNSAFE = {"POST", "PUT", "PATCH", "DELETE"}
 
@@ -107,12 +111,18 @@ def progress_get(d: Day = Depends(day), player: str = Depends(current_player)):
 @app.put("/api/progress/{date}")
 def progress_put(body: ProgressIn, d: Day = Depends(day), player: str = Depends(current_player)):
     """Union of stored and sent words (a word once found stays found), re-checked
-    against the board so only real words are kept."""
+    against the board so only real words are kept. Saved on the board's own day,
+    it also counts for the leaderboard."""
     def merge(stored: dict | None) -> dict:
         words = [f["w"] for f in (stored or {"found": []})["found"]] + [f.w for f in body.found]
         return {"found": d.classify(words), "rot": body.rot}
 
-    return repo().update(player, d.date, merge)
+    new = repo().update(player, d.date, merge)
+    if d.date == config.today():
+        main = [f["w"] for f in new["found"] if f["cat"] == "main"]
+        repo().record_on_day(player, d.date, len(main), len(new["found"]) - len(main), len(main) == len(d.board.main),
+                             letters=sum(len(normalize(w)) for w in main))
+    return new
 
 
 @app.get("/api/define/{word}")

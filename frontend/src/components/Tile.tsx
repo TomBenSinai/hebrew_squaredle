@@ -1,4 +1,4 @@
-import type { Ref } from "react";
+import type { CSSProperties, Ref } from "react";
 import "./Tile.css";
 
 export type TileState = "idle" | "on" | "show" | "show-bonus";
@@ -25,7 +25,7 @@ export function Tile({ letter, row, col, state = "idle", dead, starts, uses, ref
     state === "show-bonus" && "bonus",
     dead && "dead"].filter(Boolean).join(" ");
   return (
-    <div ref={ref} className={cls} style={{ gridRow: row + 1, gridColumn: col + 1 }} aria-label={"האות " + letter}>
+    <div ref={ref} className={cls} style={{ gridRow: row + 1, gridColumn: col + 1, "--w": row + col } as CSSProperties} aria-label={"האות " + letter}>
       {letter}
       {/* keyed by the count, so it pops again each time it drops */}
       {!!starts && <span key={`s${starts}`} className="hint starts" aria-hidden="true">{starts}</span>}

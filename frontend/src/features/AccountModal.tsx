@@ -12,6 +12,8 @@ interface Props {
   notice: AuthNotice | null;
   /** days this device has progress on */
   savedDays: number;
+  /** the leaderboard name was changed (null: taken off it) */
+  onNickname: (nickname: string | null) => void;
 }
 
 const NOTICES: Record<AuthNotice, { text: string; bad?: boolean }> = {
@@ -23,14 +25,14 @@ const NOTICES: Record<AuthNotice, { text: string; bad?: boolean }> = {
 };
 
 /** Log in to keep progress on every device, or, logged in, the account itself. */
-export function AccountModal({ open, onClose, auth, notice, savedDays }: Props) {
+export function AccountModal({ open, onClose, auth, notice, savedDays, onNickname }: Props) {
   const note = notice && NOTICES[notice];
   return (
     <Modal open={open} onClose={onClose} title={auth.user ? "החשבון" : "התחברות"} sheetClassName="acctcard">
       <SheetBody className="acctbody">
         {note && <p className={"acctnote" + (note.bad ? " bad" : "")} role="status">{note.text}</p>}
         {auth.user
-          ? <SignedIn user={auth.user} savedDays={savedDays} />
+          ? <SignedIn user={auth.user} savedDays={savedDays} onNickname={onNickname} />
           : <SignIn providers={auth.providers} />}
       </SheetBody>
     </Modal>
@@ -183,7 +185,8 @@ function Envelope() {
 
 // --- logged in -----------------------------------------------------------------
 
-function SignedIn({ user, savedDays }: { user: User; savedDays: number }) {
+function SignedIn({ user, savedDays, onNickname }:
+  { user: User; savedDays: number; onNickname: (nickname: string | null) => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -218,14 +221,16 @@ function SignedIn({ user, savedDays }: { user: User; savedDays: number }) {
         <span>{savedDays === 1 ? "יום שמור בחשבון" : "ימים שמורים בחשבון"}, ומחכים לכם בכל מכשיר שתתחברו ממנו.</span>
       </div>
 
+      <Nickname current={user.nickname} onSaved={onNickname} />
+
       {error && <p className="accterr" role="alert">{error}</p>}
 
-      <div className="acctactions" style={{ "--i": 2 } as CSSProperties}>
+      <div className="acctactions" style={{ "--i": 3 } as CSSProperties}>
         <Button onClick={() => run(logOut)} disabled={busy}>התנתקות</Button>
         <p className="acctfine">ההתקדמות נשארת בחשבון, והמכשיר הזה יתחיל מחדש.</p>
       </div>
 
-      <div className="acctdanger" style={{ "--i": 3 } as CSSProperties}>
+      <div className="acctdanger" style={{ "--i": 4 } as CSSProperties}>
         {confirming ? (
           <div className="acctconfirm" role="group" aria-label="מחיקת החשבון">
             <p>למחוק את החשבון ואת כל ההתקדמות השמורה בו? אי אפשר לבטל את זה.</p>
@@ -239,5 +244,56 @@ function SignedIn({ user, savedDays }: { user: User; savedDays: number }) {
         )}
       </div>
     </>
+  );
+}
+
+const NICK_ERRORS: Record<string, string> = {
+  bad_nickname: "כינוי הוא 2 עד 20 אותיות או ספרות (אפשר גם רווח, נקודה, מקף או גרש), בלי ניקוד ואמוג'י.",
+  nickname_taken: "הכינוי הזה כבר תפוס. נסו אחר.",
+};
+
+/** The name the leaderboard shows; without one the player stays off it. */
+function Nickname({ current, onSaved }: { current: string | null; onSaved: (nickname: string | null) => void }) {
+  const [value, setValue] = useState(current ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  const save = async (nickname: string | null) => {
+    setBusy(true);
+    setError(null);
+    setSaved(false);
+    try {
+      const r = await api.auth.setNickname(nickname);
+      setValue(r.nickname ?? "");
+      setSaved(true);
+      onSaved(r.nickname);
+    } catch (err) {
+      setError(err instanceof ApiError && err.detail && NICK_ERRORS[err.detail]
+        ? NICK_ERRORS[err.detail] : "אין חיבור לשרת. נסו שוב בעוד רגע.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const submit = (e: FormEvent) => { e.preventDefault(); if (value.trim()) save(value); };
+  const changed = value.trim() !== (current ?? "");
+
+  return (
+    <div className="acctnick" style={{ "--i": 2 } as CSSProperties}>
+      <label className="acctlabel" htmlFor="acct-nick">כינוי בטבלת המובילים</label>
+      <form className="acctform" onSubmit={submit} noValidate>
+        <input id="acct-nick" className="acctinput" maxLength={20} autoComplete="nickname" placeholder="למשל: מלכת המילים"
+          value={value} onChange={e => { setValue(e.target.value); setSaved(false); }}
+          aria-invalid={!!error || undefined} aria-describedby={error ? "acct-nick-err" : undefined} />
+        <Button type="submit" disabled={busy || !value.trim() || !changed}>{busy ? "שומרים…" : "שמירה"}</Button>
+      </form>
+      {error && <p id="acct-nick-err" className="accterr" role="alert">{error}</p>}
+      <p className="acctfine" role="status">
+        {saved && current ? "נשמר. כך תופיעו בטבלה." : saved ? "הוסרתם מהטבלה." : current
+          ? <>הכינוי גלוי לכל השחקנים.{" "}
+              <button type="button" className="linkish muted" onClick={() => save(null)} disabled={busy}>הסרה מהטבלה</button></>
+          : "בלי כינוי לא תופיעו בטבלה. הכינוי גלוי לכל השחקנים, אז עדיף לא את השם המלא."}
+      </p>
+    </div>
   );
 }

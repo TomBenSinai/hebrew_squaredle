@@ -31,7 +31,8 @@ CREATE TABLE IF NOT EXISTS users (
     id          INTEGER PRIMARY KEY,
     email       TEXT UNIQUE,                 -- lowercase; NULL when not verified
     name        TEXT NOT NULL DEFAULT '',
-    created_at  INTEGER NOT NULL
+    created_at  INTEGER NOT NULL,
+    nickname    TEXT                         -- shown on the leaderboard; NULL = stays off it
 );
 CREATE TABLE IF NOT EXISTS identities (
     provider    TEXT NOT NULL,               -- 'google' | 'email'
@@ -67,8 +68,13 @@ def _hash(secret: str) -> str:
     return hashlib.sha256(secret.encode()).hexdigest()
 
 
+class NicknameTaken(Exception):
+    pass
+
+
 def _user(row: sqlite3.Row | None) -> dict | None:
-    return {"id": row["id"], "email": row["email"], "name": row["name"]} if row else None
+    return ({"id": row["id"], "email": row["email"], "name": row["name"], "nickname": row["nickname"]}
+            if row else None)
 
 
 class AccountRepo:
@@ -83,6 +89,10 @@ class AccountRepo:
             db.executescript(SCHEMA)
             if "made_user" not in {r["name"] for r in db.execute("PRAGMA table_info(sessions)")}:
                 db.execute("ALTER TABLE sessions ADD COLUMN made_user INTEGER NOT NULL DEFAULT 0")
+            if "nickname" not in {r["name"] for r in db.execute("PRAGMA table_info(users)")}:
+                db.execute("ALTER TABLE users ADD COLUMN nickname TEXT")
+            # one player per name, however it's cased (NOCASE folds Latin letters only)
+            db.execute("CREATE UNIQUE INDEX IF NOT EXISTS users_nickname ON users(nickname COLLATE NOCASE)")
 
     def now(self) -> int:
         return int(self._clock())
@@ -123,6 +133,19 @@ class AccountRepo:
     @staticmethod
     def _fresh_user(db: sqlite3.Connection, user_id: int) -> dict:
         return _user(db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone())
+
+    def set_nickname(self, user_id: int, nickname: str | None) -> None:
+        """None takes the user off the leaderboard. Raises NicknameTaken."""
+        with self._tx() as db:
+            try:
+                db.execute("UPDATE users SET nickname = ? WHERE id = ?", (nickname, user_id))
+            except sqlite3.IntegrityError:
+                raise NicknameTaken(nickname)
+
+    def nicknames(self) -> dict[int, str]:
+        """Every user on the leaderboard: id -> nickname."""
+        with self._tx() as db:
+            return {r["id"]: r["nickname"] for r in db.execute("SELECT id, nickname FROM users WHERE nickname IS NOT NULL")}
 
     def delete_user(self, user_id: int) -> None:
         """The user, their identities and sessions (progress is ProgressRepo's)."""
