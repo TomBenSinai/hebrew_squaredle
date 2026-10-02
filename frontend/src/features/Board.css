@@ -33,3 +33,9 @@
 .tiles.spin { transition: transform .46s cubic-bezier(.45, .05, .2, 1); transform: rotate(-90deg) scale(.94); }
 .tiles.settle .tile { animation: settle .32s ease-out both; }
 @keyframes settle { from { transform: scale(.9); opacity: .6; } }
+
+/* Solved: a wave runs corner to corner, each tile lifting and lighting gold. */
+.tiles.won .tile { animation: wave .7s var(--ease-out) both; animation-delay: calc(var(--w, 0) * 80ms); }
+@keyframes wave {
+  40% { transform: translateY(-14%) scale(1.08); background: var(--amber-fill); color: #111111; opacity: 1; }
+}

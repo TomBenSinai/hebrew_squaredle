@@ -1,0 +1,63 @@
+/* a short card, centred, with room for the shower over it */
+.modal .sheet.finishcard { position: relative; height: auto; max-height: min(88%, 680px); max-width: 26rem; overflow: hidden; }
+.finishbody { position: relative; padding-bottom: 22px; text-align: center; }
+
+.finishtrophy {
+  display: inline-grid; place-items: center; width: 84px; height: 84px; margin-top: 16px;
+  border-radius: 50%; background: var(--amber-fill); color: #111111; box-shadow: var(--shadow);
+}
+.finishtrophy svg { width: 48px; height: 48px; }
+@keyframes trophy {
+  from { transform: scale(.2) rotate(-25deg); opacity: 0; }
+}
+.finishhead {
+  font-family: var(--display); font-weight: 800; font-size: 2.1rem; line-height: 1.1;
+  margin: 8px 0 4px;
+}
+.finishsub { margin: 0; color: var(--muted); font-size: 1.05rem; }
+
+/* the numbers on tiles, like the board's */
+.finishstats { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px; }
+.finishstat {
+  display: grid; justify-items: center; gap: 4px;
+  min-width: 5.2rem; padding: 12px 10px 10px;
+  border-radius: 10px; background: var(--paper);
+  box-shadow: var(--shadow), inset 0 0 0 1.5px var(--line);
+}
+@keyframes pop { from { transform: scale(.4); opacity: 0; } }
+.finishstat b { font-family: var(--display); font-weight: 800; font-size: 1.9rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.finishstat span { color: var(--muted); font-size: .82rem; font-weight: 600; }
+.finishstat.bonus b { color: var(--amber); }
+/* a podium place: gold tile */
+.finishstat.lit { background: var(--amber-fill); box-shadow: var(--shadow); }
+.finishstat.lit b, .finishstat.lit span { color: #111111; }
+
+.finishfine { margin: 14px 0 0; color: var(--muted); font-size: .92rem; line-height: 1.45; }
+.finishactions { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; }
+.finishactions .btn { padding-block: 11px; font-size: 1.05rem; }
+
+/* the board's letters raining down over the card, once */
+.confetti { position: absolute; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+.confetti span {
+  position: absolute; top: -40px; left: var(--x);
+  display: grid; place-items: center; width: 26px; height: 26px; border-radius: 10%;
+  background: var(--c); color: var(--paper);
+  font-family: var(--display); font-weight: 700; font-size: 15px;
+  opacity: 0;
+  animation: fall var(--t) cubic-bezier(.35, .1, .6, 1) var(--d) both;
+}
+@keyframes fall {
+  0% { opacity: 1; transform: translateY(0) rotate(0); }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(min(90vh, 700px)) rotate(var(--r)); }
+}
+
+/* the card's own entrance, each time it opens (the modal stays mounted) */
+.modal.open .finishtrophy { animation: trophy .7s cubic-bezier(.3, 1.6, .5, 1) .15s both; }
+.modal.open .finishhead { animation: rise .4s var(--ease-out) .3s both; }
+.modal.open .finishsub { animation: rise .4s var(--ease-out) .38s both; }
+.modal.open .finishstat { animation: pop .45s cubic-bezier(.3, 1.5, .5, 1) both; }
+.modal.open .finishstat:nth-child(1) { animation-delay: .5s; }
+.modal.open .finishstat:nth-child(2) { animation-delay: .6s; }
+.modal.open .finishstat:nth-child(3) { animation-delay: .7s; }
+.modal.open .finishstat:nth-child(4) { animation-delay: .8s; }

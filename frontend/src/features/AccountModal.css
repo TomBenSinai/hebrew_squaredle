@@ -139,7 +139,7 @@
 .acctsaved {
   display: flex; align-items: center; gap: 14px;
   margin-top: 18px; padding-block: 14px;
-  border-block: 1px solid var(--line);
+  border-top: 1px solid var(--line);
   line-height: 1.4;
 }
 .acctcount {
@@ -147,6 +147,10 @@
   font-family: var(--display); font-weight: 800; font-size: 2.6rem; line-height: 1;
   font-variant-numeric: tabular-nums;
 }
+
+.acctnick { margin-top: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.acctlabel { display: block; margin-bottom: 8px; font-weight: 700; }
+.acctnick .acctfine { margin-top: 8px; }
 
 .acctactions { margin-top: 18px; }
 .acctactions .btn { width: 100%; padding-block: 11px; font-size: 1.05rem; border-color: var(--ink); }
@@ -169,6 +173,7 @@
 .modal.open .acctbody > .acctfine,
 .modal.open .acctid,
 .modal.open .acctsaved,
+.modal.open .acctnick,
 .modal.open .acctactions,
 .modal.open .acctdanger,
 .modal.open .acctsent {

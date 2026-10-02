@@ -1,5 +1,6 @@
 import type {
-  AuthInfo, CellCounts, CheckResult, DayProgress, DaysResponse, Definition, FoundWord, PublicBoard, User,
+  AuthInfo, CellCounts, CheckResult, DayProgress, DaysResponse, DayStats, Definition, FoundWord, Leaderboard,
+  PublicBoard, User,
 } from "./types";
 
 export class ApiError extends Error {
@@ -36,6 +37,11 @@ export const api = {
     post<CellCounts>(`/boards/${date}/live-cells`, { found }),
   define: (word: string, signal?: AbortSignal) =>
     request<Definition>(`/define/${encodeURIComponent(word)}`, { signal }),
+  /** the player id only places an anonymous player; logged in, the session does */
+  /** how everyone did on the day, for the progress bar */
+  stats: (date: string) => request<DayStats>(`/leaderboard/${date}/stats`, { cache: "no-store" }),
+  leaderboard: (date: string, player: string, signal?: AbortSignal) =>
+    request<Leaderboard>(`/leaderboard/${date}`, { headers: { "X-Player-Id": player }, signal, cache: "no-store" }),
 
   /** The session is an HttpOnly cookie: the browser sends it by itself. */
   auth: {
@@ -46,6 +52,9 @@ export const api = {
     emailVerify: (token: string) => post<{ user: User; newAccount: boolean }>("/auth/email/verify", { token }),
     /** Move this browser's anonymous progress into the account. */
     claim: (player: string) => post<{ moved: string[] }>("/auth/claim", {}, { "X-Player-Id": player }),
+    /** null takes the player off the leaderboard */
+    setNickname: (nickname: string | null) =>
+      request<{ nickname: string | null }>("/auth/nickname", { method: "PUT", body: JSON.stringify({ nickname }) }),
     logout: () => post<{ ok: true }>("/auth/logout", {}),
     deleteAccount: () => request<{ ok: true }>("/auth/me", { method: "DELETE", body: "{}" }),
   },

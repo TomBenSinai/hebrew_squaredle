@@ -30,8 +30,21 @@
 @media (max-width: 420px) {
   .pill.cal { width: 40px; height: 40px; padding: 0; justify-content: center; }
   .pill.cal .pilllabel { display: none; }
-  /* four don't fit: the account waits on today's page, one tap away */
-  .headbtns:has(> .pill.strong) .pill.acct { display: none; }
+  /* four don't fit: the account and the leaderboard wait on today's page, one tap away */
+  .headbtns:has(> .pill.strong) .pill.acct,
+  .headbtns:has(> .pill.strong) .pill.leaders { display: none; }
+}
+/* today on the narrowest phones: five round pills and the name, so they close up a little */
+@media (max-width: 380px) {
+  .headbtns { gap: 5px; }
+  .headbtns .pill.round, .headbtns .pill.cal { width: 36px; height: 36px; }
+}
+
+/* not opened yet: an amber dot on the trophy */
+.pill.leaders.new::before {
+  content: ""; position: absolute; top: 1px; inset-inline-end: 1px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--amber-fill); box-shadow: 0 0 0 2px var(--ground);
 }
 
 /* logged in: the player's initial on a lit tile's colours */
@@ -48,10 +61,11 @@
 .shape { white-space: nowrap; }
 .shape-icon { vertical-align: -1px; margin-inline-end: 4px; opacity: .75; }
 
-/* "New: log in" note, a row under the header (only on today's page, logged out).
-   Its arrow points up at the account button: the third pill from the row's end,
-   after the theme and help pills (40px each, 8px apart), so its centre is 116px in. */
-.loginnews {
+/* "New: ..." note, a row under the header (only on today's page). Its arrow
+   points up at a pill, counted from the row's end: theme, help, account,
+   leaderboard (40px each, 8px apart), so the account's centre is 116px in and
+   the leaderboard's 164px. */
+.news {
   position: relative; align-self: flex-end;
   width: min(300px, 100%); margin-top: -2px;
   display: flex; align-items: flex-start;
@@ -59,9 +73,15 @@
   border-radius: 12px; box-shadow: var(--shadow);
   animation: newsin .35s var(--ease-out) both;
 }
-.loginnews::before {
+.news::before {
   content: ""; position: absolute; top: -6px; inset-inline-end: 109px;
   border: 7px solid transparent; border-top: 0; border-bottom: 7px solid var(--cobalt);
+}
+.news.to-leaders::before { inset-inline-end: 157px; }
+/* the pills close up there (36px, 5px apart): centres at 100px and 141px */
+@media (max-width: 380px) {
+  .news::before { inset-inline-end: 93px; }
+  .news.to-leaders::before { inset-inline-end: 134px; }
 }
 .newsbody {
   flex: 1; text-align: start; font: inherit; font-size: .92rem; line-height: 1.4;

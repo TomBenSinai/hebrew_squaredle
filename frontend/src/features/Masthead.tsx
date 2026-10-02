@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CalendarIcon, Chip, MoonIcon, PersonIcon, Pill, ShapeIcon, SunIcon } from "../components";
+import { CalendarIcon, Chip, MoonIcon, PersonIcon, Pill, ShapeIcon, SunIcon, TrophyIcon } from "../components";
 import type { DaySummary, User } from "../api/types";
 import { shortDate, weekday } from "../lib/dates";
 import { useTheme } from "../lib/theme";
@@ -12,11 +12,15 @@ interface Props {
   onToday: () => void;
   onArchive: () => void;
   onHelp: () => void;
+  /** undefined: no leaderboard (it needs login, for the nicknames) */
+  onLeaders?: () => void;
+  /** the player hasn't opened the leaderboard yet: a dot on its button */
+  leadersNew?: boolean;
   /** undefined: login is off, so no account button */
   account?: { user: User | null; onOpen: () => void };
 }
 
-export function Masthead({ day, isToday, canGoToday, onToday, onArchive, onHelp, account }: Props) {
+export function Masthead({ day, isToday, canGoToday, onToday, onArchive, onHelp, onLeaders, leadersNew, account }: Props) {
   return (
     <MastheadFrame live when={<>
       {isToday ? <b>היום</b> : <><b>ארכיון</b> · {weekday(day.date)}</>}
@@ -26,6 +30,12 @@ export function Masthead({ day, isToday, canGoToday, onToday, onArchive, onHelp,
     </>}>
       {!isToday && canGoToday && <Pill strong onClick={onToday}>חזרה להיום</Pill>}
       <ArchivePill onClick={onArchive} />
+      {onLeaders && (
+        <Pill className={"round leaders" + (leadersNew ? " new" : "")} aria-label="טבלת המובילים" title="טבלת המובילים"
+          onClick={onLeaders}>
+          <TrophyIcon />
+        </Pill>
+      )}
       {account && <AccountPill user={account.user} onClick={account.onOpen} />}
       <HelpPill onClick={onHelp} />
       <ThemePill />
@@ -67,14 +77,16 @@ function AccountPill({ user, onClick }: { user: User | null; onClick: () => void
 }
 
 /**
- * Tells players who haven't logged in that they now can. A row of its own under
- * the header, so it covers nothing; its arrow points up at the account button.
+ * Tells players about something new up in the header, once. A row of its own
+ * under the header, so it covers nothing; its arrow points up at the button
+ * `to` names. Tapping it opens what it's about.
  */
-export function LoginNews({ onOpen, onDismiss }: { onOpen: () => void; onDismiss: () => void }) {
+export function News({ to, onOpen, onDismiss, children }:
+  { to: "acct" | "leaders"; onOpen: () => void; onDismiss: () => void; children: ReactNode }) {
   return (
-    <div className="loginnews" role="note">
+    <div className={"news to-" + to} role="note">
       <button type="button" className="newsbody" onClick={onOpen}>
-        <b>חדש!</b> התחברו כדי שההתקדמות שלכם תישמר, ותוכלו להמשיך אותה מכל המכשירים שלכם.
+        <b>חדש!</b> {children}
       </button>
       <button type="button" className="newsclose" aria-label="סגירה" onClick={onDismiss}>×</button>
     </div>

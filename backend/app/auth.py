@@ -8,6 +8,7 @@ them to every device.
   POST   /api/auth/email/start          {email} -> sends a login link (to /#login=<token>)
   POST   /api/auth/email/verify         {token} -> session cookie, the user, newAccount
   POST   /api/auth/claim                moves the X-Player-Id's progress into a new account, once
+  PUT    /api/auth/nickname             {nickname: str | null} -> on (or off) the leaderboard
   POST   /api/auth/logout
   DELETE /api/auth/me                   deletes the account and its progress
 
@@ -24,6 +25,7 @@ import secrets
 import smtplib
 import threading
 import time
+import unicodedata
 from collections import deque
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response
@@ -31,7 +33,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 
 from . import config, google, mailer
-from .accounts import EMAIL_TOKEN_TTL, SESSION_DAYS
+from .accounts import EMAIL_TOKEN_TTL, SESSION_DAYS, NicknameTaken
 from .boards import BoardNotFound, get_day
 from .deps import SESSION_COOKIE, accounts, anon_player, current_user, player_key, repo, require_user
 
@@ -44,6 +46,10 @@ LOGIN_COOKIE = "ribuon_login"               # the Google login's state, between 
 EMAIL = re.compile(r"^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9-]+(\.[a-z0-9-]+)+$")
 LINKS_PER_ADDRESS = 3                       # per EMAIL_TOKEN_TTL
 LINKS_PER_IP = 10                           # per hour
+# letters of any script, digits, and a few marks between them; no niqqud, emoji
+# or invisible direction marks, which could make two names look the same
+NICKNAME = re.compile(r"^[^\W_](?:[\w'\".\- ]*[^\W_])?$")
+NICKNAME_LEN = (2, 20)
 
 
 class RateLimit:
@@ -88,7 +94,7 @@ def _clear_session(res: Response) -> None:
 
 
 def _public(user: dict | None) -> dict | None:
-    return {"name": user["name"], "email": user["email"]} if user else None
+    return {"name": user["name"], "email": user["email"], "nickname": user["nickname"]} if user else None
 
 
 @router.get("/me")
@@ -215,6 +221,25 @@ def claim(user: dict = Depends(require_user), anon: str = Depends(anon_player),
     if ribuon_session:
         accounts().end_claim(ribuon_session)
     return {"moved": moved}
+
+
+class NicknameIn(BaseModel):
+    nickname: str | None = Field(default=None, max_length=100)
+
+
+@router.put("/nickname")
+def set_nickname(body: NicknameIn, user: dict = Depends(require_user)):
+    """The name the leaderboard shows; null (or blank) takes the player off it."""
+    nick = " ".join(unicodedata.normalize("NFC", body.nickname or "").split()) or None
+    if nick is not None:
+        lo, hi = NICKNAME_LEN
+        if not (lo <= len(nick) <= hi and NICKNAME.match(nick)):
+            raise HTTPException(422, "bad_nickname")
+    try:
+        accounts().set_nickname(user["id"], nick)
+    except NicknameTaken:
+        raise HTTPException(409, "nickname_taken")
+    return {"nickname": nick}
 
 
 @router.post("/logout")

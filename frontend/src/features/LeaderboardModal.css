@@ -1,0 +1,71 @@
+/* a card like the account's, a little wider for the scores */
+.modal .sheet.leadcard { max-width: 32rem; }
+.leadbody { padding-bottom: 22px; }
+
+/* two tabs, the chosen one on a lit tile */
+.leadtabs {
+  display: flex; gap: 4px;
+  margin-top: 12px; padding: 4px;
+  border: 1.5px solid var(--line); border-radius: 999px;
+}
+.leadtab {
+  flex: 1; padding: 7px 12px;
+  border: 0; border-radius: 999px; background: none;
+  font: inherit; font-weight: 600; font-size: 1rem; color: var(--muted);
+  cursor: pointer;
+}
+.leadtab.on { background: var(--cobalt); color: var(--cobalt-ink); }
+.leadtab:focus-visible { outline: 3px solid var(--cobalt); outline-offset: 2px; }
+
+.leadfine { margin: 10px 0 0; color: var(--muted); font-size: .88rem; line-height: 1.45; }
+.leadempty { margin: 24px 0 8px; text-align: center; color: var(--muted); }
+
+.leadlist { list-style: none; margin: 8px 0 0; padding: 0; }
+.leadrow {
+  display: grid; grid-template-columns: 2.2em 1fr auto; align-items: center; gap: 10px;
+  padding: 11px 4px;
+  border-bottom: 1px solid var(--line);
+}
+.leadrank {
+  font-family: var(--display); font-weight: 800; font-size: 1.15rem; line-height: 1;
+  text-align: center; font-variant-numeric: tabular-nums; color: var(--muted);
+}
+/* the first three on tiles, gold first */
+.leadrow.p1 .leadrank, .leadrow.p2 .leadrank, .leadrow.p3 .leadrank {
+  display: grid; place-items: center; width: 1.9em; height: 1.9em; border-radius: 10%;
+  font-size: 1rem; color: var(--ink); background: var(--cobalt-soft);
+}
+.leadrow.p1 .leadrank { background: var(--amber-fill); color: #111111; }
+.leadname {
+  font-family: var(--display); font-weight: 600; font-size: 1.1rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.leadscore { color: var(--muted); font-size: .92rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.leadscore b { color: var(--ink); }
+.leadbonus { margin-inline-start: 6px; color: var(--amber); font-weight: 600; }
+.leadrow.me { background: var(--cobalt-soft); border-radius: 8px; padding-inline: 10px; border-bottom-color: transparent; }
+.leadrow.me:not(.ghost) .leadname::after { content: " (אתם)"; color: var(--muted); font-weight: 400; font-size: .9rem; }
+
+/* the player's place while not on the list: a row like the rest, in its spot,
+   only drawn in outline, as if pencilled in */
+.leadrow.ghost {
+  background: none; margin-block: 3px;
+  outline: 1.5px dashed var(--muted); outline-offset: -1.5px;
+}
+.leadrow.ghost .leadname { color: var(--muted); }
+.leadtag {
+  display: inline-block; margin-inline-start: 6px; padding: 1px 7px; border-radius: 99px;
+  border: 1px solid var(--line); font-family: var(--body); font-weight: 600; font-size: .75rem;
+  vertical-align: 2px;
+}
+
+/* the gap before a place below the rows shown */
+.leadgap { text-align: center; color: var(--muted); letter-spacing: .2em; padding-block: 2px; }
+
+.leadjoin { margin-top: 14px; }
+.leadjoin .btn { width: 100%; margin-top: 10px; padding-block: 10px; }
+
+.modal.open .leadrow {
+  animation: rise .36s var(--ease-out) both;
+  animation-delay: calc(90ms + var(--i, 0) * 28ms);
+}

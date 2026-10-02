@@ -92,6 +92,8 @@ export interface Definition {
 export interface User {
   name: string;
   email: string | null;
+  /** the name the leaderboard shows; null: not on it */
+  nickname: string | null;
 }
 
 export interface AuthInfo {
@@ -100,4 +102,42 @@ export interface AuthInfo {
   user: User | null;
   /** this login made the account, so what this device played goes into it */
   newAccount: boolean;
+}
+
+/** One listed player's row (backend/app/leaderboard.py). */
+export interface Ranked {
+  /** place, shared by equal rows */
+  rank: number;
+  name: string;
+  /** this row is the asking player's */
+  me: boolean;
+}
+
+/** The asking player, listed or not, placed among the listed. */
+export interface MyPlace {
+  rank: number;
+  listed: boolean;
+}
+
+export interface DayRow { main: number; bonus: number; done: boolean }
+export interface StreakRow { streak: number; days: number }
+
+export interface Ranking<Row> {
+  /** listed players with a row */
+  players: number;
+  top: (Ranked & Row)[];
+  me: (MyPlace & Row) | null;
+}
+
+export interface Leaderboard {
+  day: Ranking<DayRow> & { date: string; mainTotal: number };
+  streaks: Ranking<StreakRow>;
+}
+
+/** Everyone's average on a day, counted on the day itself; no names, no counts.
+ *  null while too few have played. */
+export interface DayStats {
+  avgWords: number | null;
+  /** average share of the main letters found, 0..1 (the progress bar's measure) */
+  avgFraction: number | null;
 }
