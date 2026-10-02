@@ -115,7 +115,8 @@ function Play({ days, game, setDate, auth, setNickname }:
     setWon(true);
     const card = setTimeout(() => setFinishOpen(true), 900);
     const calm = setTimeout(() => setWon(false), 2200);
-    return () => { clearTimeout(card); clearTimeout(calm); };
+    // leaving the board mid-wave (another day) mustn't leave the next board's tiles waving
+    return () => { clearTimeout(card); clearTimeout(calm); setWon(false); };
   }, [mainFound, board.date, board.mainTotal]);
 
   // Each hint, and the first bonus and theme word, is explained once, the first

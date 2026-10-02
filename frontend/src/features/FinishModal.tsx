@@ -28,9 +28,11 @@ const COLORS = ["var(--amber-fill)", "var(--cobalt)", "var(--hint-sort)", "var(-
  */
 export function FinishModal({ open, onClose, board, bonus, isToday, user, onLeaders, onAccount }: Props) {
   const [lead, setLead] = useState<Leaderboard | null>(null);
+  // a flag, not the callback: the parent makes a new one each render, which would refetch
+  const hasLeaders = !!onLeaders;
 
   useEffect(() => {
-    if (!open || !isToday || !onLeaders) return;
+    if (!open || !isToday || !hasLeaders) return;
     const ctl = new AbortController();
     setLead(null);
     // the last word first, so the place counts it
@@ -38,7 +40,7 @@ export function FinishModal({ open, onClose, board, bonus, isToday, user, onLead
       .then(() => api.leaderboard(board.date, playerId(), ctl.signal))
       .then(setLead, () => {});
     return () => ctl.abort();
-  }, [open, isToday, board.date, onLeaders]);
+  }, [open, isToday, board.date, hasLeaders]);
 
   // spread over the card by the golden angle: looks random, renders the same each time
   const confetti = useMemo(() => Array.from({ length: CONFETTI }, (_, i) => ({
