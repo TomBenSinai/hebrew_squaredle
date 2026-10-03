@@ -106,8 +106,13 @@ export function FinishModal({ open, onClose, board, bonus, isToday, again, user,
                 ? <li key="me" className="leadrow ghost me">
                     <span className="leadrank">{missed.rank}</span>
                     <span className="leadname">אתם <span className="leadtag">כאן הייתם</span></span>
-                    <span className="leadscore"><b>הושלם ✓</b>{bonus > 0 && <span className="leadbonus">+{bonus}</span>}</span>
+                    <span className="leadscore">
+                      {missed.done ? <b>הושלם ✓</b> : <><b>{missed.main}</b>/{board.mainTotal}</>}
+                      {missed.bonus > 0 && <span className="leadbonus">+{missed.bonus}</span>}
+                    </span>
                   </li>
+                : r === "gap"
+                ? <li key="gap" className="leadgap" aria-hidden="true">⋯</li>
                 : <li key={r.rank + r.name} className="leadrow">
                     <span className="leadrank">{r.rank}</span>
                     <bdi className="leadname">{r.name}</bdi>
@@ -148,9 +153,12 @@ function Stat({ value, label, bonus, lit }: { value: number | string; label: str
 
 /**
  * A peek at today's list around the player's place: the row ahead of them,
- * their own (pencilled in), and the row behind.
+ * their own (pencilled in), and the row behind. Below the rows sent, a gap
+ * before their own, as on the full list.
  */
-function peek(top: (Ranked & DayRow)[], me: MyPlace): ((Ranked & DayRow) | "me")[] {
+function peek(top: (Ranked & DayRow)[], me: MyPlace): ((Ranked & DayRow) | "me" | "gap")[] {
   const at = top.filter(r => r.rank < me.rank).length;
-  return [...top.slice(Math.max(at - 1, 0), at), "me" as const, ...top.slice(at, at + 1)];
+  const ahead = top.slice(Math.max(at - 1, 0), at);
+  const gap = at === top.length && at > 0 && top[at - 1].rank + 1 < me.rank;
+  return [...ahead, ...(gap ? ["gap" as const] : []), "me" as const, ...top.slice(at, at + 1)];
 }

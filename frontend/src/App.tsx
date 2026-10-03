@@ -128,6 +128,8 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
   useEffect(() => {
     const was = solved.current;
     solved.current = { date: board.date, n: mainFound };
+    // off to another day, even before the card showed: coming back doesn't replay it
+    if (board.date !== reloadWin) reloadShown.current = true;
     const justWon = was.date === board.date && was.n < board.mainTotal && mainFound >= board.mainTotal;
     const reload = reloadWin === board.date && !reloadShown.current;
     if (!justWon && !reload) return;
