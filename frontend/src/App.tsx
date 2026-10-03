@@ -69,6 +69,9 @@ export default function App() {
     setNickname={setNickname} />;
 }
 
+/** Play has mounted once this page load: only then is a solved board a refresh after the win */
+let playMounted = false;
+
 function Play({ days, refreshDays, game, setDate, auth, setNickname }:
   { days: DaysResponse; refreshDays: () => void; game: Game; setDate: (d: string) => void; auth: AuthState;
     setNickname: (nickname: string | null) => void }) {
@@ -113,21 +116,30 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
   const hintsOpen = useMemo(() => openHints(fraction), [fraction]);
   const crowd = useDayStats(board.date);
 
-  // The last main word, found just now (not a board already solved when it
-  // loaded): a wave across the board, then the finish card.
+  // The last main word, found just now: a wave across the board, then the
+  // finish card. Today's board already solved when the page loads (a refresh
+  // after the win) gets them too, once; coming back to it from another day doesn't.
   const [won, setWon] = useState(false);
   const [finishOpen, setFinishOpen] = useState(false);
   const solved = useRef({ date: board.date, n: mainFound });
+  const [reloadWin] = useState(() => !playMounted && isToday && mainFound >= board.mainTotal ? board.date : null);
+  const reloadShown = useRef(false);
+  useEffect(() => { playMounted = true; }, []);
   useEffect(() => {
     const was = solved.current;
     solved.current = { date: board.date, n: mainFound };
-    if (was.date !== board.date || was.n >= board.mainTotal || mainFound < board.mainTotal) return;
+    // off to another day, even before the card showed: coming back doesn't replay it
+    if (board.date !== reloadWin) reloadShown.current = true;
+    const justWon = was.date === board.date && was.n < board.mainTotal && mainFound >= board.mainTotal;
+    const reload = reloadWin === board.date && !reloadShown.current;
+    if (!justWon && !reload) return;
     setWon(true);
-    const card = setTimeout(() => setFinishOpen(true), 900);
+    // marked when the card shows, not before: a strict-mode rerun must still get it
+    const card = setTimeout(() => { reloadShown.current = true; setFinishOpen(true); }, 900);
     const calm = setTimeout(() => setWon(false), 2200);
     // leaving the board mid-wave (another day) mustn't leave the next board's tiles waving
     return () => { clearTimeout(card); clearTimeout(calm); setWon(false); };
-  }, [mainFound, board.date, board.mainTotal]);
+  }, [mainFound, board.date, board.mainTotal, reloadWin]);
 
   // Each hint, and the first bonus and theme word, is explained once, the first
   // time this player ever meets it. One card at a time, in the order they came.
@@ -211,7 +223,7 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
       <DefinitionModal word={defWord} onClose={() => setDefWord(null)} onShow={showOnBoard} />
       <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
       <FinishModal open={finishOpen} onClose={() => setFinishOpen(false)} board={board} bonus={bonusFound}
-        isToday={isToday} user={user} onAccount={() => { setFinishOpen(false); openAccount(); }}
+        isToday={isToday} again={reloadWin === board.date} user={user} onAccount={() => { setFinishOpen(false); openAccount(); }}
         onLeaders={loginOn ? () => { setFinishOpen(false); openLeaders(); } : undefined} />
       <LeaderboardModal open={leadersOpen} onClose={() => setLeadersOpen(false)} date={days.today} user={user}
         onAccount={openAccount} />
