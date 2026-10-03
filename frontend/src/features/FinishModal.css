@@ -52,6 +52,18 @@
 }
 .finishmissed p { margin: 0; font-size: 1.05rem; line-height: 1.45; }
 .finishmissed .finishwould { font-family: var(--display); font-weight: 600; font-size: 1.2rem; margin-bottom: 4px; }
+/* a slice of today's list with their row pencilled in, on paper over the gold */
+.finishpeek {
+  margin: 10px 0 0; padding: 2px 10px; border-radius: 8px;
+  background: var(--paper); text-align: start;
+}
+.finishpeek .leadrow { padding-block: 8px; }
+.finishpeek .leadrow:last-child { border-bottom: 0; }
+.finishpeek .leadrow.ghost { margin-inline: -4px; padding-inline: 8px; border-radius: 7px; outline-color: var(--amber); }
+.finishpeek .leadrow.ghost .leadrank { color: var(--amber); }
+.finishmissed .finishnudge { margin-top: 10px; font-size: .95rem; color: var(--muted); }
+/* no second button: a quiet way out under the one that matters */
+.finishactions .finishlater { align-self: center; padding: 6px 12px; color: var(--muted); font-weight: 500; }
 .finishplace {
   display: inline-block; padding: 0 8px; border-radius: 7px;
   background: var(--amber-fill); color: #111111; font-weight: 800;
@@ -87,3 +99,10 @@
 .modal.open .finishstat:nth-child(4) { animation-delay: .8s; }
 .modal.open .finishbonus { animation: rise .45s var(--ease-out) .9s both; }
 .modal.open .finishmissed { animation: rise .45s var(--ease-out) 1s both; }
+/* the pencilled row draws itself in last, a beat after its neighbours */
+.modal.open .finishpeek .leadrow { animation: rise .36s var(--ease-out) 1.15s both; }
+.modal.open .finishpeek .leadrow.ghost { animation: pencil .6s var(--ease-out) 1.4s both; }
+@keyframes pencil {
+  from { opacity: 0; transform: scaleX(.6); outline-color: transparent; }
+  60% { opacity: 1; }
+}

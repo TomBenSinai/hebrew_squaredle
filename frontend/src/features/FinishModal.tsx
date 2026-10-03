@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { api } from "../api/client";
-import type { Leaderboard, PublicBoard, User } from "../api/types";
+import type { DayRow, Leaderboard, MyPlace, PublicBoard, Ranked, User } from "../api/types";
 import { Button, Modal, SheetBody, TrophyIcon } from "../components";
 import { playerId, progressStore } from "../state/progressStore";
 import "./FinishModal.css";
+import "./LeaderboardModal.css";
 
 interface Props {
   open: boolean;
@@ -12,6 +13,8 @@ interface Props {
   bonus: number;
   /** finished on the board's own day: it counts for the leaderboard */
   isToday: boolean;
+  /** the page was loaded on a board already solved: welcome back, not "you did it" */
+  again?: boolean;
   user: User | null;
   /** undefined: no leaderboard (login is off) */
   onLeaders?: () => void;
@@ -26,7 +29,7 @@ const COLORS = ["var(--amber-fill)", "var(--cobalt)", "var(--hint-sort)", "var(-
  * The board is solved: a shower of the board's own letters, what the player
  * found, and on today's board their place and streak.
  */
-export function FinishModal({ open, onClose, board, bonus, isToday, user, onLeaders, onAccount }: Props) {
+export function FinishModal({ open, onClose, board, bonus, isToday, again, user, onLeaders, onAccount }: Props) {
   const [lead, setLead] = useState<Leaderboard | null>(null);
   // a flag, not the callback: the parent makes a new one each render, which would refetch
   const hasLeaders = !!onLeaders;
@@ -72,7 +75,9 @@ export function FinishModal({ open, onClose, board, bonus, isToday, user, onLead
       <SheetBody className="finishbody">
         <div className="finishtrophy"><TrophyIcon /></div>
         <h3 className="finishhead">כל הכבוד!</h3>
-        <p className="finishsub">מצאתם את כל המילים בלוח {board.number}.</p>
+        <p className="finishsub">
+          {again ? <>לוח {board.number} כבר פתור. כל המילים שלכם.</> : <>מצאתם את כל המילים בלוח {board.number}.</>}
+        </p>
 
         <div className="finishstats">
           <Stat value={board.mainTotal} label="מילים" />
@@ -93,23 +98,38 @@ export function FinishModal({ open, onClose, board, bonus, isToday, user, onLead
             </div>
           : <p className="finishbonus all">ומצאתם גם את כל מילות הבונוס!</p>)}
 
-        {missed && (
+        {missed && shown && (
           <div className="finishmissed">
-            <p className="finishwould">
-              {user ? "עם כינוי, " : "אם הייתם מחוברים, "}
-              הייתם במקום <b className="finishplace">ה־{missed.rank}</b> היום.
+            <p className="finishwould">המקום שלכם בטבלה שמור</p>
+            <ol className="finishpeek leadlist" aria-label="טבלת המובילים של היום">
+              {peek(shown.day.top, missed).map(r => r === "me"
+                ? <li key="me" className="leadrow ghost me">
+                    <span className="leadrank">{missed.rank}</span>
+                    <span className="leadname">אתם <span className="leadtag">כאן הייתם</span></span>
+                    <span className="leadscore"><b>הושלם ✓</b>{bonus > 0 && <span className="leadbonus">+{bonus}</span>}</span>
+                  </li>
+                : <li key={r.rank + r.name} className="leadrow">
+                    <span className="leadrank">{r.rank}</span>
+                    <bdi className="leadname">{r.name}</bdi>
+                    <span className="leadscore">
+                      {r.done ? <b>הושלם ✓</b> : <><b>{r.main}</b>/{board.mainTotal}</>}
+                      {r.bonus > 0 && <span className="leadbonus">+{r.bonus}</span>}
+                    </span>
+                  </li>)}
+            </ol>
+            <p className="finishnudge">
+              כל מה שמפריד ביניכם לבין מקום בטבלה זה {user ? "כינוי" : "התחברות"}!
             </p>
-            <p>לא חבל שלא תופיעו בטבלת המובילים?</p>
           </div>
         )}
         {!isToday && <p className="finishfine">לוחות מהארכיון לא נכנסים לטבלת המובילים, אבל הם נשמרים אצלכם.</p>}
 
         <div className="finishactions">
           {missed
-            ? <Button variant="primary" onClick={onAccount}>{user ? "בחירת כינוי" : "התחברות"}</Button>
+            ? <Button variant="primary" onClick={onAccount}>{user ? "בחירת כינוי" : "להתחבר ולהופיע בטבלה"}</Button>
             : isToday && onLeaders && <Button variant="primary" onClick={onLeaders}>לטבלת המובילים</Button>}
-          {missed && onLeaders
-            ? <Button onClick={onLeaders}>לטבלת המובילים</Button>
+          {missed
+            ? <button type="button" className="linkish finishlater" onClick={onClose}>אולי אחר כך</button>
             : <Button onClick={onClose}>{isToday && onLeaders ? "סגירה" : "יופי"}</Button>}
         </div>
       </SheetBody>
@@ -124,4 +144,13 @@ function Stat({ value, label, bonus, lit }: { value: number | string; label: str
       <span>{label}</span>
     </div>
   );
+}
+
+/**
+ * A peek at today's list around the player's place: the row ahead of them,
+ * their own (pencilled in), and the row behind.
+ */
+function peek(top: (Ranked & DayRow)[], me: MyPlace): ((Ranked & DayRow) | "me")[] {
+  const at = top.filter(r => r.rank < me.rank).length;
+  return [...top.slice(Math.max(at - 1, 0), at), "me" as const, ...top.slice(at, at + 1)];
 }

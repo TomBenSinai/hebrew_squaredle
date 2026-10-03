@@ -10,7 +10,7 @@ player, listed or not, also gets their own place (`me`), counted among the liste
 Both lists read `on_day` (progress.py): what a player found on the board's own
 day, so archive play never counts.
 
-- day: most main words, then who finished first, then most bonus words.
+- day: most main words, then most bonus words, then who finished first.
 - streaks: days in a row with a main word found on the day, up to today. A
   streak still counts through yesterday until today's board is played.
 """
@@ -68,8 +68,8 @@ def _ranked(rows: list[dict], key, listed: dict[str, str], me: str | None) -> di
 def day_board(d: Day, listed: dict[str, str], me: str | None) -> dict:
     rows = [{"player_id": r["player_id"], "main": r["main"], "bonus": r["bonus"], "done": r["done_at"] is not None,
              "_at": r["done_at"] or ""} for r in repo().on_day(d.date)]
-    # finished first ranks higher; unfinished rows all share "" there, so only bonus splits them
-    key = lambda r: (-r["main"], not r["done"], r["_at"], -r["bonus"])
+    # the finish time only breaks a tie in both counts; unfinished rows all share "" there
+    key = lambda r: (-r["main"], not r["done"], -r["bonus"], r["_at"])
     return {"date": d.date, "mainTotal": len(d.board.main), **_ranked(rows, key, listed, me)}
 
 

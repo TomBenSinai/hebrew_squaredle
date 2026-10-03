@@ -47,7 +47,7 @@ export function LeaderboardModal({ open, onClose, date, user, onAccount }: Props
         </div>
         <p className="leadfine">
           {tab === "day"
-            ? "לפי מספר המילים. בתיקו: מי שסיים ראשון, ואז מילות הבונוס."
+            ? "לפי מספר המילים, ואז מילות הבונוס. בתיקו: מי שסיים ראשון."
             : "ימים ברצף שבהם מצאתם מילה בלוח של אותו יום. משחק בארכיון לא נספר."}
         </p>
 
@@ -86,13 +86,15 @@ const GAP = "gap" as const;
 
 /**
  * The listed rows with the player's own row put in where it belongs, when the
- * list doesn't already show it: after everyone ahead of or level with them, or
- * at the end after a gap when they rank below the rows shown.
+ * list doesn't already show it: after everyone ahead of them, or at the end
+ * after a gap when they rank below the rows shown. A listed row with their own
+ * place number comes after them: their place counts only the rows ahead, so
+ * that row is level with them or behind.
  */
 function withMe(top: Ranked[], me: MyPlace | null, name: string): (ListRow | typeof GAP)[] {
   if (!me || top.some(r => r.me)) return top;
   const row: ListRow = { ...me, name, me: true, ghost: !me.listed };
-  const at = top.filter(r => r.rank <= me.rank).length;
+  const at = top.filter(r => r.rank < me.rank).length;
   if (at === top.length && top.length && top[top.length - 1].rank + 1 < me.rank) return [...top, GAP, row];
   return [...top.slice(0, at), row, ...top.slice(at)];
 }

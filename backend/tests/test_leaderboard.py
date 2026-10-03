@@ -50,7 +50,7 @@ class LeaderboardBase(Base):
 
 
 class TestDay(LeaderboardBase):
-    def test_ranked_by_main_words_then_finish_then_bonus(self):
+    def test_ranked_by_main_words_then_bonus(self):
         main = words(D1, 999)
         bonus = list(get_day(D1).board.bonus)
         a, b, c, d = (self.player(f"{n}@example.com", n) for n in ("alef", "bet", "gimel", "dalet"))
@@ -63,7 +63,14 @@ class TestDay(LeaderboardBase):
         self.assertTrue(top[0]["done"])
         self.assertEqual((top[2]["main"], top[2]["bonus"]), (3, 2))
 
-    def test_finishing_first_wins_a_tie(self):
+    def test_bonus_words_beat_finishing_first(self):
+        main, bonus = words(D1, 999), list(get_day(D1).board.bonus)
+        a, b = self.player("a@example.com", "first"), self.player("b@example.com", "more")
+        self.put(a, D1, main)
+        self.put(b, D1, main + bonus[:1])
+        self.assertEqual(self.names(self.board(a)["day"]), [(1, "more"), (2, "first")])
+
+    def test_finishing_first_breaks_a_bonus_tie(self):
         main = words(D1, 999)
         a, b = self.player("a@example.com", "first"), self.player("b@example.com", "second")
         self.put(b, D1, main[:-1])
