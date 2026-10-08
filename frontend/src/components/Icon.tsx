@@ -105,3 +105,13 @@ export function SunIcon() {
     </svg>
   );
 }
+
+/** A box with an arrow rising out of it: share. */
+export function ShareIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">
+      <path d="M12 3.5v11M8 7.2l4-3.7 4 3.7M8.5 10.5H6.5A1.5 1.5 0 0 0 5 12v7a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19v-7a1.5 1.5 0 0 0-1.5-1.5h-2"
+        fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

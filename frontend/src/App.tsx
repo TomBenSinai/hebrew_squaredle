@@ -9,7 +9,7 @@ import { FinishModal } from "./features/FinishModal";
 import { HelpModal } from "./features/HelpModal";
 import { introName, IntroModal, type Intro } from "./features/IntroModal";
 import { LeaderboardModal } from "./features/LeaderboardModal";
-import { ArchivePill, LeadersPill, Masthead, News } from "./features/Masthead";
+import { ArchivePill, LeadersPill, Masthead, News, SharePill } from "./features/Masthead";
 import { Readout } from "./features/Readout";
 import { Score } from "./features/Score";
 import { SpinButton } from "./features/SpinButton";
@@ -22,6 +22,7 @@ import { useSwipe } from "./hooks/useSwipe";
 import { withFinal } from "./lib/hebrew";
 import { HINTS, letterFraction, openHints, rankFor } from "./lib/scoring";
 import { hasSeen, markSeen } from "./lib/seen";
+import { share, shareText } from "./lib/share";
 import { bootAuth, type AuthState } from "./state/auth";
 import { progressStore } from "./state/progressStore";
 import { useGame, type Game } from "./state/useGame";
@@ -113,6 +114,19 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
   const bonusFound = found.length - mainFound;
   const fraction = letterFraction(found, board.mainLetters);
 
+  // called straight from the tap: Safari only opens the share dialog inside one.
+  // Without a share menu the text goes to the clipboard, and the button says so.
+  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const shareProgress = () => {
+    share(shareText(found)).then(r => {
+      if (r !== "copied") return;
+      clearTimeout(copiedTimer.current);
+      setCopied(true);
+      copiedTimer.current = setTimeout(() => setCopied(false), 2200);
+    });
+  };
+  useEffect(() => () => clearTimeout(copiedTimer.current), []);
   const hintsOpen = useMemo(() => openHints(fraction), [fraction]);
   const crowd = useDayStats(board.date);
 
@@ -205,6 +219,7 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
         <div className="tools">
           <SpinButton turns={turns} onClick={spin} />
           <span className="toolsend">
+            {found.length > 0 && <SharePill copied={copied} onClick={shareProgress} />}
             <ArchivePill onClick={() => setArchiveOpen(true)} />
             {loginOn && <LeadersPill fresh={!leadersSeen} onClick={openLeaders} />}
           </span>
@@ -223,7 +238,8 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
       <DefinitionModal word={defWord} onClose={() => setDefWord(null)} onShow={showOnBoard} />
       <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
       <FinishModal open={finishOpen} onClose={() => setFinishOpen(false)} board={board} bonus={bonusFound}
-        isToday={isToday} again={reloadWin === board.date} user={user} onAccount={() => { setFinishOpen(false); openAccount(); }}
+        onShare={shareProgress} copied={copied}
+        isToday={isToday} user={user} onAccount={() => { setFinishOpen(false); openAccount(); }}
         onLeaders={loginOn ? () => { setFinishOpen(false); openLeaders(); } : undefined} />
       <LeaderboardModal open={leadersOpen} onClose={() => setLeadersOpen(false)} date={days.today} user={user}
         onAccount={openAccount} />

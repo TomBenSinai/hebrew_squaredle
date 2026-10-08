@@ -38,6 +38,10 @@
   .tools .pill:hover .tip { opacity: 1; }
 }
 .tools .pill:focus-visible .tip { opacity: 1; }
+/* share is the row's call to action: filled in ink, the others outlined */
+.tools .pill.share { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.tools .pill.share:hover { background: color-mix(in srgb, var(--ink) 85%, var(--paper)); }
+.tools .pill.share svg { width: 17px; height: 17px; }
 /* the row's last pill sits at its end: its label hangs inward, not off the screen */
 .tools .toolsend .pill:last-child .tip { left: auto; right: 0; transform: none; }
 @media (prefers-reduced-motion: reduce) {
