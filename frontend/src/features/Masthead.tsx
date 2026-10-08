@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CalendarIcon, Chip, MoonIcon, PersonIcon, Pill, ShapeIcon, SunIcon, TrophyIcon } from "../components";
+import { CalendarIcon, Chip, MoonIcon, PersonIcon, Pill, ShapeIcon, ShareIcon, SunIcon, TrophyIcon } from "../components";
 import type { DaySummary, User } from "../api/types";
 import { shortDate, weekday } from "../lib/dates";
 import { useTheme } from "../lib/theme";
@@ -59,6 +59,15 @@ export function LeadersPill({ fresh, onClick }: { fresh?: boolean; onClick: () =
     <Pill className={"round leaders" + (fresh ? " new" : "")} aria-label="טבלת המובילים" onClick={onClick}>
       <TrophyIcon />
       <span className="tip" aria-hidden="true">טבלת המובילים</span>
+    </Pill>
+  );
+}
+
+/** Share the player's progress: the one filled pill in the row. */
+export function SharePill({ onClick }: { onClick: () => void }) {
+  return (
+    <Pill className="share" icon={<ShareIcon />} aria-label="שיתוף ההתקדמות" onClick={onClick}>
+      <span className="pilllabel">שיתוף</span>
     </Pill>
   );
 }

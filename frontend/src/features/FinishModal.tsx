@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { api } from "../api/client";
 import type { DayRow, Leaderboard, MyPlace, PublicBoard, Ranked, User } from "../api/types";
-import { Button, Modal, SheetBody, TrophyIcon } from "../components";
+import { Button, Modal, SheetBody, ShareIcon, TrophyIcon } from "../components";
 import { playerId, progressStore } from "../state/progressStore";
 import "./FinishModal.css";
 import "./LeaderboardModal.css";
@@ -13,12 +13,12 @@ interface Props {
   bonus: number;
   /** finished on the board's own day: it counts for the leaderboard */
   isToday: boolean;
-  /** the page was loaded on a board already solved: welcome back, not "you did it" */
-  again?: boolean;
   user: User | null;
   /** undefined: no leaderboard (login is off) */
   onLeaders?: () => void;
   onAccount: () => void;
+  /** share the result (opens a share menu) */
+  onShare: () => void;
 }
 
 const CONFETTI = 30;
@@ -29,7 +29,7 @@ const COLORS = ["var(--amber-fill)", "var(--cobalt)", "var(--hint-sort)", "var(-
  * The board is solved: a shower of the board's own letters, what the player
  * found, and on today's board their place and streak.
  */
-export function FinishModal({ open, onClose, board, bonus, isToday, again, user, onLeaders, onAccount }: Props) {
+export function FinishModal({ open, onClose, board, bonus, isToday, user, onLeaders, onAccount, onShare }: Props) {
   const [lead, setLead] = useState<Leaderboard | null>(null);
   // a flag, not the callback: the parent makes a new one each render, which would refetch
   const hasLeaders = !!onLeaders;
@@ -66,36 +66,31 @@ export function FinishModal({ open, onClose, board, bonus, isToday, again, user,
   // finished today, but not on the list: say where they'd be, and how to get there
   const missed = isToday && me && !me.listed ? me : null;
   return (
-    <Modal open={open} onClose={onClose} title="סיימתם!" sheetClassName="finishcard" layer={30}>
+    <Modal open={open} onClose={onClose} sheetClassName="finishcard" layer={30}
+      title={<span className="finishtitle"><span className="finishtrophy"><TrophyIcon /></span>
+        <span>סיימתם את לוח {board.number}! <span className="finishcheer">כל הכבוד :)</span></span></span>}>
       {open && (
         <div className="confetti" aria-hidden="true">
           {confetti.map((c, i) => <span key={i} style={c.style}>{c.letter}</span>)}
         </div>
       )}
       <SheetBody className="finishbody">
-        <div className="finishtrophy"><TrophyIcon /></div>
-        <h3 className="finishhead">כל הכבוד!</h3>
-        <p className="finishsub">
-          {again ? <>לוח {board.number} כבר פתור. כל המילים שלכם.</> : <>מצאתם את כל המילים בלוח {board.number}.</>}
-        </p>
-
-        <div className="finishstats">
-          <Stat value={board.mainTotal} label="מילים" />
-          {bonus > 0 && <Stat value={`+${bonus}`} label="בונוס" bonus />}
-          {me?.listed && <Stat value={me.rank} label="מקום היום" lit={me.rank <= 3} />}
-          {streak > 1 && <Stat value={streak} label="ימים ברצף" />}
-        </div>
+        {/* the result as it will be shared, and the one tap that shares it */}
+        <button type="button" className="finishshare" onClick={onShare}>
+          <span className="finishstats">
+            <Stat value={board.mainTotal} label="מילים" />
+            {bonus > 0 && <Stat value={`+${bonus}`} label="בונוס" bonus />}
+            {me?.listed && <Stat value={me.rank} label="מקום היום" lit={me.rank <= 3} />}
+            {streak > 1 && <Stat value={streak} label="ימים ברצף" />}
+          </span>
+          <span className="finishsharecta"><ShareIcon />שתפו את התוצאה</span>
+        </button>
 
         {board.bonusTotal > 0 && (bonusLeft > 0
-          ? <div className="finishbonus">
-              <p className="finishbonushead">
-                {bonusLeft === 1 ? "יש עוד מילת בונוס אחת בלוח" : <>יש עוד <b>{bonusLeft}</b> מילות בונוס בלוח</>}
-              </p>
-              <p>
-                הן לא חובה, אבל אפשר להמשיך לחפש. גם אותיות שהאפירו יכולות להיות חלק ממילת בונוס.{" "}
-                <button type="button" className="linkish" onClick={onClose}>להמשיך לחפש</button>
-              </p>
-            </div>
+          ? <p className="finishbonus">
+              {bonusLeft === 1 ? "נשארה עוד מילת בונוס אחת" : <>נשארו עוד <b>{bonusLeft}</b> מילות בונוס</>}
+              {" · "}<button type="button" className="linkish" onClick={onClose}>להמשיך לחפש</button>
+            </p>
           : <p className="finishbonus all">ומצאתם גם את כל מילות הבונוס!</p>)}
 
         {missed && shown && (
@@ -122,17 +117,13 @@ export function FinishModal({ open, onClose, board, bonus, isToday, again, user,
                     </span>
                   </li>)}
             </ol>
-            <p className="finishnudge">
-              כל מה שמפריד ביניכם לבין מקום בטבלה זה {user ? "כינוי" : "התחברות"}!
-            </p>
+            <Button onClick={onAccount}>{user ? "בחירת כינוי" : "להתחבר ולהופיע בטבלה"}</Button>
           </div>
         )}
         {!isToday && <p className="finishfine">לוחות מהארכיון לא נכנסים לטבלת המובילים, אבל הם נשמרים אצלכם.</p>}
 
         <div className="finishactions">
-          {missed
-            ? <Button variant="primary" onClick={onAccount}>{user ? "בחירת כינוי" : "להתחבר ולהופיע בטבלה"}</Button>
-            : isToday && onLeaders && <Button variant="primary" onClick={onLeaders}>לטבלת המובילים</Button>}
+          {!missed && isToday && onLeaders && <Button onClick={onLeaders}>לטבלת המובילים</Button>}
           {missed
             ? <button type="button" className="linkish finishlater" onClick={onClose}>אולי אחר כך</button>
             : <Button onClick={onClose}>{isToday && onLeaders ? "סגירה" : "יופי"}</Button>}
@@ -144,10 +135,10 @@ export function FinishModal({ open, onClose, board, bonus, isToday, again, user,
 
 function Stat({ value, label, bonus, lit }: { value: number | string; label: string; bonus?: boolean; lit?: boolean }) {
   return (
-    <div className={"finishstat" + (bonus ? " bonus" : "") + (lit ? " lit" : "")}>
+    <span className={"finishstat" + (bonus ? " bonus" : "") + (lit ? " lit" : "")}>
       <b dir="ltr">{value}</b>
       <span>{label}</span>
-    </div>
+    </span>
   );
 }
 
