@@ -13,18 +13,20 @@ export function shareText(found: FoundWord[]): string {
 
 /**
  * Open the system share dialog. A browser without one (Firefox on a computer,
- * or any page that isn't https) gets the text on the clipboard instead.
+ * or any page that isn't https) gets the text on the clipboard instead; the
+ * caller says so, since nothing else on screen does.
  */
-export async function share(text: string): Promise<void> {
+export async function share(text: string): Promise<"shared" | "copied" | "failed"> {
   if (navigator.share && navigator.canShare?.({ text }) !== false) {
     try {
       await navigator.share({ text });
-      return;
+      return "shared";
     } catch (e) {
-      if (e instanceof DOMException && e.name === "AbortError") return;   // closed without picking
+      // closed without picking, or a second tap while the dialog is still open
+      if (e instanceof DOMException && (e.name === "AbortError" || e.name === "InvalidStateError")) return "shared";
     }
   }
-  await copyText(text);
+  return (await copyText(text)) ? "copied" : "failed";
 }
 
 /** Copy to the clipboard; the old way where the clipboard API isn't there (not https). */

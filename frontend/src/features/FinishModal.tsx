@@ -19,6 +19,8 @@ interface Props {
   onAccount: () => void;
   /** share the result (opens a share menu) */
   onShare: () => void;
+  /** the result went to the clipboard just now (no share menu here) */
+  copied?: boolean;
 }
 
 const CONFETTI = 30;
@@ -29,7 +31,7 @@ const COLORS = ["var(--amber-fill)", "var(--cobalt)", "var(--hint-sort)", "var(-
  * The board is solved: a shower of the board's own letters, what the player
  * found, and on today's board their place and streak.
  */
-export function FinishModal({ open, onClose, board, bonus, isToday, user, onLeaders, onAccount, onShare }: Props) {
+export function FinishModal({ open, onClose, board, bonus, isToday, user, onLeaders, onAccount, onShare, copied }: Props) {
   const [lead, setLead] = useState<Leaderboard | null>(null);
   // a flag, not the callback: the parent makes a new one each render, which would refetch
   const hasLeaders = !!onLeaders;
@@ -83,7 +85,7 @@ export function FinishModal({ open, onClose, board, bonus, isToday, user, onLead
             {me?.listed && <Stat value={me.rank} label="מקום היום" lit={me.rank <= 3} />}
             {streak > 1 && <Stat value={streak} label="ימים ברצף" />}
           </span>
-          <span className="finishsharecta"><ShareIcon />שתפו את התוצאה</span>
+          <span className="finishsharecta"><ShareIcon />{copied ? "הועתק, אפשר להדביק" : "שתפו את התוצאה"}</span>
         </button>
 
         {board.bonusTotal > 0 && (bonusLeft > 0

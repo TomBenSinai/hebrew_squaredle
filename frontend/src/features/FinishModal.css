@@ -1,7 +1,6 @@
-/* a short card, centred, with room for the shower over it */
 /* a short card, centred, with room for the shower over it; it fits the screen
    without scrolling, the body only scrolls as a last resort */
-.modal .sheet.finishcard { position: relative; height: auto; max-height: calc(100dvh - 32px); max-width: 26rem; overflow: hidden; }
+.modal .sheet.finishcard { position: relative; height: auto; max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); max-width: 26rem; overflow: hidden; }
 .finishcard .sheethead { padding: 14px 18px 12px; gap: 12px; }
 .finishcard .sheethead h2 { font-size: 1.5rem; line-height: 1.2; }
 .finishtitle { display: flex; align-items: center; gap: 12px; }

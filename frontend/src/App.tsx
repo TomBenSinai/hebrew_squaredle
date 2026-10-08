@@ -114,8 +114,19 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
   const bonusFound = found.length - mainFound;
   const fraction = letterFraction(found, board.mainLetters);
 
-  // called straight from the tap: Safari only opens the share dialog inside one
-  const shareProgress = () => { share(shareText(found)); };
+  // called straight from the tap: Safari only opens the share dialog inside one.
+  // Without a share menu the text goes to the clipboard, and the button says so.
+  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const shareProgress = () => {
+    share(shareText(found)).then(r => {
+      if (r !== "copied") return;
+      clearTimeout(copiedTimer.current);
+      setCopied(true);
+      copiedTimer.current = setTimeout(() => setCopied(false), 2200);
+    });
+  };
+  useEffect(() => () => clearTimeout(copiedTimer.current), []);
   const hintsOpen = useMemo(() => openHints(fraction), [fraction]);
   const crowd = useDayStats(board.date);
 
@@ -208,7 +219,7 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
         <div className="tools">
           <SpinButton turns={turns} onClick={spin} />
           <span className="toolsend">
-            {found.length > 0 && <SharePill onClick={shareProgress} />}
+            {found.length > 0 && <SharePill copied={copied} onClick={shareProgress} />}
             <ArchivePill onClick={() => setArchiveOpen(true)} />
             {loginOn && <LeadersPill fresh={!leadersSeen} onClick={openLeaders} />}
           </span>
@@ -227,7 +238,7 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
       <DefinitionModal word={defWord} onClose={() => setDefWord(null)} onShow={showOnBoard} />
       <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
       <FinishModal open={finishOpen} onClose={() => setFinishOpen(false)} board={board} bonus={bonusFound}
-        onShare={shareProgress}
+        onShare={shareProgress} copied={copied}
         isToday={isToday} user={user} onAccount={() => { setFinishOpen(false); openAccount(); }}
         onLeaders={loginOn ? () => { setFinishOpen(false); openLeaders(); } : undefined} />
       <LeaderboardModal open={leadersOpen} onClose={() => setLeadersOpen(false)} date={days.today} user={user}

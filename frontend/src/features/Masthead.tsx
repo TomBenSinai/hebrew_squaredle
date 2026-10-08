@@ -64,10 +64,10 @@ export function LeadersPill({ fresh, onClick }: { fresh?: boolean; onClick: () =
 }
 
 /** Share the player's progress: the one filled pill in the row. */
-export function SharePill({ onClick }: { onClick: () => void }) {
+export function SharePill({ copied, onClick }: { copied?: boolean; onClick: () => void }) {
   return (
-    <Pill className="share" icon={<ShareIcon />} aria-label="שיתוף ההתקדמות" onClick={onClick}>
-      <span className="pilllabel">שיתוף</span>
+    <Pill className="share" icon={<ShareIcon />} aria-label={copied ? "הועתק" : "שיתוף ההתקדמות"} onClick={onClick}>
+      <span className="pilllabel" aria-live="polite">{copied ? "הועתק" : "שיתוף"}</span>
     </Pill>
   );
 }
