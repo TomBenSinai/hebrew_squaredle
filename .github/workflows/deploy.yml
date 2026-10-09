@@ -1,0 +1,49 @@
+# Deploy ribuon.com on every push to main (a merged PR is one).
+#
+# The DEPLOY_SSH_KEY secret is a key the server only lets run deploy/deploy.sh
+# (a forced command in authorized_keys), so even a leaked key can do nothing but
+# deploy main. Setup: docs/DEPLOY.md, "Deploy on merge".
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+  workflow_dispatch:
+
+# One deploy at a time; a newer push waits for the running one instead of
+# cutting it off halfway through a build.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: https://ribuon.com
+    steps:
+      - name: Run deploy/deploy.sh on the server
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          # ssh-keyscan -t ed25519 ribuon.com
+          echo 'ribuon.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEWOosSmsvX3Xzuu4WQxaifiQsTxB51FY8ThBRv4DcJ' > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes root@ribuon.com
+
+      - name: Check the live site
+        run: |
+          for i in $(seq 1 10); do
+            if curl -fsS https://ribuon.com/api/health; then exit 0; fi
+            sleep 3
+          done
+          exit 1
