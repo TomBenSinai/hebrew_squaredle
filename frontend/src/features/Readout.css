@@ -45,8 +45,9 @@
 }
 .toastbtn { border: 0; background: none; color: inherit; font: inherit; cursor: pointer; padding: 4px 8px; }
 .toastbtn .tw { text-decoration: underline dotted 1.5px; text-underline-offset: 5px; }
-/* a message about a word (new, bonus or a repeat) reads larger; plain notes and hint lines stay small */
-.toast .toastbtn { font-size: 1.25em; }
+/* a message about a word (new, bonus, a repeat, or not in the list) reads larger;
+   plain notes and hint lines stay small */
+.toast .toastbtn, .toast.bad .toastline { font-size: 1.25em; }
 /* under a find that opened a new hint, in that hint's color */
 .toast .note {
   /* one line even on a 360px phone */
