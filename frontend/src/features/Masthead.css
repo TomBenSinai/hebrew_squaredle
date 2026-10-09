@@ -37,11 +37,6 @@
   background: var(--cobalt); border-color: var(--cobalt); color: var(--cobalt-ink);
   font-family: var(--display); font-weight: 700; font-size: 1.05rem;
 }
-/* An archive day adds "back to today"; on a narrow phone four pills and the name
-   don't fit one line, so the theme switch steps aside until the player is back on today. */
-@media (max-width: 420px) {
-  .headbtns:has(.pill.strong) .pill.theme { display: none; }
-}
 /* Sits before the shape name (also in the archive list), so "סופגנייה" reads as the board's shape, not the theme. */
 .shape { white-space: nowrap; }
 .shape-icon { vertical-align: -1px; margin-inline-end: 4px; opacity: .75; }
