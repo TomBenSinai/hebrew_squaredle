@@ -24,7 +24,11 @@ export function Readout({ current, waiting, toast, onWord }: Props) {
       </div>
       {!current && toast && (
         <div className={`toast ${toast.kind}`} role="status">
-          {toast.word ? <ToastWord toast={toast} word={toast.word} onWord={onWord} /> : toast.text}
+          <span className="toastline">
+            {toast.word ? <ToastWord toast={toast} word={toast.word} onWord={onWord} /> : toast.text}
+            {/* a new main word: "+1" pops up beside it, so the find reads as a point scored */}
+            {toast.kind === "main" && <span key={toast.word} className="gain" dir="ltr" aria-hidden="true">+1</span>}
+          </span>
           {toast.note && <span className={`note hint-${toast.note.hint}`}>{toast.note.text}</span>}
         </div>
       )}
