@@ -10,11 +10,11 @@ export function shareText(found: FoundWord[], mainTotal: number): string {
   const link = window.location.origin;
   if (main >= mainTotal) {
     const extra = bonus ? ` ועוד ${count(bonus, "מילת בונוס אחת", "מילות בונוס")}` : "";
-    return `תראו, סיימתי את הריבועון: מצאתי את כל ${mainTotal} המילים${extra}! נראה אותך מצליח גם🤩 ${link}`;
+    return `תראו, סיימתי את הריבועון: כל ${mainTotal} המילים${extra}! נראה אתכם מצליחים גם🤩 ${link}`;
   }
   const words = main === 1 ? `מילה אחת מתוך ${mainTotal}` : `${main} מתוך ${mainTotal} מילים`;
-  const extra = bonus ? ` ו${count(bonus, "מילת בונוס אחת", "מילות בונוס")}` : "";
-  return `שיחקתי בריבועון ומצאתי ${words}${extra}. נראה אותך עוקף אותי! ${link}`;
+  const extra = bonus ? (bonus === 1 ? " ומילת בונוס אחת" : ` ו־${bonus} מילות בונוס`) : "";
+  return `שיחקתי בריבועון ומצאתי ${words}${extra}. נראה אתכם עוקפים אותי! ${link}`;
 }
 
 /**
