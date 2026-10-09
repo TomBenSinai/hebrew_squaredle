@@ -71,4 +71,7 @@ export const MAX_GROUP = 8;
 export const groupOfLength = (n: number) => Math.min(n, MAX_GROUP);
 export const groupOf = (w: string) => groupOfLength(letterCount(w));
 export const groupTitle = (len: number) => (len >= MAX_GROUP ? `${MAX_GROUP}+ אותיות` : `${len} אותיות`);
-export const leftText = (n: number) => (n === 1 ? "נותרה עוד מילה אחת" : `נותרו עוד ${n} מילים`);
+/** A count of words left, capped: past 100 the exact number only reads as endless.
+ * Isolated left-to-right, or the "+" lands on the wrong side in Hebrew text. */
+export const countText = (n: number) => (n > 100 ? "\u2066100+\u2069" : String(n));
+export const leftText = (n: number) => (n === 1 ? "נותרה עוד מילה אחת" : `נותרו עוד ${countText(n)} מילים`);

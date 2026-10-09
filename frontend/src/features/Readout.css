@@ -24,6 +24,25 @@
 .toast.bonus { color: var(--amber); }
 .toast.bad { color: var(--bad); }
 .toast.info { color: var(--muted); }
+.toastline { position: relative; }
+.toast .gain {
+  /* after the word: to its left (the "+1" runs left-to-right, so a logical side would flip) */
+  position: absolute; right: 100%; margin-right: 6px; top: -.15em;
+  font-family: var(--display); font-weight: 800; font-size: .95rem; letter-spacing: 0;
+  pointer-events: none; white-space: nowrap;
+  animation: gain 1.2s var(--ease-out) both;
+}
+@keyframes gain {
+  0% { opacity: 0; transform: translateY(.5em) scale(.6); }
+  16% { opacity: 1; transform: translateY(0) scale(1.15); }
+  30% { transform: translateY(0) scale(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-.6em); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast .gain { animation: gain-fade 1.2s linear both; }
+  @keyframes gain-fade { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
+}
 .toastbtn { border: 0; background: none; color: inherit; font: inherit; cursor: pointer; padding: 4px 8px; }
 .toastbtn .tw { text-decoration: underline dotted 1.5px; text-underline-offset: 5px; }
 /* under a find that opened a new hint, in that hint's color */

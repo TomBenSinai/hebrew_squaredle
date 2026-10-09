@@ -3,6 +3,7 @@ import { api } from "../api/client";
 import type { DayRow, Leaderboard, MyPlace, PublicBoard, Ranked, User } from "../api/types";
 import { Button, Modal, SheetBody, ShareIcon, TrophyIcon } from "../components";
 import { playerId, progressStore } from "../state/progressStore";
+import { countText } from "../lib/scoring";
 import "./FinishModal.css";
 import "./LeaderboardModal.css";
 
@@ -90,7 +91,7 @@ export function FinishModal({ open, onClose, board, bonus, isToday, user, onLead
 
         {board.bonusTotal > 0 && (bonusLeft > 0
           ? <p className="finishbonus">
-              {bonusLeft === 1 ? "נשארה עוד מילת בונוס אחת" : <>נשארו עוד <b>{bonusLeft}</b> מילות בונוס</>}
+              {bonusLeft === 1 ? "נשארה עוד מילת בונוס אחת" : <>נשארו עוד <b>{countText(bonusLeft)}</b> מילות בונוס</>}
               {" · "}<button type="button" className="linkish" onClick={onClose}>להמשיך לחפש</button>
             </p>
           : <p className="finishbonus all">ומצאתם גם את כל מילות הבונוס!</p>)}
