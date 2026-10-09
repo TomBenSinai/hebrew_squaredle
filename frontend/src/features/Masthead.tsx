@@ -8,14 +8,12 @@ import "./Masthead.css";
 interface Props {
   day: DaySummary;
   isToday: boolean;
-  canGoToday: boolean;
-  onToday: () => void;
   onHelp: () => void;
   /** undefined: login is off, so no account button */
   account?: { user: User | null; onOpen: () => void };
 }
 
-export function Masthead({ day, isToday, canGoToday, onToday, onHelp, account }: Props) {
+export function Masthead({ day, isToday, onHelp, account }: Props) {
   return (
     <MastheadFrame live when={<>
       {isToday ? <b>היום</b> : <><b>ארכיון</b> · {weekday(day.date)}</>}
@@ -23,7 +21,6 @@ export function Masthead({ day, isToday, canGoToday, onToday, onHelp, account }:
       {day.shapeName && <> · <span className="shape" title="צורת הלוח"><ShapeIcon />{day.shapeName}</span></>}
       {day.theme && <Chip>★ {day.theme}</Chip>}
     </>}>
-      {!isToday && canGoToday && <Pill strong onClick={onToday}>חזרה להיום</Pill>}
       {account && <AccountPill user={account.user} onClick={account.onOpen} />}
       <HelpPill onClick={onHelp} />
       <ThemePill />
@@ -44,13 +41,21 @@ export function MastheadFrame({ when, live, children }: { when: ReactNode; live?
   );
 }
 
-export function ArchivePill({ className, onClick }: { className?: string; onClick: () => void }) {
+export function ArchivePill({ className, round, onClick }:
+  { className?: string; round?: boolean; onClick: () => void }) {
   return (
-    <Pill className={["cal", className].filter(Boolean).join(" ")} icon={<CalendarIcon />}
-      aria-label="ארכיון" title="ארכיון" onClick={onClick}>
-      <span className="pilllabel">ארכיון</span>
+    <Pill className={["cal", round && "round", className].filter(Boolean).join(" ")} icon={<CalendarIcon />}
+      aria-label="ארכיון" title={round ? undefined : "ארכיון"} onClick={onClick}>
+      {round
+        ? <span className="tip" aria-hidden="true">ארכיון</span>
+        : <span className="pilllabel">ארכיון</span>}
     </Pill>
   );
+}
+
+/** On an archive day, beside the archive: straight back to today's board. */
+export function TodayPill({ onClick }: { onClick: () => void }) {
+  return <Pill strong className="today" onClick={onClick}>חזרה להיום</Pill>;
 }
 
 /** The leaderboard, in the row under the board; `fresh`: not opened yet, so a dot. */
@@ -63,11 +68,16 @@ export function LeadersPill({ fresh, onClick }: { fresh?: boolean; onClick: () =
   );
 }
 
-/** Share the player's progress: the one filled pill in the row. */
-export function SharePill({ copied, onClick }: { copied?: boolean; onClick: () => void }) {
+/**
+ * Share the player's progress: the one filled pill in the row. `round`: icon
+ * only (a narrow row), its label a tip that stays up while it says it copied.
+ */
+export function SharePill({ copied, round, onClick }: { copied?: boolean; round?: boolean; onClick: () => void }) {
+  const label = copied ? "הועתק" : "שיתוף";
   return (
-    <Pill className="share" icon={<ShareIcon />} aria-label={copied ? "הועתק" : "שיתוף ההתקדמות"} onClick={onClick}>
-      <span className="pilllabel" aria-live="polite">{copied ? "הועתק" : "שיתוף"}</span>
+    <Pill className={"share" + (round ? " round" : "") + (copied ? " copied" : "")} icon={<ShareIcon />}
+      aria-label={copied ? "הועתק" : "שיתוף ההתקדמות"} onClick={onClick}>
+      <span className={round ? "tip" : "pilllabel"} aria-live="polite">{label}</span>
     </Pill>
   );
 }

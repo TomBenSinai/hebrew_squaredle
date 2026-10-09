@@ -44,6 +44,8 @@
 .tools .pill.share svg { width: 17px; height: 17px; }
 /* the row's last pill sits at its end: its label hangs inward, not off the screen */
 .tools .toolsend .pill:last-child .tip { left: auto; right: 0; transform: none; }
+/* share says it copied in its tip, so with its label gone the word still shows */
+.tools .pill.copied .tip { opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
   .tools .spinbtn .spinicon, .tools .pill .tip { transition: none; }
 }

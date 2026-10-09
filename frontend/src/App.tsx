@@ -9,7 +9,7 @@ import { FinishModal } from "./features/FinishModal";
 import { HelpModal } from "./features/HelpModal";
 import { introName, IntroModal, type Intro } from "./features/IntroModal";
 import { LeaderboardModal } from "./features/LeaderboardModal";
-import { ArchivePill, LeadersPill, Masthead, News, SharePill } from "./features/Masthead";
+import { ArchivePill, LeadersPill, Masthead, News, SharePill, TodayPill } from "./features/Masthead";
 import { Readout } from "./features/Readout";
 import { Score } from "./features/Score";
 import { SpinButton } from "./features/SpinButton";
@@ -31,6 +31,9 @@ import "./App.css";
 /** Where the word list moves out of the modal and beside the board. The only copy:
     App.css styles the wide layout from the `wide` class this sets. */
 const WIDE_QUERY = "(min-width: 1100px)";
+/** Where the row under the board can't fit "back to today" beside share and the
+    archive with their words, so those two go round. */
+const NARROW_QUERY = "(max-width: 420px)";
 
 export default function App() {
   const [days, setDays] = useState<DaysResponse | null>(null);
@@ -55,7 +58,12 @@ export default function App() {
     return () => document.removeEventListener("visibilitychange", onShow);
   }, [refreshDays]);
 
-  const { game, error } = useGame(date);
+  const { game: loaded, error } = useGame(date);
+  // while the next day's board loads, the last one stays up, so Play isn't
+  // remounted on a day change (what's open in it, and the login's notice, stay put)
+  const lastGame = useRef<Game | null>(null);
+  if (loaded) lastGame.current = loaded;
+  const game = loaded ?? lastGame.current;
   // a first-time player learns on a practice board before the game opens
   const [learned, setLearned] = useState(() => hasSeen("tutorial"));
   // a player who starts after login came out isn't told it's new
@@ -100,6 +108,7 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
 
   // on a computer the list is always beside the board, so the count opens nothing
   const wide = useMedia(WIDE_QUERY);
+  const narrow = useMedia(NARROW_QUERY);
 
   const tileRefs = useRef<(HTMLDivElement | null)[]>([]);
   const { phase, turns, spin } = useSpin(game.rotate);
@@ -107,6 +116,7 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
 
   const swiping = withFinal(path.map(i => layout.letters[i]).join(""));
   const isToday = board.date === days.today;
+  const showToday = !isToday && days.days.some(d => d.date === days.today);
   // one note at a time: the leaderboard's first, the login's after it
   const showLeadersNews = loginOn && !leadersSeen && isToday;
   const showNews = !newsSeen && user === null && isToday && !showLeadersNews;
@@ -190,8 +200,7 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
   return (
     <div className={wide ? "app wide" : "app"}>
       <section className="play" aria-label="הלוח">
-        <Masthead day={board} isToday={isToday} canGoToday={days.days.some(d => d.date === days.today)}
-          onToday={() => setDate(days.today)}
+        <Masthead day={board} isToday={isToday}
           onHelp={() => setHelpOpen(true)}
           account={loginOn ? { user, onOpen: openAccount } : undefined} />
         {loginOn && showNews && (
@@ -219,8 +228,9 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
         <div className="tools">
           <SpinButton turns={turns} onClick={spin} />
           <span className="toolsend">
-            {found.length > 0 && <SharePill copied={copied} onClick={shareProgress} />}
-            <ArchivePill onClick={() => setArchiveOpen(true)} />
+            {found.length > 0 && <SharePill copied={copied} round={showToday && narrow} onClick={shareProgress} />}
+            {showToday && <TodayPill onClick={() => setDate(days.today)} />}
+            <ArchivePill round={showToday && narrow} onClick={() => setArchiveOpen(true)} />
             {loginOn && <LeadersPill fresh={!leadersSeen} onClick={openLeaders} />}
           </span>
         </div>
