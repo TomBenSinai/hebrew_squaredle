@@ -104,6 +104,40 @@ Deploy from `main` only, and never `--force` a regeneration of today or a past
 day on the server: `boards/daily/*.json` is the record players' progress is
 checked against.
 
+### Deploy on merge
+
+`.github/workflows/deploy.yml` does the above by itself on every push to `main`
+(docs-only pushes are skipped; Actions -> Deploy -> *Run workflow* runs it by
+hand). It sshes in and runs `deploy/deploy.sh`, which:
+
+- refuses to run if the server is off `main` or has local changes, so a hotfix
+  made on the server is never thrown away - fix that by hand and re-run;
+- `git pull --ff-only`, then `up -d --build` (unchanged images are left alone),
+  and restarts `api` when `backend/` or `wordgame.py` changed, since uvicorn
+  doesn't reload;
+- waits for `/api/health`.
+
+It uses `docker-compose.behind-proxy.yml`; set `RIBUON_COMPOSE` in the forced
+command below to use another file.
+
+One-time setup. On your own machine, make a key for GitHub only:
+
+```bash
+ssh-keygen -t ed25519 -f ribuon-deploy -N "" -C github-deploy
+gh secret set DEPLOY_SSH_KEY -R TomBenSinai/hebrew_squaredle < ribuon-deploy
+```
+
+Then add `ribuon-deploy.pub` to the server's `/root/.ssh/authorized_keys`, locked
+to the deploy script so the key can do nothing else (one line, path to your clone):
+
+```
+command="/root/rivuon/deploy/deploy.sh",restrict ssh-ed25519 AAAA... github-deploy
+```
+
+Delete the local `ribuon-deploy` files afterwards. If the server's host key ever
+changes, update the `known_hosts` line in the workflow
+(`ssh-keyscan -t ed25519 ribuon.com`).
+
 ## 6. Keeping the schedule ahead
 
 Boards are generated on a workstation and committed - generation needs the word
