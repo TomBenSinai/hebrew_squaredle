@@ -23,8 +23,10 @@
   ],
   "min_words": 7,
   "settings": {
-    "main_zipf": 4.0,
+    "main_zipf": 4.6,
     "max_longest": 0,
-    "max_long_words": 0
+    "max_long_words": 0,
+    "min_main": 60,
+    "max_main": 90
   }
 }
