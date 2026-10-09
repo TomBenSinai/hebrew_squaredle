@@ -129,7 +129,7 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
   const [copied, setCopied] = useState(false);
   const copiedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const shareProgress = () => {
-    share(shareText(found)).then(r => {
+    share(shareText(found, mainFound === board.mainTotal)).then(r => {
       if (r !== "copied") return;
       clearTimeout(copiedTimer.current);
       setCopied(true);
