@@ -55,7 +55,12 @@ export default function App() {
     return () => document.removeEventListener("visibilitychange", onShow);
   }, [refreshDays]);
 
-  const { game, error } = useGame(date);
+  const { game: loaded, error } = useGame(date);
+  // while the next day's board loads, the last one stays up, so Play isn't
+  // remounted on a day change (what's open in it, and the login's notice, stay put)
+  const lastGame = useRef<Game | null>(null);
+  if (loaded) lastGame.current = loaded;
+  const game = loaded ?? lastGame.current;
   // a first-time player learns on a practice board before the game opens
   const [learned, setLearned] = useState(() => hasSeen("tutorial"));
   // a player who starts after login came out isn't told it's new
