@@ -101,7 +101,7 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname, setMode }:
   { days: DaysResponse; refreshDays: () => void; game: Game; setDate: (d: string) => void; auth: AuthState;
     setNickname: (nickname: string | null) => void; setMode: (m: Mode) => void }) {
   const { board, layout, found } = game;
-  // ריבועוני: today's only, with no archive, leaderboard or crowd on the progress bar
+  // ריבועוני: today's only, so no archive and no way back to today
   const mini = board.date.startsWith("mini-");
   const [wordsOpen, setWordsOpen] = useState(false);
   // one sort for both word lists: the side panel and the modal are both mounted
@@ -167,7 +167,7 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname, setMode }:
   };
   useEffect(() => () => clearTimeout(copiedTimer.current), []);
   const hintsOpen = useMemo(() => openHints(fraction), [fraction]);
-  const crowd = useDayStats(mini ? null : board.date);
+  const crowd = useDayStats(board.date);
 
   // The last main word, found just now: a wave across the board, then the
   // finish card. Today's board already solved when the page loads (a refresh
@@ -260,7 +260,7 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname, setMode }:
             {found.length > 0 && <SharePill copied={copied} round={showToday && narrow} onClick={shareProgress} />}
             {showToday && <TodayPill onClick={() => setDate(days.today)} />}
             {!mini && <ArchivePill round={showToday && narrow} onClick={() => setArchiveOpen(true)} />}
-            {loginOn && !mini && <LeadersPill fresh={!leadersSeen} onClick={openLeaders} />}
+            {loginOn && <LeadersPill fresh={!leadersSeen} onClick={openLeaders} />}
           </span>
         </div>
       </section>
@@ -281,8 +281,9 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname, setMode }:
       <FinishModal open={finishOpen} onClose={() => setFinishOpen(false)} board={board} bonus={bonusFound}
         onShare={shareProgress} copied={copied}
         isToday={isToday} user={user} onAccount={() => { setFinishOpen(false); openAccount(); }}
-        onLeaders={loginOn && !mini ? () => { setFinishOpen(false); openLeaders(); } : undefined} mini={mini} />
+        onLeaders={loginOn ? () => { setFinishOpen(false); openLeaders(); } : undefined} mini={mini} />
       <LeaderboardModal open={leadersOpen} onClose={() => setLeadersOpen(false)} date={days.today} user={user}
+        mini={user ? days.mini : null} startMini={mini}
         onAccount={openAccount} />
       <AccountModal open={accountOpen} onClose={() => setAccountOpen(false)} auth={auth.info} notice={notice}
         savedDays={accountOpen ? Object.values(progressStore.all()).filter(p => p.found.length).length : 0}

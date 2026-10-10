@@ -180,3 +180,9 @@
   animation: rise .4s var(--ease-out) both;
   animation-delay: calc(110ms + var(--i, 0) * 60ms);
 }
+
+/* A new account's first step: the leaderboard name, alone on the card */
+.acctwelcome { padding-block: 8px 4px; }
+.acctwelcome .accthead { margin-top: 6px; }
+.acctwelcome .acctnick { margin-top: 14px; padding-bottom: 0; border-bottom: 0; }
+.acctskip { display: block; margin: 14px auto 0; padding: 8px; }

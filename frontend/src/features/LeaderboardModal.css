@@ -2,6 +2,21 @@
 .modal .sheet.leadcard { max-width: 32rem; }
 .leadbody { padding-bottom: 22px; }
 
+/* With ריבועוני: which game, above the tabs. Lighter than the tabs under it:
+   words on an underline, ריבועוני's in amber. */
+.leadgames { display: flex; gap: 18px; margin-top: 8px; border-bottom: 1.5px solid var(--line); }
+.leadgame {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-bottom: -1.5px; padding: 6px 2px 8px;
+  border: 0; border-bottom: 3px solid transparent; background: none;
+  font-family: var(--display); font-weight: 700; font-size: 1.02rem; color: var(--muted);
+  cursor: pointer;
+}
+.leadgame.on { color: var(--ink); border-bottom-color: var(--ink); }
+.leadgame.mini .grid-icon { color: var(--amber-fill); }
+.leadgame.mini.on { border-bottom-color: var(--amber-fill); }
+.leadgame:focus-visible { outline: 3px solid var(--cobalt); outline-offset: 2px; border-radius: 4px; }
+
 /* two tabs, the chosen one on a lit tile */
 .leadtabs {
   display: flex; gap: 4px;

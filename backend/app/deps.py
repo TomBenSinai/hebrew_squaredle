@@ -39,13 +39,6 @@ def day(date: str, user: dict | None = Depends(current_user)) -> Day:
         raise HTTPException(404, "No board for this date")
 
 
-def daily_day(d: Day = Depends(day)) -> Day:
-    """Only the big daily board (the leaderboard has no ריבועוני)."""
-    if d.mini:
-        raise HTTPException(404, "No board for this date")
-    return d
-
-
 def require_user(user: dict | None = Depends(current_user)) -> dict:
     if user is None:
         raise HTTPException(401, "Not logged in")

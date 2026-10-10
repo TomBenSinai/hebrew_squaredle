@@ -53,11 +53,24 @@ class TestMini(Base):
         self.assertEqual((b["date"], len(b["letters"]), b["mask"]), (MINI, 9, ["XXX", "XXX", "XXX"]))
         r = c.put(f"/api/progress/{MINI}", json={"found": found(self.words + ["לא-מילה"]), "rot": 2})
         self.assertEqual([f["w"] for f in r.json()["found"]], self.words)
-        # its own row, beside the big board's, and never on the leaderboard
+        # its own row, beside the big board's
         everything = c.get("/api/progress").json()
         self.assertEqual(list(everything), [MINI])
-        self.assertEqual(c.get(f"/api/leaderboard/{MINI}").status_code, 404)
-        self.assertEqual(c.get(f"/api/leaderboard/{MINI}/stats").status_code, 404)
+
+    def test_its_own_leaderboard_and_streak(self):
+        c = self.client()
+        self.email_login(c, "mini@example.com")
+        self.assertEqual(c.put("/api/auth/nickname", json={"nickname": "מיני"}).status_code, 200)
+        c.put(f"/api/progress/{MINI}", json={"found": found(self.words), "rot": 0})
+        mini = c.get(f"/api/leaderboard/{MINI}").json()
+        self.assertEqual([(r["name"], r["main"]) for r in mini["day"]["top"]], [("מיני", 2)])
+        self.assertEqual([r["streak"] for r in mini["streaks"]["top"]], [1])
+        # the big board's lists know nothing of it
+        big = c.get(f"/api/leaderboard/{TODAY}").json()
+        self.assertEqual((big["day"]["top"], big["streaks"]["top"]), ([], []))
+        self.assertEqual(c.get(f"/api/leaderboard/{MINI}/stats").status_code, 200)
+        # and logged out there is no ריבועוני list at all
+        self.assertEqual(self.client().get(f"/api/leaderboard/{MINI}").status_code, 401)
 
     def test_only_todays(self):
         c = self.client()

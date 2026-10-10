@@ -88,6 +88,12 @@ def playable_dates() -> list[str]:
     return playable or dates[:1]
 
 
+def mini_dates() -> list[str]:
+    """Every ריבועוני up to today, oldest first, by id ("mini-<date>")."""
+    today = config.today()
+    return sorted(MINI + f.stem for f in config.MINI_DIR.glob("*.json") if f.stem <= today)
+
+
 def mini_today() -> str | None:
     """Today's ריבועוני ("mini-<date>"), if one was made. Only today's is played: no archive."""
     today = config.today()
@@ -159,6 +165,10 @@ class Day:
         if all(set(row) == {"X"} for row in shape.mask):
             return ""
         return _shape_titles().get(shape.name, "")
+
+    def on_its_day(self) -> bool:
+        """Today's board: what's found now counts for the leaderboard."""
+        return self.board.date == config.today()
 
     def main_letters(self) -> int:
         return sum(len(normalize(w)) for w in self.board.main)

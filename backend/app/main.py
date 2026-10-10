@@ -123,7 +123,7 @@ def progress_put(body: ProgressIn, d: Day = Depends(day), player: str = Depends(
         return {"found": d.classify(words), "rot": body.rot}
 
     new = repo().update(player, d.date, merge)
-    if d.date == config.today():
+    if d.on_its_day():
         main = [f["w"] for f in new["found"] if f["cat"] == "main"]
         repo().record_on_day(player, d.date, len(main), len(new["found"]) - len(main), len(main) == len(d.board.main),
                              letters=sum(len(normalize(w)) for w in main))

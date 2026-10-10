@@ -13,6 +13,9 @@ day, so archive play never counts.
 - day: most main words, then most bonus words, then who finished first.
 - streaks: days in a row with a main word found on the day, up to today. A
   streak still counts through yesterday until today's board is played.
+
+ריבועוני ("mini-<date>", logged-in players only) has its own of both: its rows
+in `on_day` are filed under its id, so the two games never mix.
 """
 
 from __future__ import annotations
@@ -20,8 +23,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Cookie, Depends, Header, HTTPException
 
 from . import config
-from .boards import Day, playable_dates
-from .deps import accounts, current_player, current_user, daily_day, repo
+from .boards import Day, is_mini, mini_dates, playable_dates
+from .deps import accounts, current_player, current_user, day, repo
 
 router = APIRouter(prefix="/api/leaderboard")
 
@@ -87,11 +90,15 @@ def streak(played: set[str], dates: list[str], today: str) -> int:
     return n
 
 
-def streak_board(listed: dict[str, str], me: str | None) -> dict:
-    today, dates = config.today(), playable_dates()
+def streak_board(listed: dict[str, str], me: str | None, mini: bool = False) -> dict:
+    """The streaks of one game: ריבועון's, or with `mini` ריבועוני's."""
+    today, dates = config.today(), mini_dates() if mini else playable_dates()
+    if mini:
+        today = "mini-" + today
     who = list(listed) + ([me] if me and me not in listed else [])
+    played = {p: {x for x in days if is_mini(x) == mini} for p, days in repo().days_played(who).items()}
     rows = [{"player_id": p, "streak": streak(days, dates, today), "days": len(days)}
-            for p, days in repo().days_played(who).items()]
+            for p, days in played.items()]
     rows = [r for r in rows if r["streak"] > 0]
     return _ranked(rows, lambda r: (-r["streak"], -r["days"]), listed, me)
 
@@ -108,11 +115,11 @@ def day_stats(d: Day) -> dict:
 
 
 @router.get("/{date}")
-def leaderboard(d: Day = Depends(daily_day), me: str | None = Depends(_maybe_player)):
+def leaderboard(d: Day = Depends(day), me: str | None = Depends(_maybe_player)):
     listed = _listed()
-    return {"day": day_board(d, listed, me), "streaks": streak_board(listed, me)}
+    return {"day": day_board(d, listed, me), "streaks": streak_board(listed, me, d.mini)}
 
 
 @router.get("/{date}/stats")
-def stats(d: Day = Depends(daily_day)):
+def stats(d: Day = Depends(day)):
     return day_stats(d)
