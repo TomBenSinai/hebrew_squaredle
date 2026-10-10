@@ -6,13 +6,16 @@
 #
 # Keeps the 14 newest snapshots. Run it from the repo root, e.g. from cron:
 #   17 4 * * *  cd /srv/ribuon && ./deploy/backup.sh >> /var/log/ribuon-backup.log 2>&1
+# Behind another proxy, name that stack's file:
+#   RIBUON_COMPOSE=docker-compose.behind-proxy.yml ./deploy/backup.sh
 set -eu
 
 out="${1:-$HOME/ribuon-backups}"
-compose="docker compose -f docker-compose.prod.yml"
+compose="docker compose -f ${RIBUON_COMPOSE:-docker-compose.prod.yml}"
 stamp=$(date +%Y%m%d-%H%M%S)
 
 mkdir -p "$out"
+chmod 700 "$out"                       # players' emails: owner only
 $compose exec -T api python -c "
 import sqlite3
 src = sqlite3.connect('/data/ribuon.db')
