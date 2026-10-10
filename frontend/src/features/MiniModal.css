@@ -1,5 +1,11 @@
 .modal .sheet.minicard { height: auto; max-height: min(88%, 620px); max-width: 400px; }
 .minititle { font-family: var(--display); font-weight: 800; }
+/* the amber "new" tag of the notes under the header, beside the name */
+.mininew {
+  display: inline-block; margin-inline-start: 10px; padding: 1px 7px; border-radius: 5px; vertical-align: 3px;
+  background: var(--amber-fill); color: #111111;
+  font-family: var(--body); font-weight: 700; font-size: .6em;
+}
 .minibody { padding-bottom: 20px; text-align: center; }
 
 /* The demo board: amber tiles drop in one by one, then a word lights up along

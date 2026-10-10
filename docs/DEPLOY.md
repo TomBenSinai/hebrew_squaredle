@@ -92,8 +92,9 @@ Reach the server by its name, not its address: `ssh root@ribuon.com`.
 cd /srv/ribuon && git pull
 ```
 
-- **New boards only** (`boards/daily/*.json`): nothing else to do. The repo is
-  mounted live and the API re-reads the directory per request.
+- **New boards only** (`boards/daily/*.json`, `boards/mini/*.json`): nothing
+  else to do. The repo is mounted live and the API re-reads both directories
+  per request.
 - **Backend code or dependencies**:
   `docker compose -f docker-compose.prod.yml up -d --build api`
 - **Frontend**: `docker compose -f docker-compose.prod.yml up -d --build web`
@@ -101,8 +102,8 @@ cd /srv/ribuon && git pull
   the new asset hashes reach everyone on the next load).
 
 Deploy from `main` only, and never `--force` a regeneration of today or a past
-day on the server: `boards/daily/*.json` is the record players' progress is
-checked against.
+day on the server, of either game: `boards/daily/*.json` and `boards/mini/*.json`
+are the record players' progress and the leaderboard are checked against.
 
 ## 6. Keeping the schedule ahead
 
@@ -111,13 +112,14 @@ lists in `data/`, and a board must never change after it has been played.
 
 ```bash
 python generate_days.py --days 90        # skips days that already exist
-git add boards/daily && git commit -m "Boards through <date>" && git push
+python generate_days.py --mini --days 90 # ריבועוני too: always top both up together
+git add boards/daily boards/mini && git commit -m "Boards through <date>" && git push
 ```
 
 Then `git pull` on the server. Boards (daily and `--mini`) currently run through **2027-03-31**; top
-them up a couple of months before that. `/api/health` reports the board count,
-and `GET /api/days` shows the newest playable day, so a monitor on either will
-warn you before the well runs dry.
+them up a couple of months before that. `/api/health` reports both games' board
+counts and the last day each reaches (`lastBoard`, `lastMini`), so a monitor on
+it will warn you before either well runs dry.
 
 ## 7. Backups
 

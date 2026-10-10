@@ -27,6 +27,7 @@ Full references: `docs/BOARDS.md` (how-to), `docs/ALGORITHM.md` (how it works),
 ### Fill upcoming days
 ```bash
 python generate_days.py --days 60        # skips days already made
+python generate_days.py --mini --days 60 # ריבועוני (boards/mini/): always top it up with the daily ones
 ```
 
 ### Make one day special (shape and/or settings)

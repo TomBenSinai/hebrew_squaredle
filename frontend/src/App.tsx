@@ -84,7 +84,7 @@ export default function App() {
   // a first-time player learns on a practice board before the game opens
   const [learned, setLearned] = useState(() => hasSeen("tutorial"));
   // a player who starts after login came out isn't told it's new
-  const finishTutorial = () => { markSeen("tutorial"); markSeen("login-news"); setLearned(true); };
+  const finishTutorial = () => { markSeen("tutorial"); markSeen("login-news"); markSeen("mini-news"); setLearned(true); };
 
   if (!learned) return <div className="app"><Tutorial onDone={finishTutorial} /></div>;
   if (loadError || error) return <div className="app"><p className="status">לא הצלחנו לטעון את המשחק. נסו לרענן.</p></div>;
@@ -122,8 +122,13 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname, setMode }:
   const [accountOpen, setAccountOpen] = useState(auth.notice !== null);
   const { providers, user } = auth.info;
   const loginOn = providers.google || providers.email || user !== null;
-  // logged out, ריבועוני's switch opens a card about it instead of the board
-  const [miniCardOpen, setMiniCardOpen] = useState(false);
+  // ריבועוני is new: its card opens by itself once, at the first load after it
+  // came out, unless a login card is up (or the player is already on it).
+  // Logged out, its switch opens the same card instead of the board.
+  const [miniCardOpen, setMiniCardOpen] = useState(() =>
+    loginOn && !!days.mini && !mini && auth.notice === null && !hasSeen("mini-news"));
+  // seen once it shows, closed or not: a reload doesn't bring it back
+  useEffect(() => { if (miniCardOpen) markSeen("mini-news"); }, [miniCardOpen]);
   const miniSwitch = loginOn && days.mini ? {
     on: mini,
     locked: user === null,
@@ -283,7 +288,8 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname, setMode }:
         progress={archiveOpen ? progressStore.all() : {}} onPick={pickDay} />
       <DefinitionModal word={defWord} onClose={() => setDefWord(null)} onShow={showOnBoard} />
       <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
-      <MiniModal open={miniCardOpen} onClose={() => setMiniCardOpen(false)}
+      <MiniModal open={miniCardOpen} onClose={() => setMiniCardOpen(false)} loggedIn={user !== null}
+        onPlay={() => { setMiniCardOpen(false); setMode("mini"); }}
         onLogin={() => { setMiniCardOpen(false); setMode("mini"); openAccount(); }} />
       <FinishModal open={finishOpen} onClose={() => setFinishOpen(false)} board={board} bonus={bonusFound}
         onShare={shareProgress} copied={copied}
