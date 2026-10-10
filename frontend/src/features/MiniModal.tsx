@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { Button, LockIcon, Modal, SheetBody } from "../components";
+import { Button, GridIcon, LockIcon, Modal, SheetBody } from "../components";
 import "./MiniModal.css";
 
 // A ריבועוני spelling מילה: down, a diagonal step, then up, lit in amber.
@@ -46,6 +46,9 @@ export function MiniModal({ open, onClose, loggedIn, onLogin, onPlay }: {
         <p className="minilead">ריבועון קטן, 3 על 3</p>
         <p className="minitext">קליל וכיף לפתור עם הקפה של הבוקר או ממש לפני השינה.</p>
         {!loggedIn && <p className="minitext">הריבועוני זמין למשתמשים מחוברים.</p>}
+        <p className="minitext minihint">
+          אפשר לעבור בין הלוחות בכל רגע בכפתור <span className="miniswitch" aria-hidden="true"><GridIcon n={3} /></span> בתפריט למעלה.
+        </p>
         <div className="miniactions">
           {loggedIn
             ? <Button variant="primary" onClick={onPlay}>לשחק עכשיו</Button>

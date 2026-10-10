@@ -31,6 +31,13 @@
   margin: 18px 0 0; font-family: var(--display); font-weight: 700; font-size: 1.25rem; line-height: 1.2;
 }
 .minitext { margin: 8px auto 0; max-width: 30ch; color: var(--muted); font-size: 1.02rem; line-height: 1.5; }
+/* the header's switch, drawn small inside the sentence that points at it */
+.minihint { font-size: .95rem; }
+.miniswitch {
+  display: inline-grid; place-items: center; width: 24px; height: 24px; margin-inline: 2px; vertical-align: -6px;
+  border: 1.5px solid var(--amber-fill); border-radius: 50%; color: var(--amber-fill);
+}
+.miniswitch .grid-icon { width: 13px; height: 13px; }
 .miniactions { display: grid; gap: 6px; justify-items: center; margin-top: 20px; }
 .miniactions .btn { width: 100%; padding-block: 11px; font-size: 1.05rem; }
 .miniactions .linkish { padding: 8px; }
