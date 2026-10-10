@@ -1,5 +1,6 @@
 """ריבועון API.
 
+  GET  /api/health                      board counts and the last day of each game, for a monitor
   GET  /api/days                        playable days (newest last) with totals, and today's
                                         ריבועוני's id ("mini-<date>"), if there is one
   GET  /api/boards/{date}               letters, shape, counts, and the words hashed (never in the clear)
@@ -79,7 +80,12 @@ class ProgressIn(BaseModel):
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "today": config.today(), "boards": len(all_dates())}
+    """For a monitor: how many boards of each game are stored, and the last day
+    each reaches, so it can warn before either runs out."""
+    daily = all_dates()
+    mini = sorted(f.stem for f in config.MINI_DIR.glob("*.json"))
+    return {"ok": True, "today": config.today(), "boards": len(daily), "miniBoards": len(mini),
+            "lastBoard": daily[-1] if daily else None, "lastMini": mini[-1] if mini else None}
 
 
 @app.get("/api/days")

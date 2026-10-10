@@ -37,6 +37,10 @@ class TestMini(Base):
         self.addCleanup(patcher.stop)
         self.words = list(board["main"])[:2]
 
+    def test_health_says_how_far_it_reaches(self):
+        h = self.client().get("/api/health").json()
+        self.assertEqual((h["miniBoards"], h["lastMini"]), (2, TODAY))
+
     def test_days_names_todays_mini(self):
         self.assertEqual(self.client().get("/api/days").json()["mini"], MINI)
 
