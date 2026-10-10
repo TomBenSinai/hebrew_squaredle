@@ -10,6 +10,7 @@ import { HelpModal } from "./features/HelpModal";
 import { introName, IntroModal, type Intro } from "./features/IntroModal";
 import { LeaderboardModal } from "./features/LeaderboardModal";
 import { ArchivePill, LeadersPill, Masthead, News, SharePill, TodayPill } from "./features/Masthead";
+import { MiniModal } from "./features/MiniModal";
 import { Readout } from "./features/Readout";
 import { Score } from "./features/Score";
 import { SpinButton } from "./features/SpinButton";
@@ -35,11 +36,24 @@ const WIDE_QUERY = "(min-width: 1100px)";
     archive with their words, so those two go round. */
 const NARROW_QUERY = "(max-width: 420px)";
 
+/** Which board the player was on: ריבועוני ("mini") or the big one. Kept, so a
+    reload, or the page coming back from a login started at ריבועוני, opens it again. */
+type Mode = "daily" | "mini";
+const MODE_KEY = "ribuon:mode";
+function savedMode(): Mode {
+  try { return localStorage.getItem(MODE_KEY) === "mini" ? "mini" : "daily"; } catch { return "daily"; }
+}
+function saveMode(mode: Mode) {
+  try { localStorage.setItem(MODE_KEY, mode); } catch { /* private mode etc. */ }
+}
+
 export default function App() {
   const [days, setDays] = useState<DaysResponse | null>(null);
   const [date, setDate] = useState<string | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [auth, setAuth] = useState<AuthState | null>(null);
+  const [mode, setModeState] = useState<Mode>(savedMode);
+  const setMode = useCallback((m: Mode) => { saveMode(m); setModeState(m); }, []);
 
   useEffect(() => {
     // finish a login the page came back from, then merge server progress (the
@@ -58,7 +72,9 @@ export default function App() {
     return () => document.removeEventListener("visibilitychange", onShow);
   }, [refreshDays]);
 
-  const { game: loaded, error } = useGame(date);
+  // ריבועוני only for a logged-in player, and only on a day that has one
+  const miniId = auth?.info.user ? days?.mini ?? null : null;
+  const { game: loaded, error } = useGame(mode === "mini" && miniId ? miniId : date);
   // while the next day's board loads, the last one stays up, so Play isn't
   // remounted on a day change (what's open in it, and the login's notice, stay put)
   const lastGame = useRef<Game | null>(null);
@@ -75,16 +91,18 @@ export default function App() {
   const setNickname = (nickname: string | null) => setAuth(a => a && a.info.user
     ? { ...a, info: { ...a.info, user: { ...a.info.user, nickname } } } : a);
   return <Play days={days} refreshDays={refreshDays} game={game} setDate={setDate} auth={auth}
-    setNickname={setNickname} />;
+    setNickname={setNickname} setMode={setMode} />;
 }
 
 /** Play has mounted once this page load: only then is a solved board a refresh after the win */
 let playMounted = false;
 
-function Play({ days, refreshDays, game, setDate, auth, setNickname }:
+function Play({ days, refreshDays, game, setDate, auth, setNickname, setMode }:
   { days: DaysResponse; refreshDays: () => void; game: Game; setDate: (d: string) => void; auth: AuthState;
-    setNickname: (nickname: string | null) => void }) {
+    setNickname: (nickname: string | null) => void; setMode: (m: Mode) => void }) {
   const { board, layout, found } = game;
+  // ריבועוני: today's only, with no archive, leaderboard or crowd on the progress bar
+  const mini = board.date.startsWith("mini-");
   const [wordsOpen, setWordsOpen] = useState(false);
   // one sort for both word lists: the side panel and the modal are both mounted
   const { az, toggleSort } = useWordSort();
@@ -97,6 +115,17 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
   const [accountOpen, setAccountOpen] = useState(auth.notice !== null);
   const { providers, user } = auth.info;
   const loginOn = providers.google || providers.email || user !== null;
+  // logged out, ריבועוני's switch opens a card about it instead of the board
+  const [miniCardOpen, setMiniCardOpen] = useState(false);
+  const miniSwitch = loginOn && days.mini ? {
+    on: mini,
+    locked: user === null,
+    onSwitch: () => {
+      if (mini) setMode("daily");
+      else if (user) setMode("mini");
+      else setMiniCardOpen(true);
+    },
+  } : undefined;
   // login is new: tell a logged-out player once, until they close the note or open the sheet
   const [newsSeen, setNewsSeen] = useState(() => hasSeen("login-news"));
   const seeNews = () => { markSeen("login-news"); setNewsSeen(true); };
@@ -115,11 +144,11 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
   const { path, handlers } = useSwipe(layout, tileRefs, game.submit, phase !== "idle");
 
   const swiping = withFinal(path.map(i => layout.letters[i]).join(""));
-  const isToday = board.date === days.today;
-  const showToday = !isToday && days.days.some(d => d.date === days.today);
+  const isToday = mini || board.date === days.today;
+  const showToday = !mini && !isToday && days.days.some(d => d.date === days.today);
   // one note at a time: the leaderboard's first, the login's after it
-  const showLeadersNews = loginOn && !leadersSeen && isToday;
-  const showNews = !newsSeen && user === null && isToday && !showLeadersNews;
+  const showLeadersNews = loginOn && !leadersSeen && isToday && !mini;
+  const showNews = !newsSeen && user === null && isToday && !mini && !showLeadersNews;
   const mainFound = found.filter(f => f.cat === "main").length;
   const bonusFound = found.length - mainFound;
   const fraction = letterFraction(found, board.mainLetters);
@@ -129,7 +158,7 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
   const [copied, setCopied] = useState(false);
   const copiedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const shareProgress = () => {
-    share(shareText(found, board.mainTotal)).then(r => {
+    share(shareText(found, board.mainTotal, mini ? "ריבועוני" : "ריבועון")).then(r => {
       if (r !== "copied") return;
       clearTimeout(copiedTimer.current);
       setCopied(true);
@@ -138,7 +167,7 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
   };
   useEffect(() => () => clearTimeout(copiedTimer.current), []);
   const hintsOpen = useMemo(() => openHints(fraction), [fraction]);
-  const crowd = useDayStats(board.date);
+  const crowd = useDayStats(mini ? null : board.date);
 
   // The last main word, found just now: a wave across the board, then the
   // finish card. Today's board already solved when the page loads (a refresh
@@ -198,11 +227,11 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
   }, [game]);
 
   return (
-    <div className={wide ? "app wide" : "app"}>
+    <div className={["app", wide && "wide", mini && "mini"].filter(Boolean).join(" ")}>
       <section className="play" aria-label="הלוח">
         <Masthead day={board} isToday={isToday}
           onHelp={() => setHelpOpen(true)}
-          account={loginOn ? { user, onOpen: openAccount } : undefined} />
+          account={loginOn ? { user, onOpen: openAccount } : undefined} mini={miniSwitch} />
         {loginOn && showNews && (
           <News to="acct" onOpen={openAccount} onDismiss={seeNews}>
             התחברו כדי שההתקדמות שלכם תישמר, ותוכלו להמשיך אותה מכל המכשירים שלכם.
@@ -230,8 +259,8 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
           <span className="toolsend">
             {found.length > 0 && <SharePill copied={copied} round={showToday && narrow} onClick={shareProgress} />}
             {showToday && <TodayPill onClick={() => setDate(days.today)} />}
-            <ArchivePill round={showToday && narrow} onClick={() => setArchiveOpen(true)} />
-            {loginOn && <LeadersPill fresh={!leadersSeen} onClick={openLeaders} />}
+            {!mini && <ArchivePill round={showToday && narrow} onClick={() => setArchiveOpen(true)} />}
+            {loginOn && !mini && <LeadersPill fresh={!leadersSeen} onClick={openLeaders} />}
           </span>
         </div>
       </section>
@@ -247,16 +276,18 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname }:
         progress={archiveOpen ? progressStore.all() : {}} onPick={pickDay} />
       <DefinitionModal word={defWord} onClose={() => setDefWord(null)} onShow={showOnBoard} />
       <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <MiniModal open={miniCardOpen} onClose={() => setMiniCardOpen(false)}
+        onLogin={() => { setMiniCardOpen(false); setMode("mini"); openAccount(); }} />
       <FinishModal open={finishOpen} onClose={() => setFinishOpen(false)} board={board} bonus={bonusFound}
         onShare={shareProgress} copied={copied}
         isToday={isToday} user={user} onAccount={() => { setFinishOpen(false); openAccount(); }}
-        onLeaders={loginOn ? () => { setFinishOpen(false); openLeaders(); } : undefined} />
+        onLeaders={loginOn && !mini ? () => { setFinishOpen(false); openLeaders(); } : undefined} mini={mini} />
       <LeaderboardModal open={leadersOpen} onClose={() => setLeadersOpen(false)} date={days.today} user={user}
         onAccount={openAccount} />
       <AccountModal open={accountOpen} onClose={() => setAccountOpen(false)} auth={auth.info} notice={notice}
         savedDays={accountOpen ? Object.values(progressStore.all()).filter(p => p.found.length).length : 0}
         onNickname={setNickname} />
-      <IntroModal intro={helpOpen || accountOpen || leadersOpen || finishOpen ? null : intros[0] ?? null} onClose={closeIntro} />
+      <IntroModal intro={helpOpen || accountOpen || leadersOpen || finishOpen || miniCardOpen ? null : intros[0] ?? null} onClose={closeIntro} />
     </div>
   );
 }

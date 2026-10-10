@@ -54,6 +54,15 @@ class BoardNotFound(Exception):
     pass
 
 
+# ריבועוני's boards are named "mini-YYYY-MM-DD" wherever a daily board takes its
+# date (the API's routes, the progress rows), so both share every route and table
+MINI = "mini-"
+
+
+def is_mini(board_id: str) -> bool:
+    return board_id.startswith(MINI)
+
+
 @lru_cache(maxsize=1)
 def _shape_titles() -> dict[str, str]:
     if not config.SHAPES_FILE.exists():
@@ -63,8 +72,8 @@ def _shape_titles() -> dict[str, str]:
 
 
 @lru_cache(maxsize=512)
-def _load(path: Path, mtime: float) -> "Day":
-    return Day(Board.from_json(json.loads(path.read_text(encoding="utf-8"))))
+def _load(path: Path, mtime: float, mini: bool) -> "Day":
+    return Day(Board.from_json(json.loads(path.read_text(encoding="utf-8"))), mini)
 
 
 def all_dates() -> list[str]:
@@ -79,16 +88,27 @@ def playable_dates() -> list[str]:
     return playable or dates[:1]
 
 
-def get_day(date: str) -> "Day":
-    if date not in playable_dates():
-        raise BoardNotFound(date)
-    return load_day(date)
+def mini_today() -> str | None:
+    """Today's ריבועוני ("mini-<date>"), if one was made. Only today's is played: no archive."""
+    today = config.today()
+    return MINI + today if (config.MINI_DIR / f"{today}.json").exists() else None
+
+
+def get_day(board_id: str) -> "Day":
+    if is_mini(board_id):
+        if board_id != mini_today():
+            raise BoardNotFound(board_id)
+        path = config.MINI_DIR / f"{board_id[len(MINI):]}.json"
+        return _load(path, path.stat().st_mtime, True)
+    if board_id not in playable_dates():
+        raise BoardNotFound(board_id)
+    return load_day(board_id)
 
 
 def load_day(date: str) -> "Day":
     """No playability check: for dates that came from `playable_dates()`."""
     path = config.BOARDS_DIR / f"{date}.json"
-    return _load(path, path.stat().st_mtime)
+    return _load(path, path.stat().st_mtime, False)
 
 
 def day_number(date: str, epoch: str | None = None) -> int:
@@ -119,8 +139,9 @@ def reveal_mask(word: str) -> dict:
 class Day:
     """One board plus the indexes needed to answer the player."""
 
-    def __init__(self, board: Board):
+    def __init__(self, board: Board, mini: bool = False):
         self.board = board
+        self.mini = mini
         self.nbrs = neighbors(board.shape)
         self.index: dict[str, tuple[str, str]] = {normalize(w): (BONUS, w) for w in board.bonus}
         self.index.update({normalize(w): (MAIN, w) for w in board.main})
@@ -128,7 +149,8 @@ class Day:
 
     @property
     def date(self) -> str:
-        return self.board.date
+        """The board's id: its date, or "mini-<date>" for a ריבועוני."""
+        return MINI + self.board.date if self.mini else self.board.date
 
     @property
     def shape_title(self) -> str:
@@ -145,8 +167,8 @@ class Day:
         """What the archive list shows for this day."""
         b = self.board
         return {
-            "date": b.date,
-            "number": day_number(b.date, epoch),
+            "date": self.date,
+            "number": 0 if self.mini else day_number(b.date, epoch),
             "shapeName": self.shape_title,
             "theme": b.theme["title"] if b.theme else None,
             "mainTotal": len(b.main),

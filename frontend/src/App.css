@@ -67,3 +67,28 @@
   width: 100%; max-width: 380px;
   justify-self: end;                          /* RTL: hug the board, not the screen edge */
 }
+
+/* ריבועוני: the same game on a small board, in amber. The rule under the name,
+   the lit tiles, the path and the progress bar take the amber that ink has on
+   the big board; the letters stay ink, which amber on paper couldn't carry. The
+   nine tiles sit on an amber tray, and stop growing well before the big board's. */
+.app.mini .masthead { border-bottom-color: var(--amber-fill); }
+.app.mini .boardwrap {
+  --cell: min(calc(100cqw / 3.4), calc((100cqh - 3.2rem) / 3.4), 124px);
+}
+.app.mini .board::before {
+  content: ""; position: absolute; inset: calc(var(--cell) * -.16);
+  border-radius: calc(var(--cell) * .2);
+  background: var(--amber-soft);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--amber-fill) 45%, transparent);
+}
+.app.mini .tile { color: var(--ink); }
+.app.mini .tile.on { background: var(--amber-fill); color: #111111; }
+.app.mini .tile.show { background: color-mix(in srgb, var(--amber-fill) 35%, var(--paper)); }
+.app.mini .trace polyline { stroke: var(--amber); stroke-opacity: .45; }
+.app.mini .pbar i {
+  background:
+    repeating-linear-gradient(-45deg, rgba(255,255,255,.2) 0 8px, transparent 8px 16px),
+    var(--amber-fill);
+  background-size: 22.6px 100%, auto;
+}

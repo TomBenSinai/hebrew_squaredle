@@ -21,7 +21,7 @@ from fastapi import APIRouter, Cookie, Depends, Header, HTTPException
 
 from . import config
 from .boards import Day, playable_dates
-from .deps import accounts, current_player, current_user, day, repo
+from .deps import accounts, current_player, current_user, daily_day, repo
 
 router = APIRouter(prefix="/api/leaderboard")
 
@@ -108,11 +108,11 @@ def day_stats(d: Day) -> dict:
 
 
 @router.get("/{date}")
-def leaderboard(d: Day = Depends(day), me: str | None = Depends(_maybe_player)):
+def leaderboard(d: Day = Depends(daily_day), me: str | None = Depends(_maybe_player)):
     listed = _listed()
     return {"day": day_board(d, listed, me), "streaks": streak_board(listed, me)}
 
 
 @router.get("/{date}/stats")
-def stats(d: Day = Depends(day)):
+def stats(d: Day = Depends(daily_day)):
     return day_stats(d)

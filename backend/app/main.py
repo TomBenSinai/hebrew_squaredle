@@ -1,6 +1,7 @@
 """ריבועון API.
 
-  GET  /api/days                        playable days (newest last) with totals
+  GET  /api/days                        playable days (newest last) with totals, and today's
+                                        ריבועוני's id ("mini-<date>"), if there is one
   GET  /api/boards/{date}               letters, shape, counts, and the words hashed (never in the clear)
   POST /api/boards/{date}/check         {path: [cells]} -> main / bonus / not_a_word ... (for clients
                                         that can't check locally)
@@ -16,6 +17,9 @@
   GET  /api/leaderboard/{date}/stats    how everyone did on the day, for the progress bar
   /api/auth/...                         optional login (auth.py)
 
+A board's {date} is a date, or "mini-<date>" for ריבועוני, the small board only
+logged-in players get (401 login_required otherwise); only today's is served.
+
 Progress is the logged-in user's when the request carries a session cookie,
 else the anonymous X-Player-Id's.
 """
@@ -29,7 +33,7 @@ from pydantic import BaseModel, Field
 from wordgame import normalize
 
 from . import auth, config, leaderboard, milog
-from .boards import Day, all_dates, load_day, playable_dates
+from .boards import Day, all_dates, load_day, mini_today, playable_dates
 from .deps import current_player, day, repo
 
 app = FastAPI(title="Ribuon API")
@@ -80,7 +84,8 @@ def health():
 @app.get("/api/days")
 def days():
     dates = playable_dates()          # one scan of boards/daily for the whole list
-    return {"today": config.today(), "days": [load_day(d).summary(dates[0]) for d in dates]}
+    return {"today": config.today(), "days": [load_day(d).summary(dates[0]) for d in dates],
+            "mini": mini_today()}
 
 
 @app.get("/api/boards/{date}")

@@ -22,6 +22,8 @@ interface Props {
   onShare: () => void;
   /** the result went to the clipboard just now (no share menu here) */
   copied?: boolean;
+  /** the board is ריבועוני (no number, no leaderboard) */
+  mini?: boolean;
 }
 
 const CONFETTI = 30;
@@ -32,7 +34,7 @@ const COLORS = ["var(--amber-fill)", "var(--cobalt)", "var(--hint-sort)", "var(-
  * The board is solved: a shower of the board's own letters, what the player
  * found, and on today's board their place and streak.
  */
-export function FinishModal({ open, onClose, board, bonus, isToday, user, onLeaders, onAccount, onShare, copied }: Props) {
+export function FinishModal({ open, onClose, board, bonus, isToday, user, onLeaders, onAccount, onShare, copied, mini }: Props) {
   const [lead, setLead] = useState<Leaderboard | null>(null);
   // a flag, not the callback: the parent makes a new one each render, which would refetch
   const hasLeaders = !!onLeaders;
@@ -71,7 +73,7 @@ export function FinishModal({ open, onClose, board, bonus, isToday, user, onLead
   return (
     <Modal open={open} onClose={onClose} sheetClassName="finishcard" layer={30}
       title={<span className="finishtitle"><span className="finishtrophy"><TrophyIcon /></span>
-        <span>סיימתם את לוח {board.number}! <span className="finishcheer">כל הכבוד :)</span></span></span>}>
+        <span>{mini ? "סיימתם את הריבועוני!" : `סיימתם את לוח ${board.number}!`} <span className="finishcheer">כל הכבוד :)</span></span></span>}>
       {open && (
         <div className="confetti" aria-hidden="true">
           {confetti.map((c, i) => <span key={i} style={c.style}>{c.letter}</span>)}

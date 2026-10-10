@@ -1,0 +1,46 @@
+.modal .sheet.minicard { height: auto; max-height: min(88%, 620px); max-width: 400px; }
+.minititle { font-family: var(--display); font-weight: 800; }
+.minibody { padding-bottom: 20px; text-align: center; }
+
+/* The demo board: amber tiles drop in one by one, then a word lights up along
+   its path. A lock sits on its corner: this one opens after logging in. */
+.minidemo { position: relative; width: 168px; margin: 14px auto 0; }
+.minidemo svg { display: block; width: 168px; height: 168px; }
+.minidemo rect { fill: var(--paper); stroke: var(--amber-fill); stroke-width: 1.5; }
+.minidemo text { font-family: var(--display); font-weight: 600; font-size: 22px; fill: var(--ink); }
+.minidemo .on rect { fill: var(--amber-fill); }
+.minidemo .on text { fill: #111111; }
+.minidemo polyline {
+  fill: none; stroke: var(--amber); stroke-opacity: .45;
+  stroke-width: 10; stroke-linecap: round; stroke-linejoin: round;
+}
+.minilock {
+  position: absolute; bottom: -8px; inset-inline-start: -8px;
+  display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
+  background: var(--ink); color: var(--ground); box-shadow: 0 0 0 3px var(--ground);
+}
+.minilock .lock-icon { width: 16px; height: 16px; }
+
+.minilead {
+  margin: 18px 0 0; font-family: var(--display); font-weight: 700; font-size: 1.25rem; line-height: 1.2;
+}
+.minitext { margin: 8px auto 0; max-width: 30ch; color: var(--muted); font-size: 1.02rem; line-height: 1.5; }
+.miniactions { display: grid; gap: 6px; justify-items: center; margin-top: 20px; }
+.miniactions .btn { width: 100%; padding-block: 11px; font-size: 1.05rem; }
+.miniactions .linkish { padding: 8px; }
+
+.modal.open .minidemo g { animation: minidrop .42s var(--ease-out) both; animation-delay: calc(120ms + var(--i) * 45ms); }
+.modal.open .minidemo .on rect { animation: minilight .3s ease both; animation-delay: calc(720ms + var(--lit) * 160ms); }
+.modal.open .minidemo .on text { animation: minilightt .3s ease both; animation-delay: calc(720ms + var(--lit) * 160ms); }
+.modal.open .minidemo polyline {
+  stroke-dasharray: 100; animation: minidraw .64s linear both; animation-delay: 720ms;
+}
+.modal.open .minilock { animation: minipop .4s var(--ease-out) both; animation-delay: 1.45s; }
+.modal.open .minilead, .modal.open .minitext, .modal.open .miniactions {
+  animation: rise .4s var(--ease-out) both; animation-delay: 300ms;
+}
+@keyframes minidrop { from { opacity: 0; transform: translateY(-10px); } }
+@keyframes minilight { from { fill: var(--paper); } }
+@keyframes minilightt { from { fill: var(--ink); } }
+@keyframes minidraw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+@keyframes minipop { from { opacity: 0; transform: scale(.4) rotate(-20deg); } }

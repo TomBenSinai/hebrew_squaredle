@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CalendarIcon, Chip, MoonIcon, PersonIcon, Pill, ShapeIcon, ShareIcon, SunIcon, TrophyIcon } from "../components";
+import { CalendarIcon, Chip, GridIcon, LockIcon, MoonIcon, PersonIcon, Pill, ShapeIcon, ShareIcon, SunIcon, TrophyIcon } from "../components";
 import type { DaySummary, User } from "../api/types";
 import { shortDate, weekday } from "../lib/dates";
 import { useTheme } from "../lib/theme";
@@ -11,15 +11,30 @@ interface Props {
   onHelp: () => void;
   /** undefined: login is off, so no account button */
   account?: { user: User | null; onOpen: () => void };
+  /** the switch between ריבועון and ריבועוני; undefined: no ריבועוני today */
+  mini?: { on: boolean; locked: boolean; onSwitch: () => void };
 }
 
-export function Masthead({ day, isToday, onHelp, account }: Props) {
+export function Masthead({ day, isToday, onHelp, account, mini }: Props) {
+  if (mini?.on) {
+    return (
+      <MastheadFrame live title={<>ריבועונ<span className="mini-yod">י</span></>} when={<>
+        <b>היום</b>{` ${shortDate(day.date.slice("mini-".length))} · 3×3`}
+        <GameSwitch to="ריבועון" n={4} onClick={mini.onSwitch} />
+      </>}>
+        {account && <AccountPill user={account.user} onClick={account.onOpen} />}
+        <HelpPill onClick={onHelp} />
+        <ThemePill />
+      </MastheadFrame>
+    );
+  }
   return (
     <MastheadFrame live when={<>
       {isToday ? <b>היום</b> : <><b>ארכיון</b> · {weekday(day.date)}</>}
       {` ${shortDate(day.date)} · לוח ${day.number}`}
       {day.shapeName && <> · <span className="shape" title="צורת הלוח"><ShapeIcon />{day.shapeName}</span></>}
       {day.theme && <Chip>★ {day.theme}</Chip>}
+      {mini && <GameSwitch to="ריבועוני" n={3} locked={mini.locked} onClick={mini.onSwitch} />}
     </>}>
       {account && <AccountPill user={account.user} onClick={account.onOpen} />}
       <HelpPill onClick={onHelp} />
@@ -28,12 +43,26 @@ export function Masthead({ day, isToday, onHelp, account }: Props) {
   );
 }
 
+/**
+ * Over to the other board, at the end of the date line: a small tile with that
+ * board's grid. ריבועוני's is amber, and carries a lock for a logged-out player.
+ */
+function GameSwitch({ to, n, locked, onClick }: { to: string; n: 3 | 4; locked?: boolean; onClick: () => void }) {
+  return (
+    <button type="button" className={"gameswitch to-" + (n === 3 ? "mini" : "daily")} onClick={onClick}
+      aria-label={locked ? `${to}: למחוברים בלבד` : `מעבר ל${to}`}>
+      <GridIcon n={n} />{to}{locked && <LockIcon />}
+    </button>
+  );
+}
+
 /** The header itself, shared with the tutorial: the name, a line under it, and buttons. */
-export function MastheadFrame({ when, live, children }: { when: ReactNode; live?: boolean; children: ReactNode }) {
+export function MastheadFrame({ when, live, title = "ריבועון", children }:
+  { when: ReactNode; live?: boolean; title?: ReactNode; children: ReactNode }) {
   return (
     <header className="masthead">
       <div className="brand">
-        <h1>ריבועון</h1>
+        <h1>{title}</h1>
         <div className="when" aria-live={live ? "polite" : undefined}>{when}</div>
       </div>
       <div className="headbtns">{children}</div>
