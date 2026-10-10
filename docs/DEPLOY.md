@@ -131,6 +131,9 @@ the 14 newest copies:
 (crontab -l 2>/dev/null; echo '17 4 * * * cd /srv/ribuon && ./deploy/backup.sh') | crontab -
 ```
 
+Behind another proxy, set `RIBUON_COMPOSE=docker-compose.behind-proxy.yml` in
+front of `./deploy/backup.sh` (in the cron line too).
+
 Copy them off the machine periodically (`rsync`, `rclone`, whatever you use).
 
 To restore:
