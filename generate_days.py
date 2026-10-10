@@ -23,7 +23,8 @@ Days that already have a file are skipped unless --force.
 
 --mini makes ריבועוני instead: a plain 3x3 every day (no schedule, no themes)
 in boards/mini/, with its own salt so its letters don't follow the big board's,
-and easier than the big board: only common words (zipf >= 4) are main words.
+and easier than the big board: only common words (zipf >= 4) are main words,
+and at most 20 bonus words.
 """
 
 from __future__ import annotations
@@ -43,8 +44,10 @@ from wordgame import (PRESETS, Board, Lexicon, Settings, Shape, Theme, daily_boa
 
 HERE = Path(__file__).parent
 # ריבועוני is meant to be light: only fairly common words count as main (rarer
-# ones are bonus), 10-25 of them, so a whole board can be cleared over a coffee
-MINI_SCHEDULE = {"default": {"shape": "3x3", "main_zipf": 4.0, "min_main": 10, "max_main": 25}}
+# ones are bonus), 10-25 of them, and at most 20 bonus words, so the rare words
+# main_zipf demotes don't pile up there instead
+MINI_SCHEDULE = {"default": {"shape": "3x3", "main_zipf": 4.0, "min_main": 10, "max_main": 25,
+                             "max_bonus": 20}}
 MINI_SALT = "ribuoni"
 WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 _lex: Lexicon | None = None
@@ -68,6 +71,7 @@ HELP = {
     "max_attempts": "restarts before giving up",
     "main_zipf": "only words at least this common count as MAIN (e.g. 4.5), 0 = off",
     "max_bonus_ratio": "at most this many BONUS words per MAIN word (e.g. 1.0), 0 = off",
+    "max_bonus": "at most this many BONUS words, also with --main-zipf, 0 = off",
     "relax": "1 = loosen the rules step by step if a shape can't meet them, 0 = fail instead",
 }
 
