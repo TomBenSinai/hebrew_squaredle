@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import tempfile
+from datetime import date, timedelta
 from pathlib import Path
 from unittest import mock
 
@@ -17,6 +18,7 @@ from app.boards import get_day  # noqa: E402
 
 TODAY = config.today()
 MINI = f"mini-{TODAY}"
+YESTERDAY = (date.fromisoformat(TODAY) - timedelta(days=1)).isoformat()
 # any stored ריבועוני will do: it is copied in as today's
 SOURCE = next(iter(sorted((config.REPO_ROOT / "boards" / "mini").glob("*.json"))))
 
@@ -27,8 +29,9 @@ class TestMini(Base):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         board = json.loads(SOURCE.read_text(encoding="utf-8"))
-        board["date"] = TODAY
-        (Path(tmp.name) / f"{TODAY}.json").write_text(json.dumps(board, ensure_ascii=False), encoding="utf-8")
+        for day in (YESTERDAY, TODAY):
+            board["date"] = day
+            (Path(tmp.name) / f"{day}.json").write_text(json.dumps(board, ensure_ascii=False), encoding="utf-8")
         patcher = mock.patch.object(config, "MINI_DIR", Path(tmp.name))
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -72,11 +75,23 @@ class TestMini(Base):
         # and logged out there is no ריבועוני list at all
         self.assertEqual(self.client().get(f"/api/leaderboard/{MINI}").status_code, 401)
 
-    def test_only_todays(self):
+    def test_a_dead_session_is_told_so(self):
+        c = self.client()
+        c.cookies.set("ribuon_session", "expired-or-revoked")
+        r = c.get(f"/api/boards/{MINI}")
+        self.assertEqual((r.status_code, r.json()["detail"]), (401, "session_ended"))
+
+    def test_only_todays_is_offered_but_a_late_save_lands(self):
         c = self.client()
         self.email_login(c, "mini@example.com")
-        self.assertEqual(c.get(f"/api/boards/mini-{DATE}").status_code, 404)
-        self.assertEqual(c.get("/api/boards/mini-2099-01-01").status_code, 404)
+        self.assertEqual(c.put("/api/auth/nickname", json={"nickname": "מאחרת"}).status_code, 200)
+        # a word found just before midnight, sent after it: kept, but not on the day's list
+        r = c.put(f"/api/progress/mini-{YESTERDAY}", json={"found": found(self.words), "rot": 0})
+        self.assertEqual([f["w"] for f in r.json()["found"]], self.words)
+        self.assertEqual(c.get(f"/api/leaderboard/mini-{YESTERDAY}").json()["day"]["top"], [])
+        self.assertEqual(c.get("/api/days").json()["mini"], MINI)
+        for gone in (f"mini-{DATE}", "mini-2099-01-01", "mini-..", "mini-2026-9-1"):
+            self.assertEqual(c.get(f"/api/boards/{gone}").status_code, 404, gone)
 
     def test_the_big_board_is_unchanged(self):
         self.assertFalse(get_day(DATE).mini)

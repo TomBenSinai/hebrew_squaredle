@@ -27,11 +27,13 @@ type Tab = "day" | "streaks";
  */
 export function LeaderboardModal({ open, onClose, date, mini, startMini, user, onAccount }: Props) {
   const [tab, setTab] = useState<Tab>("day");
-  const [game, setGame] = useState<"daily" | "mini">("daily");
+  // the game picked in the card; until one is, the game being played. Cleared
+  // on closing, so the next opening starts there again, and fetches only that
+  const [picked, setGame] = useState<"daily" | "mini" | null>(null);
+  useEffect(() => { if (!open) setGame(null); }, [open]);
+  const game = picked ?? (startMini && mini ? "mini" : "daily");
   const [data, setData] = useState<Leaderboard | null>(null);
   const [failed, setFailed] = useState(false);
-  // each opening starts on the game being played
-  useEffect(() => { if (open) setGame(startMini && mini ? "mini" : "daily"); }, [open, startMini, mini]);
   const board = game === "mini" && mini ? mini : date;
 
   useEffect(() => {

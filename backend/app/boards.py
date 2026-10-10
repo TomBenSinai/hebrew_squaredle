@@ -10,6 +10,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import re
 from datetime import date as Date
 from functools import lru_cache
 from pathlib import Path
@@ -57,6 +58,7 @@ class BoardNotFound(Exception):
 # ריבועוני's boards are named "mini-YYYY-MM-DD" wherever a daily board takes its
 # date (the API's routes, the progress rows), so both share every route and table
 MINI = "mini-"
+_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 
 def is_mini(board_id: str) -> bool:
@@ -102,9 +104,14 @@ def mini_today() -> str | None:
 
 def get_day(board_id: str) -> "Day":
     if is_mini(board_id):
-        if board_id != mini_today():
+        # Only today's is offered (mini_today), but a past one still answers: a
+        # word found just before midnight, or in a tab left open past it, must
+        # still reach the account, or the device would hold it unsent for good.
+        # Saved late, it doesn't count for the leaderboard (Day.on_its_day).
+        date = board_id[len(MINI):]
+        path = config.MINI_DIR / f"{date}.json"
+        if not _DATE.fullmatch(date) or date > config.today() or not path.exists():
             raise BoardNotFound(board_id)
-        path = config.MINI_DIR / f"{board_id[len(MINI):]}.json"
         return _load(path, path.stat().st_mtime, True)
     if board_id not in playable_dates():
         raise BoardNotFound(board_id)

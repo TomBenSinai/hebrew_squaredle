@@ -28,6 +28,7 @@ in boards/mini/, with its own salt so its letters don't follow the big board's.
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import statistics
 import time
@@ -210,6 +211,8 @@ def main() -> None:
     a = p.parse_args()
     if a.no_save and not a.date:
         p.error("--no-save only works with --date")
+    if a.mini and (a.shape or a.size or a.theme):
+        p.error("--mini is always a plain 3x3: no --shape, --size or --theme")
     out = Path(a.out or HERE / "boards" / ("mini" if a.mini else "daily"))
     salt = a.salt or (MINI_SALT if a.mini else "hebrew-word-grid")
 
@@ -257,7 +260,7 @@ def main() -> None:
     else:
         start, days, force = a.start, a.days, a.force
 
-    schedule = MINI_SCHEDULE if a.mini else load_schedule()
+    schedule = copy.deepcopy(MINI_SCHEDULE) if a.mini else load_schedule()
     if a.date and forced:
         # the day's entry becomes exactly the flags, saved or not, so a
         # --no-save try gives the board that saving would

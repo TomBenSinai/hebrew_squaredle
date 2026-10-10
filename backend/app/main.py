@@ -18,7 +18,8 @@
   /api/auth/...                         optional login (auth.py)
 
 A board's {date} is a date, or "mini-<date>" for ריבועוני, the small board only
-logged-in players get (401 login_required otherwise); only today's is served.
+logged-in players get (401 login_required otherwise); only today's is offered,
+but a past one still takes the progress saved late.
 
 Progress is the logged-in user's when the request carries a session cookie,
 else the anonymous X-Player-Id's.

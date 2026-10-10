@@ -21,6 +21,7 @@ import { useMedia } from "./hooks/useMedia";
 import { useSpin } from "./hooks/useSpin";
 import { useSwipe } from "./hooks/useSwipe";
 import { withFinal } from "./lib/hebrew";
+import { boardDate, isMini } from "./lib/mini";
 import { HINTS, letterFraction, openHints, rankFor } from "./lib/scoring";
 import { hasSeen, markSeen } from "./lib/seen";
 import { share, shareText } from "./lib/share";
@@ -94,6 +95,12 @@ export default function App() {
     setNickname={setNickname} setMode={setMode} />;
 }
 
+/** Days with anything found, on either board: a day played on both counts once. */
+function savedDays(): number {
+  const all = progressStore.all();
+  return new Set(Object.keys(all).filter(id => all[id].found.length).map(boardDate)).size;
+}
+
 /** Play has mounted once this page load: only then is a solved board a refresh after the win */
 let playMounted = false;
 
@@ -102,7 +109,7 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname, setMode }:
     setNickname: (nickname: string | null) => void; setMode: (m: Mode) => void }) {
   const { board, layout, found } = game;
   // ריבועוני: today's only, so no archive and no way back to today
-  const mini = board.date.startsWith("mini-");
+  const mini = isMini(board.date);
   const [wordsOpen, setWordsOpen] = useState(false);
   // one sort for both word lists: the side panel and the modal are both mounted
   const { az, toggleSort } = useWordSort();
@@ -286,7 +293,7 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname, setMode }:
         mini={user ? days.mini : null} startMini={mini}
         onAccount={openAccount} />
       <AccountModal open={accountOpen} onClose={() => setAccountOpen(false)} auth={auth.info} notice={notice}
-        savedDays={accountOpen ? Object.values(progressStore.all()).filter(p => p.found.length).length : 0}
+        savedDays={accountOpen ? savedDays() : 0}
         onNickname={setNickname} />
       <IntroModal intro={helpOpen || accountOpen || leadersOpen || finishOpen || miniCardOpen ? null : intros[0] ?? null} onClose={closeIntro} />
     </div>

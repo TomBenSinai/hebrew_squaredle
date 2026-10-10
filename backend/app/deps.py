@@ -29,10 +29,14 @@ def current_user(ribuon_session: str | None = Cookie(default=None)) -> dict | No
     return accounts().session_user(ribuon_session) if ribuon_session else None
 
 
-def day(date: str, user: dict | None = Depends(current_user)) -> Day:
-    """The board `date` names. ריבועוני ("mini-<date>") is for logged-in players only."""
-    if is_mini(date) and user is None:
-        raise HTTPException(401, "login_required")
+def day(date: str, ribuon_session: str | None = Cookie(default=None)) -> Day:
+    """The board `date` names. ריבועוני ("mini-<date>") is for logged-in players
+    only: without a session it's 401 login_required, and with one that no longer
+    works 401 session_ended, as `current_player` says it. The session is looked
+    up for ריבועוני only, so the big board's requests (a check per swipe) don't
+    pay for it."""
+    if is_mini(date) and not (ribuon_session and accounts().session_user(ribuon_session)):
+        raise HTTPException(401, "session_ended" if ribuon_session else "login_required")
     try:
         return get_day(date)
     except BoardNotFound:

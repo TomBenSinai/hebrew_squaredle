@@ -23,7 +23,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Cookie, Depends, Header, HTTPException
 
 from . import config
-from .boards import Day, is_mini, mini_dates, playable_dates
+from .boards import MINI, Day, is_mini, mini_dates, playable_dates
 from .deps import accounts, current_player, current_user, day, repo
 
 router = APIRouter(prefix="/api/leaderboard")
@@ -94,7 +94,7 @@ def streak_board(listed: dict[str, str], me: str | None, mini: bool = False) -> 
     """The streaks of one game: ריבועון's, or with `mini` ריבועוני's."""
     today, dates = config.today(), mini_dates() if mini else playable_dates()
     if mini:
-        today = "mini-" + today
+        today = MINI + today
     who = list(listed) + ([me] if me and me not in listed else [])
     played = {p: {x for x in days if is_mini(x) == mini} for p, days in repo().days_played(who).items()}
     rows = [{"player_id": p, "streak": streak(days, dates, today), "days": len(days)}

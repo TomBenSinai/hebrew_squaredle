@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { CalendarIcon, Chip, GridIcon, LockIcon, MoonIcon, PersonIcon, Pill, ShapeIcon, ShareIcon, SunIcon, TrophyIcon } from "../components";
 import type { DaySummary, User } from "../api/types";
 import { shortDate, weekday } from "../lib/dates";
+import { boardDate } from "../lib/mini";
 import { useTheme } from "../lib/theme";
 import "./Masthead.css";
 
@@ -19,7 +20,7 @@ export function Masthead({ day, isToday, onHelp, account, mini }: Props) {
   if (mini?.on) {
     return (
       <MastheadFrame live title={<>ריבועונ<span className="mini-yod">י</span></>} when={<>
-        <b>היום</b>{` ${shortDate(day.date.slice("mini-".length))} · 3×3`}
+        <b>היום</b>{` ${shortDate(boardDate(day.date))} · 3×3`}
       </>}>
         <GameSwitch to="ריבועון" n={4} onClick={mini.onSwitch} />
         {account && <AccountPill user={account.user} onClick={account.onOpen} />}
