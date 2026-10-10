@@ -22,7 +22,8 @@ runs keep it); add --no-save to just print the board (nothing is written).
 Days that already have a file are skipped unless --force.
 
 --mini makes ריבועוני instead: a plain 3x3 every day (no schedule, no themes)
-in boards/mini/, with its own salt so its letters don't follow the big board's.
+in boards/mini/, with its own salt so its letters don't follow the big board's,
+and easier than the big board: only common words (zipf >= 4) are main words.
 """
 
 from __future__ import annotations
@@ -41,7 +42,9 @@ from wordgame import (PRESETS, Board, Lexicon, Settings, Shape, Theme, daily_boa
                       format_grid, save_board, settings_for)
 
 HERE = Path(__file__).parent
-MINI_SCHEDULE = {"default": {"shape": "3x3"}}
+# ריבועוני is meant to be light: only fairly common words count as main (rarer
+# ones are bonus), 10-25 of them, so a whole board can be cleared over a coffee
+MINI_SCHEDULE = {"default": {"shape": "3x3", "main_zipf": 4.0, "min_main": 10, "max_main": 25}}
 MINI_SALT = "ribuoni"
 WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 _lex: Lexicon | None = None
