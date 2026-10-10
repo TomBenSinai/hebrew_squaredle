@@ -372,6 +372,14 @@ class TestSchedule(unittest.TestCase):
         p = gd.plan_for(date(2026, 9, 21), sched, {"theme": "yomkippur", "main_zipf": 4.5})
         self.assertEqual(p["main_zipf"], 4.5)                           # a flag beats the theme
 
+    def test_max_bonus_caps_words_main_zipf_demotes(self):
+        import generate_days as gd
+        b = daily_board(date(2026, 10, 10), LEX, gd.build_settings(gd.plan_for(date(2026, 10, 10), gd.MINI_SCHEDULE), LEX),
+                        gd.MINI_SALT)
+        self.assertLessEqual(len(b.bonus), 20)
+        self.assertGreaterEqual(len(b.main), 10)
+        self.assertEqual(b.relaxed, [])
+
     def test_mini_is_a_plain_3x3_whatever_the_schedule(self):
         import generate_days as gd
         p = gd.plan_for(date(2026, 9, 26), gd.MINI_SCHEDULE)           # sukkot on the big board

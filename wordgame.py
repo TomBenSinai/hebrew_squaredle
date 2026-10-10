@@ -379,6 +379,9 @@ class Settings:
                                 # rest BONUS (for crowded boards; 4.5 ~ everyday words)
     max_bonus_ratio: float = 1.0  # >0: at most this many BONUS words per MAIN word
                                   # (ignored with main_zipf, which makes BONUS words on purpose)
+    max_bonus: int = 0          # >0: at most this many BONUS words, main_zipf or not (with
+                                # main_zipf the rare words it demotes count, so this keeps a
+                                # small board's bonus list from swelling with them)
     theme: Theme | None = None
 
     @property
@@ -629,12 +632,15 @@ def _relax(cur: Settings) -> tuple[list[str], Settings]:
                 f"{round(cur.min_main * .8)}-{round(cur.max_main * 1.2)}")
     if cur.max_bonus_ratio and not cur.main_zipf:
         step.append(f"max_bonus_ratio {cur.max_bonus_ratio:g}->{cur.max_bonus_ratio * 1.25:g}")
+    if cur.max_bonus:
+        step.append(f"max_bonus {cur.max_bonus}->{round(cur.max_bonus * 1.25)}")
     return step, replace(cur, min_long_words=max(1, cur.min_long_words - 2),
                          max_long_words=0,
                          min_longest=max(5, cur.min_longest - 1),
                          max_longest=0,
                          min_main=round(cur.min_main * .8), max_main=round(cur.max_main * 1.2),
                          max_bonus_ratio=cur.max_bonus_ratio * 1.25,
+                         max_bonus=round(cur.max_bonus * 1.25),
                          max_attempts=max(6, cur.max_attempts // 2))
 
 
@@ -657,9 +663,12 @@ def _evaluate(grid, lex, s: Settings, shape: Shape, lo: int, hi: int, theme_keys
         cost += lo - n
     elif n > hi:
         cost += n - hi
-    if s.max_bonus_ratio and not s.main_zipf:
+    if (s.max_bonus_ratio and not s.main_zipf) or s.max_bonus:
         bonus = sum(1 for cat, _ in found.values() if cat == BONUS)
-        cost += 0.5 * max(0, bonus - s.max_bonus_ratio * n)
+        if s.max_bonus_ratio and not s.main_zipf:
+            cost += 0.5 * max(0, bonus - s.max_bonus_ratio * n)
+        if s.max_bonus:
+            cost += 0.5 * max(0, bonus - s.max_bonus)
     lens = [len(normalize(w)) for w in main]
     if not any(k >= lg_lo for k in lens):
         cost += 5
