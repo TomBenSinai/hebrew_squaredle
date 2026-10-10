@@ -111,7 +111,8 @@ lists in `data/`, and a board must never change after it has been played.
 
 ```bash
 python generate_days.py --days 90        # skips days that already exist
-git add boards/daily && git commit -m "Boards through <date>" && git push
+python generate_days.py --mini --days 90 # ריבועוני too: always top both up together
+git add boards/daily boards/mini && git commit -m "Boards through <date>" && git push
 ```
 
 Then `git pull` on the server. Boards (daily and `--mini`) currently run through **2027-03-31**; top
