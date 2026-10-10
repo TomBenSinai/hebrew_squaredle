@@ -119,10 +119,11 @@ export function ShareIcon() {
 /** A square of n x n small tiles: the board's size, on the switch between ריבועון (4) and ריבועוני (3). */
 export function GridIcon({ n }: { n: 3 | 4 }) {
   const step = 18 / n, size = step - 1.6;
+  const start = (20 - (18 - 1.6)) / 2;   // the grid spans 16.4, so this centres it in the 20 box
   return (
     <svg className="grid-icon" viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
       {Array.from({ length: n * n }, (_, i) => (
-        <rect key={i} x={1 + (i % n) * step} y={1 + Math.floor(i / n) * step} width={size} height={size}
+        <rect key={i} x={start + (i % n) * step} y={start + Math.floor(i / n) * step} width={size} height={size}
           rx={n === 3 ? 1.4 : 1} fill="currentColor" />
       ))}
     </svg>
