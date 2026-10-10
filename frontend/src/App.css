@@ -74,8 +74,11 @@
    nine tiles sit on an amber tray, and stop growing well before the big board's. */
 .app.mini .masthead { border-bottom-color: var(--amber-fill); }
 .app.mini .boardwrap {
-  --cell: min(calc(100cqw / 3.4), calc((100cqh - 3.2rem) / 3.4), 124px);
+  --cell: min(calc(100cqw / 3.4), calc((100cqh - 3.2rem - 12px) / 3.4), 124px);
 }
+/* the tray reaches past the board's edge: keep that much room around it, and a
+   little more, so the word read out above doesn't sit on its rim */
+.app.mini .board { margin-block: calc(var(--cell) * .16 + 6px); }
 .app.mini .board::before {
   content: ""; position: absolute; inset: calc(var(--cell) * -.16);
   border-radius: calc(var(--cell) * .2);
