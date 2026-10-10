@@ -261,7 +261,7 @@ function NamePrompt({ onSaved, onSkip }: { onSaved: (nickname: string | null) =>
     <div className="acctwelcome">
       <h3 className="accthead" style={{ "--i": 0 } as CSSProperties}>איך תרצו להופיע בטבלת המובילים?</h3>
       <p className="acctfine" style={{ "--i": 1 } as CSSProperties}>
-        הכינוי גלוי לכל השחקנים, אז עדיף לא את השם המלא. אפשר לשנות אותו מתי שרוצים בכרטיס החשבון.
+        הכינוי גלוי לכל השחקנים. אפשר לשנות אותו מתי שרוצים בכרטיס החשבון.
       </p>
       <Nickname current={null} onSaved={onSaved} bare />
       <button type="button" className="linkish muted acctskip" style={{ "--i": 3 } as CSSProperties}
@@ -318,7 +318,7 @@ function Nickname({ current, onSaved, bare }:
         {saved && current ? "נשמר. כך תופיעו בטבלה." : saved ? "הוסרתם מהטבלה." : current
           ? <>הכינוי גלוי לכל השחקנים.{" "}
               <button type="button" className="linkish muted" onClick={() => save(null)} disabled={busy}>הסרה מהטבלה</button></>
-          : "בלי כינוי לא תופיעו בטבלה. הכינוי גלוי לכל השחקנים, אז עדיף לא את השם המלא."}
+          : "בלי כינוי לא תופיעו בטבלה. הכינוי גלוי לכל השחקנים."}
       </p>}
     </div>
   );
