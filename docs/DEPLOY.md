@@ -114,7 +114,7 @@ python generate_days.py --days 90        # skips days that already exist
 git add boards/daily && git commit -m "Boards through <date>" && git push
 ```
 
-Then `git pull` on the server. Boards currently run through **2027-03-31**; top
+Then `git pull` on the server. Boards (daily and `--mini`) currently run through **2027-03-31**; top
 them up a couple of months before that. `/api/health` reports the board count,
 and `GET /api/days` shows the newest playable day, so a monitor on either will
 warn you before the well runs dry.
