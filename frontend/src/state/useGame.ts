@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { CellCounts, DayProgress, FoundWord, PublicBoard, Reveal } from "../api/types";
-import { answerLookup, type Hit } from "../lib/answers";
+import { answerLookup, type Hit, type Lookup } from "../lib/answers";
 import { norm, withFinal } from "../lib/hebrew";
 import { useFlash } from "../hooks/useFlash";
 import { findPath, makeLayout, pathCells, type Layout } from "../lib/layout";
@@ -58,6 +58,23 @@ export interface Hints {
   uses?: number[];
 }
 
+/**
+ * The words found that are on this board as it is now. A board remade after
+ * players found words on it (a day regenerated on purpose) would otherwise keep
+ * showing, and counting, words it no longer has: those go, and the rest take the
+ * board's category. Without hashed answers (an older API) the words stay as they are.
+ */
+function onBoard(p: DayProgress, lookup: Lookup | null): DayProgress {
+  if (!lookup) return p;
+  const found: FoundWord[] = p.found.flatMap(f => {
+    const h = lookup(norm(f.w));
+    return h ? [{ w: h.word, cat: h.cat, ...(h.theme ? { theme: true } : {}) }] : [];
+  });
+  const same = found.length === p.found.length && found.every((f, i) =>
+    f.w === p.found[i].w && f.cat === p.found[i].cat && !!f.theme === !!p.found[i].theme);
+  return same ? p : { ...p, found };
+}
+
 /** One day's board and this player's progress on it. */
 export function useGame(date: string | null): { game: Game | null; error: string | null } {
   const [board, setBoard] = useState<PublicBoard | null>(null);
@@ -83,7 +100,9 @@ export function useGame(date: string | null): { game: Game | null; error: string
     api.board(date).then(b => {
       if (stale) return;
       setBoard(b);
-      progressRef.current = progressStore.load(date);
+      const stored = progressStore.load(date);
+      progressRef.current = onBoard(stored, answerLookup(b.salt, b.answers));
+      if (progressRef.current !== stored) progressStore.save(date, progressRef.current);
       setProgress(progressRef.current);
       setToast(null);
       setPending(null);
