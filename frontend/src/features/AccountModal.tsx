@@ -27,11 +27,16 @@ const NOTICES: Record<AuthNotice, { text: string; bad?: boolean }> = {
 /** Log in to keep progress on every device, or, logged in, the account itself. */
 export function AccountModal({ open, onClose, auth, notice, savedDays, onNickname }: Props) {
   const note = notice && NOTICES[notice];
+  // a brand-new account is asked for its leaderboard name first, once
+  const [skipped, setSkipped] = useState(false);
+  const askName = notice === "welcome" && !!auth.user && !auth.user.nickname && !skipped;
   return (
     <Modal open={open} onClose={onClose} title={auth.user ? "החשבון" : "התחברות"} sheetClassName="acctcard">
       <SheetBody className="acctbody">
         {note && <p className={"acctnote" + (note.bad ? " bad" : "")} role="status">{note.text}</p>}
-        {auth.user
+        {askName
+          ? <NamePrompt onSaved={onNickname} onSkip={() => setSkipped(true)} />
+          : auth.user
           ? <SignedIn user={auth.user} savedDays={savedDays} onNickname={onNickname} />
           : <SignIn providers={auth.providers} />}
       </SheetBody>
@@ -247,13 +252,34 @@ function SignedIn({ user, savedDays, onNickname }:
   );
 }
 
+/**
+ * Just made the account: before anything else, the name to show on the
+ * leaderboard. Saving it or skipping goes on to the account card.
+ */
+function NamePrompt({ onSaved, onSkip }: { onSaved: (nickname: string | null) => void; onSkip: () => void }) {
+  return (
+    <div className="acctwelcome">
+      <h3 className="accthead" style={{ "--i": 0 } as CSSProperties}>איך תרצו להופיע בטבלת המובילים?</h3>
+      <p className="acctfine" style={{ "--i": 1 } as CSSProperties}>
+        הכינוי גלוי לכל השחקנים. אפשר לשנות אותו מתי שרוצים בכרטיס החשבון.
+      </p>
+      <Nickname current={null} onSaved={onSaved} bare />
+      <button type="button" className="linkish muted acctskip" style={{ "--i": 3 } as CSSProperties}
+        onClick={onSkip}>אולי אחר כך</button>
+    </div>
+  );
+}
+
 const NICK_ERRORS: Record<string, string> = {
   bad_nickname: "כינוי הוא 2 עד 20 אותיות או ספרות (אפשר גם רווח, נקודה, מקף או גרש), בלי ניקוד ואמוג'י.",
   nickname_taken: "הכינוי הזה כבר תפוס. נסו אחר.",
 };
 
 /** The name the leaderboard shows; without one the player stays off it. */
-function Nickname({ current, onSaved }: { current: string | null; onSaved: (nickname: string | null) => void }) {
+function Nickname({ current, onSaved, bare }:
+  { current: string | null; onSaved: (nickname: string | null) => void;
+    /** in the name prompt: no label or note, its own heading says it */
+    bare?: boolean }) {
   const [value, setValue] = useState(current ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -280,20 +306,20 @@ function Nickname({ current, onSaved }: { current: string | null; onSaved: (nick
 
   return (
     <div className="acctnick" style={{ "--i": 2 } as CSSProperties}>
-      <label className="acctlabel" htmlFor="acct-nick">כינוי בטבלת המובילים</label>
+      {!bare && <label className="acctlabel" htmlFor="acct-nick">כינוי בטבלת המובילים</label>}
       <form className="acctform" onSubmit={submit} noValidate>
-        <input id="acct-nick" className="acctinput" maxLength={20} autoComplete="nickname" placeholder="למשל: מלכת המילים"
+        <input id="acct-nick" aria-label={bare ? "כינוי בטבלת המובילים" : undefined} className="acctinput" maxLength={20} autoComplete="nickname" placeholder="למשל: מלכת המילים"
           value={value} onChange={e => { setValue(e.target.value); setSaved(false); }}
           aria-invalid={!!error || undefined} aria-describedby={error ? "acct-nick-err" : undefined} />
         <Button type="submit" disabled={busy || !value.trim() || !changed}>{busy ? "שומרים…" : "שמירה"}</Button>
       </form>
       {error && <p id="acct-nick-err" className="accterr" role="alert">{error}</p>}
-      <p className="acctfine" role="status">
+      {!bare && <p className="acctfine" role="status">
         {saved && current ? "נשמר. כך תופיעו בטבלה." : saved ? "הוסרתם מהטבלה." : current
           ? <>הכינוי גלוי לכל השחקנים.{" "}
               <button type="button" className="linkish muted" onClick={() => save(null)} disabled={busy}>הסרה מהטבלה</button></>
-          : "בלי כינוי לא תופיעו בטבלה. הכינוי גלוי לכל השחקנים, אז עדיף לא את השם המלא."}
-      </p>
+          : "בלי כינוי לא תופיעו בטבלה. הכינוי גלוי לכל השחקנים."}
+      </p>}
     </div>
   );
 }

@@ -10,6 +10,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import re
 from datetime import date as Date
 from functools import lru_cache
 from pathlib import Path
@@ -54,6 +55,16 @@ class BoardNotFound(Exception):
     pass
 
 
+# ריבועוני's boards are named "mini-YYYY-MM-DD" wherever a daily board takes its
+# date (the API's routes, the progress rows), so both share every route and table
+MINI = "mini-"
+_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+def is_mini(board_id: str) -> bool:
+    return board_id.startswith(MINI)
+
+
 @lru_cache(maxsize=1)
 def _shape_titles() -> dict[str, str]:
     if not config.SHAPES_FILE.exists():
@@ -63,8 +74,8 @@ def _shape_titles() -> dict[str, str]:
 
 
 @lru_cache(maxsize=512)
-def _load(path: Path, mtime: float) -> "Day":
-    return Day(Board.from_json(json.loads(path.read_text(encoding="utf-8"))))
+def _load(path: Path, mtime: float, mini: bool) -> "Day":
+    return Day(Board.from_json(json.loads(path.read_text(encoding="utf-8"))), mini)
 
 
 def all_dates() -> list[str]:
@@ -79,16 +90,38 @@ def playable_dates() -> list[str]:
     return playable or dates[:1]
 
 
-def get_day(date: str) -> "Day":
-    if date not in playable_dates():
-        raise BoardNotFound(date)
-    return load_day(date)
+def mini_dates() -> list[str]:
+    """Every ריבועוני up to today, oldest first, by id ("mini-<date>")."""
+    today = config.today()
+    return sorted(MINI + f.stem for f in config.MINI_DIR.glob("*.json") if f.stem <= today)
+
+
+def mini_today() -> str | None:
+    """Today's ריבועוני ("mini-<date>"), if one was made. Only today's is played: no archive."""
+    today = config.today()
+    return MINI + today if (config.MINI_DIR / f"{today}.json").exists() else None
+
+
+def get_day(board_id: str) -> "Day":
+    if is_mini(board_id):
+        # Only today's is offered (mini_today), but a past one still answers: a
+        # word found just before midnight, or in a tab left open past it, must
+        # still reach the account, or the device would hold it unsent for good.
+        # Saved late, it doesn't count for the leaderboard (Day.on_its_day).
+        date = board_id[len(MINI):]
+        path = config.MINI_DIR / f"{date}.json"
+        if not _DATE.fullmatch(date) or date > config.today() or not path.exists():
+            raise BoardNotFound(board_id)
+        return _load(path, path.stat().st_mtime, True)
+    if board_id not in playable_dates():
+        raise BoardNotFound(board_id)
+    return load_day(board_id)
 
 
 def load_day(date: str) -> "Day":
     """No playability check: for dates that came from `playable_dates()`."""
     path = config.BOARDS_DIR / f"{date}.json"
-    return _load(path, path.stat().st_mtime)
+    return _load(path, path.stat().st_mtime, False)
 
 
 def day_number(date: str, epoch: str | None = None) -> int:
@@ -119,8 +152,9 @@ def reveal_mask(word: str) -> dict:
 class Day:
     """One board plus the indexes needed to answer the player."""
 
-    def __init__(self, board: Board):
+    def __init__(self, board: Board, mini: bool = False):
         self.board = board
+        self.mini = mini
         self.nbrs = neighbors(board.shape)
         self.index: dict[str, tuple[str, str]] = {normalize(w): (BONUS, w) for w in board.bonus}
         self.index.update({normalize(w): (MAIN, w) for w in board.main})
@@ -128,7 +162,8 @@ class Day:
 
     @property
     def date(self) -> str:
-        return self.board.date
+        """The board's id: its date, or "mini-<date>" for a ריבועוני."""
+        return MINI + self.board.date if self.mini else self.board.date
 
     @property
     def shape_title(self) -> str:
@@ -138,6 +173,10 @@ class Day:
             return ""
         return _shape_titles().get(shape.name, "")
 
+    def on_its_day(self) -> bool:
+        """Today's board: what's found now counts for the leaderboard."""
+        return self.board.date == config.today()
+
     def main_letters(self) -> int:
         return sum(len(normalize(w)) for w in self.board.main)
 
@@ -145,8 +184,8 @@ class Day:
         """What the archive list shows for this day."""
         b = self.board
         return {
-            "date": b.date,
-            "number": day_number(b.date, epoch),
+            "date": self.date,
+            "number": 0 if self.mini else day_number(b.date, epoch),
             "shapeName": self.shape_title,
             "theme": b.theme["title"] if b.theme else None,
             "mainTotal": len(b.main),

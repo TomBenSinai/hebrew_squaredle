@@ -10,6 +10,8 @@ from zoneinfo import ZoneInfo
 # The repo root holds wordgame.py, boards/ and shapes.json.
 REPO_ROOT = Path(os.environ.get("RIBUON_ROOT", Path(__file__).resolve().parents[2]))
 BOARDS_DIR = Path(os.environ.get("RIBUON_BOARDS", REPO_ROOT / "boards" / "daily"))
+# ריבועוני, the small daily board for logged-in players (generate_days.py --mini)
+MINI_DIR = Path(os.environ.get("RIBUON_MINI_BOARDS", REPO_ROOT / "boards" / "mini"))
 SHAPES_FILE = REPO_ROOT / "shapes.json"
 DB_PATH = Path(os.environ.get("RIBUON_DB", REPO_ROOT / "backend" / "ribuon.db"))
 CORS_ORIGINS = [o for o in os.environ.get("RIBUON_CORS", "").split(",") if o]

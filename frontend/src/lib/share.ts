@@ -3,18 +3,19 @@ import type { FoundWord } from "../api/types";
 const count = (n: number, one: string, many: string) => (n === 1 ? one : `${n} ${many}`);
 
 /** What a player shares: how many of the day's `mainTotal` words they found, a dare, and the link.
- * No words, so no spoilers. With every main word found it says the board is finished. */
-export function shareText(found: FoundWord[], mainTotal: number): string {
+ * No words, so no spoilers. With every main word found it says the board is finished.
+ * `game` is the board's name: ריבועון, or ריבועוני for the small one. */
+export function shareText(found: FoundWord[], mainTotal: number, game = "ריבועון"): string {
   const main = found.filter(f => f.cat === "main").length;
   const bonus = found.length - main;
   const link = window.location.origin;
   if (main >= mainTotal) {
     const extra = bonus ? ` ועוד ${count(bonus, "מילת בונוס אחת", "מילות בונוס")}` : "";
-    return `תראו, סיימתי את הריבועון: כל ${mainTotal} המילים${extra}! נראה אתכם מצליחים גם🤩 ${link}`;
+    return `תראו, סיימתי את ה${game}: כל ${mainTotal} המילים${extra}! נראה אתכם מצליחים גם🤩 ${link}`;
   }
   const words = main === 1 ? `מילה אחת מתוך ${mainTotal}` : `${main} מתוך ${mainTotal} מילים`;
   const extra = bonus ? (bonus === 1 ? " ומילת בונוס אחת" : ` ו־${bonus} מילות בונוס`) : "";
-  return `שיחקתי בריבועון ומצאתי ${words}${extra}. נראה אתכם עוקפים אותי! ${link}`;
+  return `שיחקתי ב${game} ומצאתי ${words}${extra}. נראה אתכם עוקפים אותי! ${link}`;
 }
 
 /**

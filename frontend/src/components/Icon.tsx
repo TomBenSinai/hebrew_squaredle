@@ -115,3 +115,26 @@ export function ShareIcon() {
     </svg>
   );
 }
+
+/** A square of n x n small tiles: the board's size, on the switch between ריבועון (4) and ריבועוני (3). */
+export function GridIcon({ n }: { n: 3 | 4 }) {
+  const step = 18 / n, size = step - 1.6;
+  return (
+    <svg className="grid-icon" viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
+      {Array.from({ length: n * n }, (_, i) => (
+        <rect key={i} x={1 + (i % n) * step} y={1 + Math.floor(i / n) * step} width={size} height={size}
+          rx={n === 3 ? 1.4 : 1} fill="currentColor" />
+      ))}
+    </svg>
+  );
+}
+
+/** A padlock: for players who are logged in only. */
+export function LockIcon() {
+  return (
+    <svg className="lock-icon" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
+      <rect x="5" y="10.5" width="14" height="10" rx="2.2" fill="currentColor" />
+      <path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+    </svg>
+  );
+}

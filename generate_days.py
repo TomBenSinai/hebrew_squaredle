@@ -13,17 +13,22 @@ shapes.json, themes in themes/*.json.
   python generate_days.py --date 2026-09-19 --shape "XXXXX/X...X/XXXXX" --min-long-words 4
   python generate_days.py --shapes                          # show the shape library
   python generate_days.py --show 2026-09-19                 # print a stored board
+  python generate_days.py --mini --days 60                  # ריבועוני: the 3x3 board for logged-in players
 
 --date makes a one-day change and records it in schedule.json (so later bulk
 runs keep it); add --no-save to just print the board (nothing is written).
 --shape / --theme / --size and any setting flag apply to every day of the run.
 
 Days that already have a file are skipped unless --force.
+
+--mini makes ריבועוני instead: a plain 3x3 every day (no schedule, no themes)
+in boards/mini/, with its own salt so its letters don't follow the big board's.
 """
 
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import statistics
 import time
@@ -36,6 +41,8 @@ from wordgame import (PRESETS, Board, Lexicon, Settings, Shape, Theme, daily_boa
                       format_grid, save_board, settings_for)
 
 HERE = Path(__file__).parent
+MINI_SCHEDULE = {"default": {"shape": "3x3"}}
+MINI_SALT = "ribuoni"
 WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 _lex: Lexicon | None = None
 
@@ -187,10 +194,11 @@ def main() -> None:
     p.add_argument("--shape", help="shape name from shapes.json, 'NxN', or a mask like '.X./XXX/.X.'")
     p.add_argument("--size", type=int, help="shortcut for --shape NxN")
     p.add_argument("--theme", help="theme file name from themes/ (without .json)")
-    p.add_argument("--out", default=str(HERE / "boards" / "daily"))
+    p.add_argument("--mini", action="store_true",
+                   help="ריבועוני: 3x3 boards into boards/mini/, ignoring schedule.json")
+    p.add_argument("--out", help="where the boards go (default boards/daily, or boards/mini with --mini)")
     p.add_argument("--data", default=str(HERE / "data"))
-    p.add_argument("--salt", default="hebrew-word-grid",
-                   help="change to get a completely different sequence of boards")
+    p.add_argument("--salt", help="change to get a completely different sequence of boards")
     p.add_argument("--workers", type=int, default=None)
     p.add_argument("--force", action="store_true", help="overwrite existing days")
     p.add_argument("--show", type=date.fromisoformat, help="print a stored board and exit")
@@ -203,7 +211,10 @@ def main() -> None:
     a = p.parse_args()
     if a.no_save and not a.date:
         p.error("--no-save only works with --date")
-    out = Path(a.out)
+    if a.mini and (a.shape or a.size or a.theme):
+        p.error("--mini is always a plain 3x3: no --shape, --size or --theme")
+    out = Path(a.out or HERE / "boards" / ("mini" if a.mini else "daily"))
+    salt = a.salt or (MINI_SALT if a.mini else "hebrew-word-grid")
 
     if a.shapes:
         show_shapes()
@@ -243,13 +254,13 @@ def main() -> None:
 
     if a.date:
         start, days, force = a.date, 1, True
-        if forced and not a.no_save:
+        if forced and not a.no_save and not a.mini:
             save_special_day(a.date, forced)
             print(f"recorded {a.date} in schedule.json: {forced}")
     else:
         start, days, force = a.start, a.days, a.force
 
-    schedule = load_schedule()
+    schedule = copy.deepcopy(MINI_SCHEDULE) if a.mini else load_schedule()
     if a.date and forced:
         # the day's entry becomes exactly the flags, saved or not, so a
         # --no-save try gives the board that saving would
@@ -263,7 +274,7 @@ def main() -> None:
         path = out / f"{day.isoformat()}.json"
         if force or not path.exists():
             plan = plan_for(day, schedule, forced)
-            jobs.append((day, plan, a.salt, None if a.no_save else path))
+            jobs.append((day, plan, salt, None if a.no_save else path))
     print(f"{len(jobs)} board(s) to generate -> {'(dry run, not saved)' if a.no_save else out}")
     if not jobs:
         return

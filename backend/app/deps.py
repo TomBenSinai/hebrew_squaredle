@@ -7,7 +7,7 @@ from fastapi import Cookie, Depends, Header, HTTPException
 
 from . import config
 from .accounts import AccountRepo
-from .boards import BoardNotFound, Day, get_day
+from .boards import BoardNotFound, Day, get_day, is_mini
 from .progress import ProgressRepo
 
 _PLAYER_ID = re.compile(r"^[A-Za-z0-9-]{8,64}$")
@@ -24,16 +24,23 @@ def accounts() -> AccountRepo:
     return AccountRepo(config.DB_PATH)
 
 
-def day(date: str) -> Day:
+def current_user(ribuon_session: str | None = Cookie(default=None)) -> dict | None:
+    """The logged-in user, or None (no session, or an expired or revoked one)."""
+    return accounts().session_user(ribuon_session) if ribuon_session else None
+
+
+def day(date: str, ribuon_session: str | None = Cookie(default=None)) -> Day:
+    """The board `date` names. ריבועוני ("mini-<date>") is for logged-in players
+    only: without a session it's 401 login_required, and with one that no longer
+    works 401 session_ended, as `current_player` says it. The session is looked
+    up for ריבועוני only, so the big board's requests (a check per swipe) don't
+    pay for it."""
+    if is_mini(date) and not (ribuon_session and accounts().session_user(ribuon_session)):
+        raise HTTPException(401, "session_ended" if ribuon_session else "login_required")
     try:
         return get_day(date)
     except BoardNotFound:
         raise HTTPException(404, "No board for this date")
-
-
-def current_user(ribuon_session: str | None = Cookie(default=None)) -> dict | None:
-    """The logged-in user, or None (no session, or an expired or revoked one)."""
-    return accounts().session_user(ribuon_session) if ribuon_session else None
 
 
 def require_user(user: dict | None = Depends(current_user)) -> dict:

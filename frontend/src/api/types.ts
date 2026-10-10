@@ -12,6 +12,8 @@ export interface DaySummary {
 export interface DaysResponse {
   today: string;
   days: DaySummary[];
+  /** today's ריבועוני ("mini-<date>"), for logged-in players; null with none made (missing from older APIs) */
+  mini?: string | null;
 }
 
 export interface PublicBoard extends DaySummary {

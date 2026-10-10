@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { api } from "../api/client";
 import type { DayRow, Leaderboard, MyPlace, Ranked, StreakRow, User } from "../api/types";
-import { Button, Modal, SheetBody } from "../components";
+import { Button, GridIcon, Modal, SheetBody } from "../components";
 import { playerId, progressStore } from "../state/progressStore";
 import "./LeaderboardModal.css";
 
@@ -10,6 +10,10 @@ interface Props {
   onClose: () => void;
   /** today's date: the day's ranking is today's */
   date: string;
+  /** today's ריבועוני ("mini-<date>"), when this player can see it: then the card has both games */
+  mini?: string | null;
+  /** which game it opens on: the one being played */
+  startMini?: boolean;
   user: User | null;
   /** opens the account card, to log in or pick a nickname */
   onAccount: () => void;
@@ -21,26 +25,45 @@ type Tab = "day" | "streaks";
  * Today's ranking and the streaks. Lists only players who picked a nickname;
  * everyone else sees their own place in it too. Only play on a board's own day counts.
  */
-export function LeaderboardModal({ open, onClose, date, user, onAccount }: Props) {
+export function LeaderboardModal({ open, onClose, date, mini, startMini, user, onAccount }: Props) {
   const [tab, setTab] = useState<Tab>("day");
+  // the game picked in the card; until one is, the game being played. Cleared
+  // on closing, so the next opening starts there again, and fetches only that
+  const [picked, setGame] = useState<"daily" | "mini" | null>(null);
+  useEffect(() => { if (!open) setGame(null); }, [open]);
+  const game = picked ?? (startMini && mini ? "mini" : "daily");
   const [data, setData] = useState<Leaderboard | null>(null);
   const [failed, setFailed] = useState(false);
+  const board = game === "mini" && mini ? mini : date;
 
   useEffect(() => {
     if (!open) return;
     const ctl = new AbortController();
     setFailed(false);
+    setData(null);
     // send the words found so far first, so the player's own row is current
     progressStore.sync().catch(() => {})
-      .then(() => api.leaderboard(date, playerId(), ctl.signal))
+      .then(() => api.leaderboard(board, playerId(), ctl.signal))
       .then(setData, () => { if (!ctl.signal.aborted) setFailed(true); });
     return () => ctl.abort();
-  }, [open, date, user?.nickname]);
+  }, [open, board, user?.nickname]);
 
   const part = data?.[tab];
   return (
     <Modal open={open} onClose={onClose} title="טבלת המובילים" sheetClassName="leadcard">
       <SheetBody className="leadbody">
+        {mini && (
+          <div className="leadgames" role="tablist" aria-label="משחק">
+            <button type="button" role="tab" aria-selected={game === "daily"}
+              className={"leadgame" + (game === "daily" ? " on" : "")} onClick={() => setGame("daily")}>
+              <GridIcon n={4} />ריבועון
+            </button>
+            <button type="button" role="tab" aria-selected={game === "mini"}
+              className={"leadgame mini" + (game === "mini" ? " on" : "")} onClick={() => setGame("mini")}>
+              <GridIcon n={3} />ריבועוני
+            </button>
+          </div>
+        )}
         <div className="leadtabs" role="tablist" aria-label="טבלה">
           <TabButton on={tab === "day"} onClick={() => setTab("day")}>היום</TabButton>
           <TabButton on={tab === "streaks"} onClick={() => setTab("streaks")}>רצפים</TabButton>
@@ -48,6 +71,8 @@ export function LeaderboardModal({ open, onClose, date, user, onAccount }: Props
         <p className="leadfine">
           {tab === "day"
             ? "לפי מספר המילים, ואז מילות הבונוס. בתיקו: מי שסיים ראשון."
+            : game === "mini"
+            ? "ימים ברצף שבהם מצאתם מילה בריבועוני של אותו יום."
             : "ימים ברצף שבהם מצאתם מילה בלוח של אותו יום. משחק בארכיון לא נספר."}
         </p>
 
