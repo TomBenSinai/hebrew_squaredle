@@ -37,11 +37,9 @@ export function MiniModal({ open, onClose, onLogin }: { open: boolean; onClose: 
       title={<span className="minititle">ריבועונ<span className="mini-yod">י</span></span>}>
       <SheetBody className="minibody">
         <MiniDemo />
-        <p className="minilead">לוח קטן של 3 על 3, חדש כל יום</p>
-        <p className="minitext">
-          תשע אותיות ועשרות מילים, לסיבוב קצר ליד הריבועון. הריבועוני פתוח רק למי שמחובר:
-          התחברו, והוא יחכה לכם כאן כל יום.
-        </p>
+        <p className="minilead">ריבועון קטן, 3 על 3</p>
+        <p className="minitext">קליל וכיף לפתור עם הקפה של הבוקר או ממש לפני השינה.</p>
+        <p className="minitext">הריבועוני זמין למשתמשים מחוברים.</p>
         <div className="miniactions">
           <Button variant="primary" onClick={onLogin}>התחברות</Button>
           <button type="button" className="linkish" onClick={onClose}>אולי אחר כך</button>

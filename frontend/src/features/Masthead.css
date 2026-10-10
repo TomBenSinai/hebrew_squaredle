@@ -81,26 +81,22 @@
 .newsclose:hover, .newsclose:focus-visible { opacity: 1; }
 @keyframes newsin { from { opacity: 0; transform: translateY(-4px); } }
 
-/* The switch between the two boards, at the end of the date line. Kept small,
-   so a narrow header wraps it onto the line's second row instead of squeezing
-   the pills. Towards ריבועוני it's amber; back to ריבועון it's plain ink. */
-.gameswitch {
-  display: inline-flex; align-items: center; gap: 5px;
-  margin-inline-start: 8px; padding: 2px 9px 2px 8px; vertical-align: 0;
-  border-radius: 99px; border: 1.5px solid var(--amber-fill);
-  background: var(--amber-soft); color: var(--ink);
-  font-family: var(--display); font-weight: 600; font-size: .8rem; line-height: 1.35;
-  cursor: pointer; white-space: nowrap;
-  transition: background .15s ease, transform .12s ease;
+/* The switch between the two boards, the first pill: the other board's grid.
+   Towards ריבועוני the grid is amber on an amber ring; a logged-out player sees
+   a lock badge on its corner, like the leaderboard's dot. */
+.pill.gameswitch { position: relative; }
+.pill.gameswitch .grid-icon { width: 18px; height: 18px; }
+.pill.gameswitch.to-mini { border-color: var(--amber-fill); color: var(--amber-fill); }
+@media (hover: hover) { .pill.gameswitch.to-mini:hover { background: var(--amber-soft); } }
+.gamelock {
+  position: absolute; top: -3px; inset-inline-end: -3px;
+  display: grid; place-items: center; width: 17px; height: 17px; border-radius: 50%;
+  background: var(--amber-fill); color: #111111; box-shadow: 0 0 0 2px var(--ground);
 }
-.gameswitch .grid-icon { color: var(--amber-fill); flex: none; }
-.gameswitch .lock-icon { color: var(--amber); opacity: .9; margin-inline-start: -1px; }
-.gameswitch:active { transform: scale(.96); }
-@media (hover: hover) { .gameswitch.to-mini:hover { background: var(--amber-fill); color: #111111; }
-  .gameswitch.to-mini:hover .grid-icon, .gameswitch.to-mini:hover .lock-icon { color: #111111; } }
-.gameswitch.to-daily { border-color: var(--line); background: var(--paper); }
-.gameswitch.to-daily .grid-icon { color: var(--ink); }
-@media (hover: hover) { .gameswitch.to-daily:hover { border-color: var(--ink); } }
+.gamelock .lock-icon { width: 10px; height: 10px; }
+
+/* A fourth pill leaves the name less room on the narrowest phones */
+@media (max-width: 359px) { .masthead h1 { font-size: 1.3rem; } }
 
 /* ריבועוני: the name's last letter, the diminutive, is the board's amber */
 .mini-yod { color: var(--amber-fill); }

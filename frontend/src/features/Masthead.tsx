@@ -20,8 +20,8 @@ export function Masthead({ day, isToday, onHelp, account, mini }: Props) {
     return (
       <MastheadFrame live title={<>ריבועונ<span className="mini-yod">י</span></>} when={<>
         <b>היום</b>{` ${shortDate(day.date.slice("mini-".length))} · 3×3`}
-        <GameSwitch to="ריבועון" n={4} onClick={mini.onSwitch} />
       </>}>
+        <GameSwitch to="ריבועון" n={4} onClick={mini.onSwitch} />
         {account && <AccountPill user={account.user} onClick={account.onOpen} />}
         <HelpPill onClick={onHelp} />
         <ThemePill />
@@ -34,8 +34,8 @@ export function Masthead({ day, isToday, onHelp, account, mini }: Props) {
       {` ${shortDate(day.date)} · לוח ${day.number}`}
       {day.shapeName && <> · <span className="shape" title="צורת הלוח"><ShapeIcon />{day.shapeName}</span></>}
       {day.theme && <Chip>★ {day.theme}</Chip>}
-      {mini && <GameSwitch to="ריבועוני" n={3} locked={mini.locked} onClick={mini.onSwitch} />}
     </>}>
+      {mini && <GameSwitch to="ריבועוני" n={3} locked={mini.locked} onClick={mini.onSwitch} />}
       {account && <AccountPill user={account.user} onClick={account.onOpen} />}
       <HelpPill onClick={onHelp} />
       <ThemePill />
@@ -44,15 +44,17 @@ export function Masthead({ day, isToday, onHelp, account, mini }: Props) {
 }
 
 /**
- * Over to the other board, at the end of the date line: a small tile with that
- * board's grid. ריבועוני's is amber, and carries a lock for a logged-out player.
+ * Over to the other board: the first pill, beside the name, showing that board's
+ * grid. ריבועוני's is amber, with a lock on its corner for a logged-out player.
  */
 function GameSwitch({ to, n, locked, onClick }: { to: string; n: 3 | 4; locked?: boolean; onClick: () => void }) {
+  const label = locked ? `${to}: למשתמשים מחוברים` : `מעבר ל${to}`;
   return (
-    <button type="button" className={"gameswitch to-" + (n === 3 ? "mini" : "daily")} onClick={onClick}
-      aria-label={locked ? `${to}: למחוברים בלבד` : `מעבר ל${to}`}>
-      <GridIcon n={n} />{to}{locked && <LockIcon />}
-    </button>
+    <Pill className={"round gameswitch to-" + (n === 3 ? "mini" : "daily")} aria-label={label} title={label}
+      onClick={onClick}>
+      <GridIcon n={n} />
+      {locked && <span className="gamelock"><LockIcon /></span>}
+    </Pill>
   );
 }
 
