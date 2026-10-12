@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { Toast } from "../state/useGame";
 import "./Readout.css";
 
@@ -12,6 +13,9 @@ interface Props {
 
 /** Above the board: the word being swiped, else the last message. */
 export function Readout({ current, waiting, toast, onWord }: Props) {
+  // a tap on a letter hides the toast for a moment; when it comes back the "+1" stays put
+  const spent = useRef<Toast | null>(null);
+  useEffect(() => { if (current && toast) spent.current = toast; }, [current, toast]);
   return (
     <div className="readout">
       <div className={waiting ? "current waiting" : "current"} aria-live="polite" aria-busy={waiting || undefined}>
@@ -27,7 +31,7 @@ export function Readout({ current, waiting, toast, onWord }: Props) {
           <span className="toastline">
             {toast.word ? <ToastWord toast={toast} word={toast.word} onWord={onWord} /> : toast.text}
             {/* a new main word: "+1" pops up beside it, so the find reads as a point scored */}
-            {toast.kind === "main" && <span key={toast.word} className="gain" aria-hidden="true"><bdi>+1</bdi></span>}
+            {toast.kind === "main" && spent.current !== toast && <span key={toast.word} className="gain" aria-hidden="true"><bdi>+1</bdi></span>}
           </span>
           {toast.note && <span className={`note hint-${toast.note.hint}`}>{toast.note.text}</span>}
         </div>
