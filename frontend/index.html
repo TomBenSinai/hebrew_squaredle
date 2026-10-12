@@ -34,9 +34,30 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700;800&family=Assistant:wght@400;600;700&display=swap" />
+    <!-- The loader (src/components/Loader) for the paint before the app loads; React replaces it.
+         A copy with its own colours, since tokens.css isn't in yet: keep it in step with Loader.css. -->
+    <style>
+      .boot { height: 100%; display: grid; place-content: center; justify-items: center; gap: 16px;
+        --ink: #111; --tile: #fff; --amber: #E3A52B; --bg: #ECECEA; background: var(--bg); }
+      @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .boot { --ink: #F2F2F0; --tile: #0B0B0B; --amber: #F0B94D; --bg: #0B0B0B; } }
+      :root[data-theme="dark"] .boot { --ink: #F2F2F0; --tile: #0B0B0B; --amber: #F0B94D; --bg: #0B0B0B; }
+      .boot .loader-mark { display: grid; grid-template-columns: repeat(2, 26px); gap: 4.7px; padding: 6.8px; border-radius: 14px; background: var(--ink); }
+      .boot .loader-mark i { width: 26px; height: 26px; border-radius: 22%; background: var(--tile); animation: bootstep 1.6s cubic-bezier(.2, .9, .25, 1) infinite both; }
+      .boot .loader-mark i:nth-child(2) { animation-delay: .4s; }
+      .boot .loader-mark i:nth-child(4) { animation-delay: .8s; }
+      .boot .loader-mark i:nth-child(3) { animation-delay: 1.2s; }
+      .boot .loader-word { font: 700 1.5rem/1 "Rubik", "Segoe UI", "Arial Hebrew", Arial, sans-serif; letter-spacing: .02em; color: var(--ink); }
+      @keyframes bootstep { 6%, 22% { background: var(--amber); transform: scale(.86); } 45% { background: var(--tile); transform: none; } }
+      @media (prefers-reduced-motion: reduce) { .boot .loader-mark i { animation: none; } .boot .loader-mark i:first-child { background: var(--amber); } }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot" role="status" aria-label="טוען">
+        <span class="loader-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span class="loader-word" aria-hidden="true">ריבועון</span>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

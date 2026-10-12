@@ -1,0 +1,37 @@
+/* The logo (public/favicon.svg): four tiles, the top-right one amber. Here the
+   amber walks round them in reading order, top right, top left, bottom left,
+   bottom right, each tile pressing in as it lights like a swiped one. */
+.loader { display: grid; justify-items: center; gap: 12px; color: var(--muted); animation: loaderin .4s var(--ease-out) .15s both; }
+.loader-mark {
+  --s: 14px;
+  display: grid; grid-template-columns: repeat(2, var(--s)); gap: calc(var(--s) * .18);
+  padding: calc(var(--s) * .26);
+  border-radius: calc(var(--s) * .55);
+  background: var(--cobalt);
+}
+.loader-mark i {
+  width: var(--s); height: var(--s);
+  border-radius: 22%;
+  background: var(--cobalt-ink);
+  animation: loaderstep 1.6s var(--ease-out) infinite both;
+}
+/* RTL grid: children go top right, top left, bottom right, bottom left */
+.loader-mark i:nth-child(2) { animation-delay: .4s; }
+.loader-mark i:nth-child(4) { animation-delay: .8s; }
+.loader-mark i:nth-child(3) { animation-delay: 1.2s; }
+@keyframes loaderstep {
+  0% { background: var(--cobalt-ink); transform: none; }
+  6%, 22% { background: var(--amber-fill); transform: scale(.86); }
+  45%, 100% { background: var(--cobalt-ink); transform: none; }
+}
+@keyframes loaderin { from { opacity: 0; transform: scale(.92); } }
+.loader-label { font-size: .95rem; }
+
+.loader.lg { gap: 16px; }
+.loader.lg .loader-mark { --s: 26px; box-shadow: var(--shadow); }
+.loader-word { font-family: var(--display); font-weight: 700; font-size: 1.5rem; line-height: 1; letter-spacing: .02em; color: var(--ink); }
+
+/* still: the logo itself */
+@media (prefers-reduced-motion: reduce) {
+  .loader-mark i:first-child { background: var(--amber-fill); }
+}

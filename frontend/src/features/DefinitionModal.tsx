@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, ExternalLinkIcon, LinkButton, Modal } from "../components";
+import { Button, ExternalLinkIcon, LinkButton, Loader, Modal } from "../components";
 import { api } from "../api/client";
 import type { Definition } from "../api/types";
 import "./DefinitionModal.css";
@@ -34,7 +34,7 @@ export function DefinitionModal({ word, onClose, onShow }: Props) {
     <Modal open={!!word} onClose={onClose} title={w} sheetClassName="defcard" layer={30}>
       <div className="defbody">
         {def === "loading" ? (
-          <p className="deftext loading">מחפש הגדרה</p>
+          <div className="defloading"><Loader label="מחפש הגדרה" /></div>
         ) : entry && sense ? (
           <>
             <p className="defmeta"><b>{entry.title}</b>{entry.info && ` · ${entry.info}`}</p>
