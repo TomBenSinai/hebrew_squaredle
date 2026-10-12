@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { api } from "../api/client";
 import type { DayRow, Leaderboard, MyPlace, Ranked, StreakRow, User } from "../api/types";
-import { Button, GridIcon, Modal, SheetBody } from "../components";
+import { Button, GridIcon, Loader, Modal, SheetBody } from "../components";
 import { playerId, progressStore } from "../state/progressStore";
 import "./LeaderboardModal.css";
 
@@ -77,7 +77,7 @@ export function LeaderboardModal({ open, onClose, date, mini, startMini, user, o
         </p>
 
         {failed && !data && <p className="leadempty">אין חיבור לשרת. נסו שוב בעוד רגע.</p>}
-        {!failed && !data && <p className="leadempty">טוען…</p>}
+        {!failed && !data && <div className="leadempty"><Loader /></div>}
         {data && part && (part.top.length || part.me
           ? <ol className="leadlist" role="tabpanel">
               {withMe(part.top, part.me, user?.nickname ?? "").map((r, k) => r === GAP

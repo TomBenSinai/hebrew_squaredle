@@ -1,6 +1,7 @@
 export { Button, LinkButton } from "./Button";
 export { Chip } from "./Chip";
 export { CalendarIcon, ExternalLinkIcon, GlobeIcon, GoogleLogo, GridIcon, LockIcon, MoonIcon, PersonIcon, RotateIcon, ShapeIcon, ShareIcon, SunIcon, TrophyIcon } from "./Icon";
+export { Loader } from "./Loader";
 export { Modal } from "./Modal";
 export { Pill } from "./Pill";
 export { ProgressBar, type Mark } from "./ProgressBar";

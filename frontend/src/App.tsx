@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api/client";
+import { Loader } from "./components";
 import type { DaysResponse } from "./api/types";
 import { AccountModal } from "./features/AccountModal";
 import { ArchiveModal } from "./features/ArchiveModal";
@@ -88,7 +89,7 @@ export default function App() {
 
   if (!learned) return <div className="app"><Tutorial onDone={finishTutorial} /></div>;
   if (loadError || error) return <div className="app"><p className="status">לא הצלחנו לטעון את המשחק. נסו לרענן.</p></div>;
-  if (!days || !game || !auth) return <div className="app"><p className="status">טוען…</p></div>;
+  if (!days || !game || !auth) return <div className="app"><div className="status"><Loader size="lg" /></div></div>;
   const setNickname = (nickname: string | null) => setAuth(a => a && a.info.user
     ? { ...a, info: { ...a.info, user: { ...a.info.user, nickname } } } : a);
   return <Play days={days} refreshDays={refreshDays} game={game} setDate={setDate} auth={auth}
