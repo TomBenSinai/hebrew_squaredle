@@ -18,8 +18,8 @@ export function letterFraction(found: FoundWord[], mainLetters: number): number 
   return mainLetters ? got / mainLetters : 0;
 }
 
-/** The second tile number (words using a letter) is switched off for now: it never unlocks. */
-export const SHOW_USES_HINT = false;
+/** The second tile number (words using a letter); false keeps it from ever unlocking. */
+export const SHOW_USES_HINT = true;
 
 export type HintId = "sort" | "reveal" | "starts" | "uses";
 
@@ -42,6 +42,13 @@ export const HINTS: HintDef[] = [
     label: "רמז: כמה מילים שמתחילות באות נותרו",
     note: "נפתח רמז חדש! המספר האדום - כמה מילים שמתחילות באות הזו נותרו",
   },
+  ...(SHOW_USES_HINT
+    ? [{
+        id: "uses" as const, at: 0.4, color: "var(--hint-uses)",
+        label: "רמז: כמה מילים שעוברות באות נותרו",
+        note: "נפתח רמז חדש! המספר הכחול - כמה מילים שעוברות באות הזו נותרו",
+      }]
+    : []),
   {
     id: "reveal", at: 0.5, color: "var(--hint-reveal)",
     label: "רמז: אותיות מהמילים שנותרו",
@@ -52,13 +59,6 @@ export const HINTS: HintDef[] = [
     label: "רמז: מיון רשימת המילים לפי א-ב",
     note: "נפתח רמז חדש! רשימת המילים ממוינת עכשיו לפי א-ב",
   },
-  ...(SHOW_USES_HINT
-    ? [{
-        id: "uses" as const, at: 0.75, color: "var(--hint-uses)",
-        label: "רמז: כמה מילים שעוברות באות נותרו",
-        note: "נפתח רמז חדש! המספר הכחול - כמה מילים שעוברות באות הזו נותרו",
-      }]
-    : []),
 ];
 
 export const hintById = (id: HintId) => HINTS.find(h => h.id === id);
