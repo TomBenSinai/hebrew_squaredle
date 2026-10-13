@@ -25,7 +25,9 @@ import { withFinal } from "./lib/hebrew";
 import { boardDate, isMini } from "./lib/mini";
 import { HINTS, letterFraction, openHints, rankFor } from "./lib/scoring";
 import { hasSeen, markSeen } from "./lib/seen";
-import { share, shareText } from "./lib/share";
+import { shareText } from "./lib/share";
+import { ShareModal } from "./features/ShareModal";
+import { shortDate, weekday } from "./lib/dates";
 import { bootAuth, type AuthState } from "./state/auth";
 import { progressStore } from "./state/progressStore";
 import { useGame, type Game } from "./state/useGame";
@@ -166,19 +168,21 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname, setMode }:
   const bonusFound = found.length - mainFound;
   const fraction = letterFraction(found, board.mainLetters);
 
-  // called straight from the tap: Safari only opens the share dialog inside one.
-  // Without a share menu the text goes to the clipboard, and the button says so.
-  const [copied, setCopied] = useState(false);
-  const copiedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const shareProgress = () => {
-    share(shareText(found, board.mainTotal, mini ? "ריבועוני" : "ריבועון")).then(r => {
-      if (r !== "copied") return;
-      clearTimeout(copiedTimer.current);
-      setCopied(true);
-      copiedTimer.current = setTimeout(() => setCopied(false), 2200);
-    });
-  };
-  useEffect(() => () => clearTimeout(copiedTimer.current), []);
+  // share opens a sheet with the result as a picture (and as text)
+  const [shareOpen, setShareOpen] = useState(false);
+  const shareProgress = () => setShareOpen(true);
+  // built only while the sheet is open: Play renders on every move of a swipe
+  const gameName = mini ? "ריבועוני" : "ריבועון";
+  const shareData = useMemo(() => {
+    if (!shareOpen) return null;
+    const day = boardDate(board.date);
+    const result = { main: mainFound, bonus: bonusFound, mainTotal: board.mainTotal, layout, found,
+      groups: board.groups, game: gameName, number: mini ? null : board.number };
+    return {
+      text: shareText(result),
+      card: { ...result, when: `${weekday(day)} ${shortDate(day)}`.trim(), host: window.location.host },
+    };
+  }, [shareOpen, mainFound, bonusFound, board, layout, found, gameName, mini]);
   const hintsOpen = useMemo(() => openHints(fraction), [fraction]);
   const crowd = useDayStats(board.date);
 
@@ -270,7 +274,7 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname, setMode }:
         <div className="tools">
           <SpinButton turns={turns} onClick={spin} />
           <span className="toolsend">
-            {found.length > 0 && <SharePill copied={copied} round={showToday && narrow} onClick={shareProgress} />}
+            {found.length > 0 && <SharePill round={showToday && narrow} onClick={shareProgress} />}
             {showToday && <TodayPill onClick={() => setDate(days.today)} />}
             {!mini && <ArchivePill round={showToday && narrow} onClick={() => setArchiveOpen(true)} />}
             {loginOn && <LeadersPill fresh={!leadersSeen} onClick={openLeaders} />}
@@ -293,9 +297,10 @@ function Play({ days, refreshDays, game, setDate, auth, setNickname, setMode }:
         onPlay={() => { setMiniCardOpen(false); setMode("mini"); }}
         onLogin={() => { setMiniCardOpen(false); setMode("mini"); openAccount(); }} />
       <FinishModal open={finishOpen} onClose={() => setFinishOpen(false)} board={board} bonus={bonusFound}
-        onShare={shareProgress} copied={copied}
+        onShare={shareProgress}
         isToday={isToday} user={user} onAccount={() => { setFinishOpen(false); openAccount(); }}
         onLeaders={loginOn ? () => { setFinishOpen(false); openLeaders(); } : undefined} mini={mini} />
+      <ShareModal open={shareOpen} onClose={() => setShareOpen(false)} data={shareData} />
       <LeaderboardModal open={leadersOpen} onClose={() => setLeadersOpen(false)} date={days.today} user={user}
         mini={user ? days.mini : null} startMini={mini}
         onAccount={openAccount} />
