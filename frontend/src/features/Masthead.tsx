@@ -102,14 +102,13 @@ export function LeadersPill({ fresh, onClick }: { fresh?: boolean; onClick: () =
 
 /**
  * Share the player's progress: the one filled pill in the row. `round`: icon
- * only (a narrow row), its label a tip that stays up while it says it copied.
+ * only (a narrow row), its label a tip.
  */
-export function SharePill({ copied, round, onClick }: { copied?: boolean; round?: boolean; onClick: () => void }) {
-  const label = copied ? "הועתק" : "שיתוף";
+export function SharePill({ round, onClick }: { round?: boolean; onClick: () => void }) {
   return (
-    <Pill className={"share" + (round ? " round" : "") + (copied ? " copied" : "")} icon={<ShareIcon />}
-      aria-label={copied ? "הועתק" : "שיתוף ההתקדמות"} onClick={onClick}>
-      <span className={round ? "tip" : "pilllabel"} aria-live="polite">{label}</span>
+    <Pill className={"share" + (round ? " round" : "")} icon={<ShareIcon />}
+      aria-label="שיתוף ההתקדמות" onClick={onClick}>
+      <span className={round ? "tip" : "pilllabel"}>שיתוף</span>
     </Pill>
   );
 }
