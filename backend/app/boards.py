@@ -25,9 +25,9 @@ MAX_GROUP = 8          # words of 8+ letters share one group
 # of the hint with the same id in HINTS in frontend/src/lib/scoring.ts (which
 # also holds `sort`, a client-only hint, and SHOW_USES_HINT)
 HINT_STARTS_AT = 0.3
+HINT_USES_AT = 0.4
 HINT_REVEAL_AT = 0.5
-HINT_USES_AT = 0.75
-SHOW_USES_HINT = False
+SHOW_USES_HINT = True
 
 REGULAR_TO_FINAL = str.maketrans("\u05db\u05de\u05e0\u05e4\u05e6", "\u05da\u05dd\u05df\u05e3\u05e5")
 
